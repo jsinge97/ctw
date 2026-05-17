@@ -14,6 +14,8 @@
 
 Read these before starting, and re-read the relevant sections at the start of each task:
 
+- `AGENTS.md` once Task 1 creates it
+- `CLAUDE.md` once Task 1 creates it
 - `docs/feature-plan.md`
 - `docs/crud-model.md`
 - `docs/data-model.md`
@@ -48,7 +50,7 @@ Current known demo seams to remove:
 
 ## Milestones
 
-1. [ ] Reality guardrails and local data lifecycle.
+1. [ ] Agent docs, reality guardrails, and local data lifecycle.
 2. [ ] Real Better Auth sessions and role-aware login.
 3. [ ] Durable Prisma workflow services.
 4. [ ] Real ingestion, storage, providers, and worker runtime.
@@ -57,7 +59,88 @@ Current known demo seams to remove:
 
 ---
 
-## Task 1: Demo Seam Guardrails
+## Task 1: Agent Source-of-Truth Docs
+
+**Purpose:** Give future agents and humans one obvious place to find the source docs, execution rules, and important commands before they touch code.
+
+**Files:**
+
+- Create: `AGENTS.md`
+- Create: `CLAUDE.md`
+- Modify: `docs/plans/2026-05-17-make-it-real-implementation-plan.md`
+
+**`AGENTS.md` must include:**
+
+- Read these source-of-truth docs before coding:
+  - `docs/feature-plan.md`
+  - `docs/crud-model.md`
+  - `docs/data-model.md`
+  - `docs/architecture.md`
+  - `docs/screens.md`
+  - `docs/frontend-architecture.md`
+  - `docs/design-system.md`
+  - `docs/deployment.md`
+  - `docs/plans/2026-05-17-ctw-2-implementation-plan.md`
+  - `docs/plans/2026-05-17-make-it-real-implementation-plan.md`
+- Commit after each completed task.
+- After each milestone, request subagent review before moving on.
+- Do not let production run demo tokens, memory workflow, or fake providers.
+- Every meaningful mutation writes audit history.
+- App owns writes; AI/provider work creates typed proposed records or drafts only.
+- Do not edit generated OpenAPI/client by hand.
+- Do not revert user changes.
+
+**`CLAUDE.md` must include command quick reference:**
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm --filter @ctw/api test
+pnpm --filter @ctw/web test
+pnpm --filter @ctw/web e2e
+pnpm --filter @ctw/worker test
+pnpm prisma:generate
+pnpm db:generate
+pnpm db:migrate
+pnpm openapi:generate
+pnpm client:generate
+pnpm build
+docker compose up -d postgres minio
+docker compose config
+```
+
+It must also document the expected local durable flow once Task 2 exists:
+
+```bash
+docker compose up -d postgres minio
+pnpm db:migrate
+pnpm db:seed
+pnpm --filter @ctw/api dev
+pnpm --filter @ctw/web dev
+```
+
+**Steps:**
+
+1. Create `AGENTS.md` with source docs, execution rules, and safety rules.
+2. Create `CLAUDE.md` with command quick reference and local runbook.
+3. Add a note to this plan's Source Docs section that `AGENTS.md` and `CLAUDE.md` are required onboarding docs.
+4. Run:
+
+```bash
+pnpm typecheck
+```
+
+5. Commit:
+
+```bash
+git add AGENTS.md CLAUDE.md docs/plans/2026-05-17-make-it-real-implementation-plan.md
+git commit -m "docs: add agent source of truth docs"
+```
+
+---
+
+## Task 2: Demo Seam Guardrails
 
 **Purpose:** Make demo-only paths explicit so they cannot accidentally remain in production.
 
@@ -93,7 +176,7 @@ git commit -m "chore: add runtime mode guardrails"
 
 ---
 
-## Task 2: Database Seed and Reset Lifecycle
+## Task 3: Database Seed and Reset Lifecycle
 
 **Purpose:** Give local dev, Playwright, and reviewers a real Postgres-backed dataset instead of `demo-store.ts`.
 
@@ -148,7 +231,7 @@ git commit -m "feat: add durable seed data lifecycle"
 
 ---
 
-## Task 3: Better Auth Database Integration
+## Task 4: Better Auth Database Integration
 
 **Purpose:** Replace hardcoded bearer-token sessions with Better Auth-backed users and sessions.
 
@@ -197,7 +280,7 @@ git commit -m "feat: wire durable auth sessions"
 
 ---
 
-## Task 4: Web Login and Session Runtime
+## Task 5: Web Login and Session Runtime
 
 **Purpose:** Replace hardcoded `am-token` in the web app with real session-aware login/logout.
 
@@ -253,7 +336,7 @@ Review focus:
 
 ---
 
-## Task 5: Prisma Workflow Repository Coverage
+## Task 6: Prisma Workflow Repository Coverage
 
 **Purpose:** Make the Prisma repository cover every object that currently comes from `demo-store.ts`.
 
@@ -297,7 +380,7 @@ git commit -m "feat: complete prisma workflow repository"
 
 ---
 
-## Task 6: Durable Deals, Participants, Users, Settings APIs
+## Task 7: Durable Deals, Participants, Users, Settings APIs
 
 **Purpose:** Move core CRUD APIs from memory arrays to Prisma repositories.
 
@@ -341,7 +424,7 @@ git commit -m "feat: persist core crud APIs with prisma"
 
 ---
 
-## Task 7: Durable Messages, Documents, Routing Review APIs
+## Task 8: Durable Messages, Documents, Routing Review APIs
 
 **Purpose:** Make channel filing and document state durable.
 
@@ -386,7 +469,7 @@ git commit -m "feat: persist channel filing workflows"
 
 ---
 
-## Task 8: Durable Tasks, Next Action, VA Work, Audit
+## Task 9: Durable Tasks, Next Action, VA Work, Audit
 
 **Purpose:** Make the main work execution loop durable end to end.
 
@@ -442,7 +525,7 @@ Review focus:
 
 ---
 
-## Task 9: Real Provider Adapters
+## Task 10: Real Provider Adapters
 
 **Purpose:** Replace deterministic fake provider functions with environment-backed provider clients behind testable adapters.
 
@@ -490,7 +573,7 @@ git commit -m "feat: add real provider adapter boundaries"
 
 ---
 
-## Task 10: Real Storage and Attachment Filing
+## Task 11: Real Storage and Attachment Filing
 
 **Purpose:** Store uploaded/attached documents in S3-compatible storage and create durable document versions.
 
@@ -533,7 +616,7 @@ git commit -m "feat: store document files durably"
 
 ---
 
-## Task 11: Worker Job Processing Against Prisma
+## Task 12: Worker Job Processing Against Prisma
 
 **Purpose:** Make workers process durable jobs and update durable records.
 
@@ -594,7 +677,7 @@ Review focus:
 
 ---
 
-## Task 12: Full Deal Workspace CRUD Tabs
+## Task 13: Full Deal Workspace CRUD Tabs
 
 **Purpose:** Replace the overview-only deal workspace with real tab routes and forms.
 
@@ -646,7 +729,7 @@ git commit -m "feat: add full deal workspace crud tabs"
 
 ---
 
-## Task 13: Settings Users and Organization CRUD
+## Task 14: Settings Users and Organization CRUD
 
 **Purpose:** Make admin/AM settings usable instead of static panels.
 
@@ -689,7 +772,7 @@ git commit -m "feat: add real settings management"
 
 ---
 
-## Task 14: Replace Local Kanban with shadcn-kanban-board
+## Task 15: Replace Local Kanban with shadcn-kanban-board
 
 **Purpose:** Use the requested `janhesters/shadcn-kanban-board` component rather than local HTML drag/drop.
 
@@ -743,7 +826,7 @@ Review focus:
 
 ---
 
-## Task 15: Postgres-Backed E2E Suite
+## Task 16: Postgres-Backed E2E Suite
 
 **Purpose:** Make e2e tests exercise the real app stack with seeded Postgres.
 
@@ -791,7 +874,7 @@ git commit -m "test: run e2e against seeded postgres"
 
 ---
 
-## Task 16: Production Deployment Hardening
+## Task 17: Production Deployment Hardening
 
 **Purpose:** Make Railway/docker deployment match the durable app.
 
@@ -872,4 +955,3 @@ Expected:
 - No external public API console.
 - No notification center beyond existing backlog indicators.
 - No hard-delete admin tools.
-
