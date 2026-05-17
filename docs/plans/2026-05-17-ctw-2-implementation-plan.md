@@ -75,6 +75,7 @@ Implementation must follow these product decisions:
 - [x] Completed Task 10 source-of-truth frontend docs.
 - [x] Completed Task 11 web app foundation.
 - [x] Completed Phase 2 review pass 2 fixes: deal-scoped activity auth, participant-aware deal visibility, VA execute capability, stricter routing resolution schema, real low-confidence message seed, routing status updates, outbound send status/provider tracking, and VA task state synchronization.
+- [x] Completed Phase 2 durability follow-up after five review passes: pg-boss queue boundary, Prisma workflow repository boundary, runtime audit repository selection, and API services routed through a workflow provider instead of importing demo state directly.
 
 ---
 
