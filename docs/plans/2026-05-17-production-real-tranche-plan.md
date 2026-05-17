@@ -68,8 +68,8 @@ This tranche finishes the next set of product-hardening work: production auth, O
 ## Verification
 
 - [x] `pnpm prisma:generate`
-- [ ] `pnpm openapi:generate`
-- [ ] `pnpm client:generate`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
-- [ ] Targeted browser smoke test on `http://127.0.0.1:5173/deals`
+- [x] `pnpm openapi:generate`
+- [x] `pnpm client:generate`
+- [x] `pnpm typecheck`
+- [x] `pnpm test`
+- [x] Targeted browser smoke test on `http://127.0.0.1:5173/deals`
