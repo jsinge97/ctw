@@ -10,5 +10,5 @@ export async function registerSessionRoutes(app: FastifyInstance) {
       throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
     }
   });
-  app.post<{ Body: { token: string } }>("/v1/session/accept-invitation", async (request) => acceptInvitation(request.body.token));
+  app.post<{ Body: { token: string } }>("/v1/session/accept-invitation", async (request) => acceptInvitation((request.body as { token: string }).token));
 }

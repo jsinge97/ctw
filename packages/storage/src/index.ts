@@ -1,1 +1,1 @@
-export const storagePackageReady = true;
+export * from "./storage.js";

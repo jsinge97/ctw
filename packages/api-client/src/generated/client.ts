@@ -7,6 +7,37 @@ export type GeneratedOperationMap = {
   "GET /openapi.json": { response: unknown };
   "GET /v1/session/current": { response: CurrentSession };
   "POST /v1/session/accept-invitation": { request: { token: string }; response: CurrentSession };
+  "GET /v1/deals": { response: unknown };
+  "POST /v1/deals": { request: unknown; response: unknown };
+  "GET /v1/deals/{dealId}": { response: unknown };
+  "PATCH /v1/deals/{dealId}": { request: unknown; response: unknown };
+  "POST /v1/deals/{dealId}/move-stage": { request: unknown; response: unknown };
+  "POST /v1/deals/{dealId}/archive": { response: unknown };
+  "GET /v1/deals/{dealId}/participants": { response: unknown };
+  "POST /v1/deals/{dealId}/participants": { request: unknown; response: unknown };
+  "PATCH /v1/deals/{dealId}/participants/{participantId}": { request: unknown; response: unknown };
+  "GET /v1/deals/{dealId}/messages": { response: unknown };
+  "PATCH /v1/deals/{dealId}/messages/:messageId": { request: unknown; response: unknown };
+  "GET /v1/deals/{dealId}/documents": { response: unknown };
+  "POST /v1/deals/{dealId}/documents": { request: unknown; response: unknown };
+  "PATCH /v1/deals/{dealId}/documents/:documentId": { request: unknown; response: unknown };
+  "GET /v1/deals/{dealId}/tasks": { response: unknown };
+  "POST /v1/deals/{dealId}/tasks": { request: unknown; response: unknown };
+  "POST /v1/tasks/{taskId}/approve": { request: unknown; response: unknown };
+  "POST /v1/tasks/{taskId}/reject": { request: unknown; response: unknown };
+  "POST /v1/tasks/{taskId}/defer": { request: unknown; response: unknown };
+  "POST /v1/tasks/{taskId}/route": { request: unknown; response: unknown };
+  "GET /v1/routing-review-items": { response: unknown };
+  "POST /v1/routing-review-items/{itemId}/resolve": { request: unknown; response: unknown };
+  "GET /v1/va-work-items": { response: unknown };
+  "POST /v1/va-work-items/{itemId}/submit": { request: unknown; response: unknown };
+  "POST /v1/va-work-items/{itemId}/send-back": { request: unknown; response: unknown };
+  "GET /v1/deals/{dealId}/activity": { response: unknown };
+  "GET /v1/settings/organization": { response: unknown };
+  "PATCH /v1/settings/organization": { request: unknown; response: unknown };
+  "GET /v1/users": { response: unknown };
+  "POST /v1/users": { request: unknown; response: unknown };
+  "PATCH /v1/users/:userId": { request: unknown; response: unknown };
 };
 
 export type GeneratedApiClientOptions = {
@@ -48,6 +79,230 @@ export class GeneratedApiClient {
     };
     if (body !== undefined) init.body = JSON.stringify(body);
     return this.request(generatedRoutes["sessionaccept_invitation"], init);
+  }
+
+  getDeals(): Promise<GeneratedOperationMap["GET /v1/deals"]["response"]> {
+    return this.request(generatedRoutes["deals"]);
+  }
+
+  postDeals(body: GeneratedOperationMap["POST /v1/deals"]["request"]): Promise<GeneratedOperationMap["POST /v1/deals"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["deals"], init);
+  }
+
+  getDealsdealId(): Promise<GeneratedOperationMap["GET /v1/deals/{dealId}"]["response"]> {
+    return this.request(generatedRoutes["dealsdealId"]);
+  }
+
+  patchDealsdealId(body: GeneratedOperationMap["PATCH /v1/deals/{dealId}"]["request"]): Promise<GeneratedOperationMap["PATCH /v1/deals/{dealId}"]["response"]> {
+    const init: RequestInit = {
+      method: "PATCH",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId"], init);
+  }
+
+  postDealsdealIdMoveStage(body: GeneratedOperationMap["POST /v1/deals/{dealId}/move-stage"]["request"]): Promise<GeneratedOperationMap["POST /v1/deals/{dealId}/move-stage"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId_move_stage"], init);
+  }
+
+  postDealsdealIdArchive(body?: never): Promise<GeneratedOperationMap["POST /v1/deals/{dealId}/archive"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId_archive"], init);
+  }
+
+  getDealsdealIdParticipants(): Promise<GeneratedOperationMap["GET /v1/deals/{dealId}/participants"]["response"]> {
+    return this.request(generatedRoutes["dealsdealId_participants"]);
+  }
+
+  postDealsdealIdParticipants(body: GeneratedOperationMap["POST /v1/deals/{dealId}/participants"]["request"]): Promise<GeneratedOperationMap["POST /v1/deals/{dealId}/participants"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId_participants"], init);
+  }
+
+  patchDealsdealIdParticipantsParticipantId(body: GeneratedOperationMap["PATCH /v1/deals/{dealId}/participants/{participantId}"]["request"]): Promise<GeneratedOperationMap["PATCH /v1/deals/{dealId}/participants/{participantId}"]["response"]> {
+    const init: RequestInit = {
+      method: "PATCH",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId_participants_participantId"], init);
+  }
+
+  getDealsdealIdMessages(): Promise<GeneratedOperationMap["GET /v1/deals/{dealId}/messages"]["response"]> {
+    return this.request(generatedRoutes["dealsdealId_messages"]);
+  }
+
+  patchDealsdealIdMessagesMessageId(body: GeneratedOperationMap["PATCH /v1/deals/{dealId}/messages/:messageId"]["request"]): Promise<GeneratedOperationMap["PATCH /v1/deals/{dealId}/messages/:messageId"]["response"]> {
+    const init: RequestInit = {
+      method: "PATCH",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId_messages__messageId"], init);
+  }
+
+  getDealsdealIdDocuments(): Promise<GeneratedOperationMap["GET /v1/deals/{dealId}/documents"]["response"]> {
+    return this.request(generatedRoutes["dealsdealId_documents"]);
+  }
+
+  postDealsdealIdDocuments(body: GeneratedOperationMap["POST /v1/deals/{dealId}/documents"]["request"]): Promise<GeneratedOperationMap["POST /v1/deals/{dealId}/documents"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId_documents"], init);
+  }
+
+  patchDealsdealIdDocumentsDocumentId(body: GeneratedOperationMap["PATCH /v1/deals/{dealId}/documents/:documentId"]["request"]): Promise<GeneratedOperationMap["PATCH /v1/deals/{dealId}/documents/:documentId"]["response"]> {
+    const init: RequestInit = {
+      method: "PATCH",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId_documents__documentId"], init);
+  }
+
+  getDealsdealIdTasks(): Promise<GeneratedOperationMap["GET /v1/deals/{dealId}/tasks"]["response"]> {
+    return this.request(generatedRoutes["dealsdealId_tasks"]);
+  }
+
+  postDealsdealIdTasks(body: GeneratedOperationMap["POST /v1/deals/{dealId}/tasks"]["request"]): Promise<GeneratedOperationMap["POST /v1/deals/{dealId}/tasks"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["dealsdealId_tasks"], init);
+  }
+
+  postTaskstaskIdApprove(body: GeneratedOperationMap["POST /v1/tasks/{taskId}/approve"]["request"]): Promise<GeneratedOperationMap["POST /v1/tasks/{taskId}/approve"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["taskstaskId_approve"], init);
+  }
+
+  postTaskstaskIdReject(body: GeneratedOperationMap["POST /v1/tasks/{taskId}/reject"]["request"]): Promise<GeneratedOperationMap["POST /v1/tasks/{taskId}/reject"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["taskstaskId_reject"], init);
+  }
+
+  postTaskstaskIdDefer(body: GeneratedOperationMap["POST /v1/tasks/{taskId}/defer"]["request"]): Promise<GeneratedOperationMap["POST /v1/tasks/{taskId}/defer"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["taskstaskId_defer"], init);
+  }
+
+  postTaskstaskIdRoute(body: GeneratedOperationMap["POST /v1/tasks/{taskId}/route"]["request"]): Promise<GeneratedOperationMap["POST /v1/tasks/{taskId}/route"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["taskstaskId_route"], init);
+  }
+
+  getRoutingReviewItems(): Promise<GeneratedOperationMap["GET /v1/routing-review-items"]["response"]> {
+    return this.request(generatedRoutes["routing_review_items"]);
+  }
+
+  postRoutingReviewItemsitemIdResolve(body: GeneratedOperationMap["POST /v1/routing-review-items/{itemId}/resolve"]["request"]): Promise<GeneratedOperationMap["POST /v1/routing-review-items/{itemId}/resolve"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["routing_review_itemsitemId_resolve"], init);
+  }
+
+  getVaWorkItems(): Promise<GeneratedOperationMap["GET /v1/va-work-items"]["response"]> {
+    return this.request(generatedRoutes["va_work_items"]);
+  }
+
+  postVaWorkItemsitemIdSubmit(body: GeneratedOperationMap["POST /v1/va-work-items/{itemId}/submit"]["request"]): Promise<GeneratedOperationMap["POST /v1/va-work-items/{itemId}/submit"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["va_work_itemsitemId_submit"], init);
+  }
+
+  postVaWorkItemsitemIdSendBack(body: GeneratedOperationMap["POST /v1/va-work-items/{itemId}/send-back"]["request"]): Promise<GeneratedOperationMap["POST /v1/va-work-items/{itemId}/send-back"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["va_work_itemsitemId_send_back"], init);
+  }
+
+  getDealsdealIdActivity(): Promise<GeneratedOperationMap["GET /v1/deals/{dealId}/activity"]["response"]> {
+    return this.request(generatedRoutes["dealsdealId_activity"]);
+  }
+
+  getSettingsorganization(): Promise<GeneratedOperationMap["GET /v1/settings/organization"]["response"]> {
+    return this.request(generatedRoutes["settingsorganization"]);
+  }
+
+  patchSettingsorganization(body: GeneratedOperationMap["PATCH /v1/settings/organization"]["request"]): Promise<GeneratedOperationMap["PATCH /v1/settings/organization"]["response"]> {
+    const init: RequestInit = {
+      method: "PATCH",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["settingsorganization"], init);
+  }
+
+  getUsers(): Promise<GeneratedOperationMap["GET /v1/users"]["response"]> {
+    return this.request(generatedRoutes["users"]);
+  }
+
+  postUsers(body: GeneratedOperationMap["POST /v1/users"]["request"]): Promise<GeneratedOperationMap["POST /v1/users"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["users"], init);
+  }
+
+  patchUsersUserId(body: GeneratedOperationMap["PATCH /v1/users/:userId"]["request"]): Promise<GeneratedOperationMap["PATCH /v1/users/:userId"]["response"]> {
+    const init: RequestInit = {
+      method: "PATCH",
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["users_userId"], init);
   }
 }
 
