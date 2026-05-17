@@ -39,16 +39,16 @@ This tranche finishes the next set of product-hardening work: production auth, O
 
 ## Milestone 3: MCP Depth
 
-- [ ] Keep MCP HTTP-only.
-- [ ] Continue adapting around the OpenAPI contract.
-- [ ] Add curated tools for common deal workspace verbs:
+- [x] Keep MCP HTTP-only.
+- [x] Continue adapting around the OpenAPI contract.
+- [x] Add curated tools for common deal workspace verbs:
   - list/update messages
   - list/update/archive documents
   - list participants
   - list activity
   - list current session/capabilities
-- [ ] Mark tools with accurate read-only/idempotency/destructive annotations.
-- [ ] Cover new tool mappings in MCP tests.
+- [x] Mark tools with accurate read-only/idempotency/destructive annotations.
+- [x] Cover new tool mappings in MCP tests.
 
 ## Milestone 4: UI Polish And Hardening
 

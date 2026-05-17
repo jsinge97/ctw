@@ -31,6 +31,14 @@ Adding a new MCP tool should usually be:
 - `ctw_list_openapi_operations`
 - `ctw_list_deals`
 - `ctw_get_deal_workspace`
+- `ctw_get_current_session`
+- `ctw_list_messages`
+- `ctw_update_message`
+- `ctw_list_documents`
+- `ctw_update_document`
+- `ctw_archive_document`
+- `ctw_list_participants`
+- `ctw_list_activity`
 - `ctw_create_deal`
 - `ctw_move_deal_stage`
 - `ctw_create_task`
@@ -47,7 +55,7 @@ The list is curated on purpose. MCP should expose product workflow actions, not 
 Start the API first:
 
 ```bash
-CTW_RUNTIME_MODE=demo CTW_DB_MODE=memory CTW_JOBS_MODE=memory CTW_PROVIDER_MODE=fake CTW_STORAGE_MODE=memory CTW_ALLOW_DEMO_TOKENS=false pnpm --filter @ctw/api start
+CTW_RUNTIME_MODE=demo CTW_DB_MODE=memory CTW_JOBS_MODE=memory CTW_PROVIDER_MODE=fake CTW_STORAGE_MODE=memory CTW_AUTH_MODE=demo CTW_AI_MODE=fake CTW_ALLOW_DEMO_TOKENS=false pnpm --filter @ctw/api start
 ```
 
 Then start MCP:

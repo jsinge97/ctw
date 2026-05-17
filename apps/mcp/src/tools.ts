@@ -84,6 +84,127 @@ export function buildCtwToolDefinitions(): Array<CtwToolDefinition<z.ZodRawShape
       }
     },
     {
+      name: "ctw_get_current_session",
+      title: "Get Current Session",
+      description: "Fetch the current user, active organization, role, capabilities, and allowed app surfaces for this MCP token.",
+      inputSchema: emptySchema,
+      operation: { method: "get", path: "/v1/session/current" },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      handler: async (_input, api) => ({ session: await api.invoke({ method: "get", path: "/v1/session/current" }) })
+    },
+    {
+      name: "ctw_list_messages",
+      title: "List Messages",
+      description: "List messages visible to the current user for a deal.",
+      inputSchema: {
+        dealId: z.string().min(1)
+      },
+      operation: { method: "get", path: "/v1/deals/{dealId}/messages" },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      handler: async (input, api) => {
+        const dealId = requiredString(input.dealId, "dealId");
+        return { messages: await api.invoke({ method: "get", path: "/v1/deals/{dealId}/messages", params: { dealId } }) };
+      }
+    },
+    {
+      name: "ctw_update_message",
+      title: "Update Message",
+      description: "Update a message's deal routing, visibility, hidden state, or redaction state.",
+      inputSchema: {
+        dealId: z.string().min(1),
+        hidden: z.boolean().optional(),
+        messageId: z.string().min(1),
+        nextDealId: z.string().nullable().optional(),
+        redacted: z.boolean().optional(),
+        visibility: z.enum(["internal", "shared"]).optional()
+      },
+      operation: { method: "patch", path: "/v1/deals/{dealId}/messages/{messageId}" },
+      annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      handler: async (input, api) => {
+        const dealId = requiredString(input.dealId, "dealId");
+        const messageId = requiredString(input.messageId, "messageId");
+        return api.invoke({ method: "patch", path: "/v1/deals/{dealId}/messages/{messageId}", params: { dealId, messageId }, body: compactBody(input, ["nextDealId", "visibility", "hidden", "redacted"]) });
+      }
+    },
+    {
+      name: "ctw_list_documents",
+      title: "List Documents",
+      description: "List documents visible to the current user for a deal.",
+      inputSchema: {
+        dealId: z.string().min(1)
+      },
+      operation: { method: "get", path: "/v1/deals/{dealId}/documents" },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      handler: async (input, api) => {
+        const dealId = requiredString(input.dealId, "dealId");
+        return { documents: await api.invoke({ method: "get", path: "/v1/deals/{dealId}/documents", params: { dealId } }) };
+      }
+    },
+    {
+      name: "ctw_update_document",
+      title: "Update Document",
+      description: "Update a document's title, type, visibility, or tags.",
+      inputSchema: {
+        dealId: z.string().min(1),
+        documentId: z.string().min(1),
+        documentType: z.enum(["unknown", "loi", "lease", "om", "estoppel", "comp_set", "other"]).optional(),
+        tags: z.array(z.string()).optional(),
+        title: z.string().optional(),
+        visibility: z.enum(["internal", "shared"]).optional()
+      },
+      operation: { method: "patch", path: "/v1/deals/{dealId}/documents/{documentId}" },
+      annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      handler: async (input, api) => {
+        const dealId = requiredString(input.dealId, "dealId");
+        const documentId = requiredString(input.documentId, "documentId");
+        return api.invoke({ method: "patch", path: "/v1/deals/{dealId}/documents/{documentId}", params: { dealId, documentId }, body: compactBody(input, ["title", "documentType", "visibility", "tags"]) });
+      }
+    },
+    {
+      name: "ctw_archive_document",
+      title: "Archive Document",
+      description: "Archive a document from a deal.",
+      inputSchema: {
+        dealId: z.string().min(1),
+        documentId: z.string().min(1)
+      },
+      operation: { method: "post", path: "/v1/deals/{dealId}/documents/{documentId}/archive" },
+      annotations: { destructiveHint: true, idempotentHint: true, openWorldHint: false },
+      handler: async (input, api) => {
+        const dealId = requiredString(input.dealId, "dealId");
+        const documentId = requiredString(input.documentId, "documentId");
+        return api.invoke({ method: "post", path: "/v1/deals/{dealId}/documents/{documentId}/archive", params: { dealId, documentId } });
+      }
+    },
+    {
+      name: "ctw_list_participants",
+      title: "List Participants",
+      description: "List visible deal participants and their capabilities.",
+      inputSchema: {
+        dealId: z.string().min(1)
+      },
+      operation: { method: "get", path: "/v1/deals/{dealId}/participants" },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      handler: async (input, api) => {
+        const dealId = requiredString(input.dealId, "dealId");
+        return { participants: await api.invoke({ method: "get", path: "/v1/deals/{dealId}/participants", params: { dealId } }) };
+      }
+    },
+    {
+      name: "ctw_list_activity",
+      title: "List Activity",
+      description: "List the activity/audit timeline visible to the current user for a deal.",
+      inputSchema: {
+        dealId: z.string().min(1)
+      },
+      operation: { method: "get", path: "/v1/deals/{dealId}/activity" },
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      handler: async (input, api) => {
+        const dealId = requiredString(input.dealId, "dealId");
+        return { activity: await api.invoke({ method: "get", path: "/v1/deals/{dealId}/activity", params: { dealId } }) };
+      }
+    },
+    {
       name: "ctw_create_deal",
       title: "Create Deal",
       description: "Create a new deal with title and optional primary company name.",
@@ -237,6 +358,10 @@ function requiredString(value: unknown, fieldName: string): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function compactBody(input: Record<string, unknown>, keys: string[]): Record<string, unknown> {
+  return Object.fromEntries(keys.filter((key) => input[key] !== undefined).map((key) => [key, input[key]]));
 }
 
 function taskDecisionPath(decision: string) {
