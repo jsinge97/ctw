@@ -16,6 +16,7 @@
     "@ctw/integrations": "workspace:*",
     "@ctw/jobs": "workspace:*",
     "@ctw/observability": "workspace:*",
-    "@ctw/storage": "workspace:*"
+    "@ctw/storage": "workspace:*",
+    "pg-boss": "^10.4.0"
   }
 }
