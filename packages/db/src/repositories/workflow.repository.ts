@@ -23,7 +23,7 @@ export type WorkflowRepository = {
   addParticipant: (input: { organizationId: string; dealId: string; name: string; company?: string | null; role: string; capabilities: string[]; membershipId?: string | null }) => Promise<unknown>;
   updateParticipant: (input: { organizationId: string; participantId: string; visibility?: VisibilityDto; capabilities?: string[]; status?: "active" | "removed" }) => Promise<unknown>;
   listMessagesForDeal: (organizationId: string, dealId: string) => Promise<unknown[]>;
-  createInboundMessage: (input: { organizationId: string; dealId: string | null; channelType: "email" | "sms"; providerMessageId?: string | null; subject?: string | null; bodyText: string; routingConfidence?: number | null; routingStatus: "routed" | "review_required" | "unrelated"; visibility: VisibilityDto }) => Promise<unknown>;
+  createInboundMessage: (input: { organizationId: string; dealId: string | null; channelType: "email" | "sms"; providerMessageId?: string | null; subject?: string | null; bodyText: string; sender?: string | null; recipient?: string | null; routingConfidence?: number | null; routingStatus: "routed" | "review_required" | "unrelated"; visibility: VisibilityDto }) => Promise<unknown>;
   updateMessageRouting: (input: { organizationId: string; messageId: string; dealId: string | null; routingStatus: "routed" | "review_required" | "unrelated" }) => Promise<unknown>;
   updateMessage: (input: { organizationId: string; messageId: string; dealId?: string | null; visibility?: VisibilityDto; hidden?: boolean; redacted?: boolean }) => Promise<unknown>;
   appendOutboundMessage: (input: { organizationId: string; dealId: string; taskId: string; providerMessageId: string | null; messageStatus: "sent" | "failed"; subject: string; bodyText: string }) => Promise<unknown>;
@@ -178,7 +178,7 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return messages.map(mapMessage);
   }
 
-  async createInboundMessage(input: { organizationId: string; dealId: string | null; channelType: "email" | "sms"; providerMessageId?: string | null; subject?: string | null; bodyText: string; routingConfidence?: number | null; routingStatus: "routed" | "review_required" | "unrelated"; visibility: VisibilityDto }) {
+  async createInboundMessage(input: { organizationId: string; dealId: string | null; channelType: "email" | "sms"; providerMessageId?: string | null; subject?: string | null; bodyText: string; sender?: string | null; recipient?: string | null; routingConfidence?: number | null; routingStatus: "routed" | "review_required" | "unrelated"; visibility: VisibilityDto }) {
     const message = await this.prisma.message.create({
       data: {
         organizationId: input.organizationId,
@@ -194,10 +194,19 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
         visibility: toDbVisibility(input.visibility)
       }
     });
-    return mapMessage(message);
+    const participants = [
+      input.sender ? { organizationId: input.organizationId, messageId: message.id, rawHandle: input.sender, participantRole: "from" as const } : null,
+      input.recipient ? { organizationId: input.organizationId, messageId: message.id, rawHandle: input.recipient, participantRole: "to" as const } : null
+    ].filter((participant): participant is { organizationId: string; messageId: string; rawHandle: string; participantRole: "from" | "to" } => Boolean(participant));
+    if (participants.length > 0) await this.prisma.messageParticipant.createMany({ data: participants });
+    const mapped = mapMessage(message);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "message", entityId: message.id, dealId: message.dealId, eventType: "message.inbound_filed", after: mapped });
+    return mapped;
   }
 
   async updateMessageRouting(input: { organizationId: string; messageId: string; dealId: string | null; routingStatus: "routed" | "review_required" | "unrelated" }) {
+    const before = await this.prisma.message.findFirst({ where: { id: input.messageId, organizationId: input.organizationId } });
+    if (!before) throw notFound("Message not found");
     const message = await this.prisma.message.update({
       where: { id: input.messageId, organizationId: input.organizationId },
       data: {
@@ -206,10 +215,14 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
         routedAt: input.routingStatus === "routed" ? new Date() : null
       }
     });
-    return mapMessage(message);
+    const mapped = mapMessage(message);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "message", entityId: message.id, dealId: message.dealId, eventType: "message.routing_updated", before: mapMessage(before), after: mapped });
+    return mapped;
   }
 
   async updateMessage(input: { organizationId: string; messageId: string; dealId?: string | null; visibility?: VisibilityDto; hidden?: boolean; redacted?: boolean }) {
+    const before = await this.prisma.message.findFirst({ where: { id: input.messageId, organizationId: input.organizationId } });
+    if (!before) throw notFound("Message not found");
     const message = await this.prisma.message.update({
       where: { id: input.messageId, organizationId: input.organizationId },
       data: {
@@ -219,7 +232,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
         ...(input.redacted ? { messageStatus: "redacted", bodyText: "[redacted]", redactedAt: new Date() } : {})
       }
     });
-    return mapMessage(message);
+    const mapped = mapMessage(message);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "message", entityId: message.id, dealId: message.dealId, eventType: "message.updated", before: mapMessage(before), after: mapped });
+    return mapped;
   }
 
   async appendOutboundMessage(input: { organizationId: string; dealId: string; taskId: string; providerMessageId: string | null; messageStatus: "sent" | "failed"; subject: string; bodyText: string }) {
@@ -266,10 +281,17 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       data,
       include: { versions: true }
     });
-    return mapDocument(document);
+    const mapped = mapDocument(document);
+    await this.recordAudit({ organizationId: input.organizationId, actorMembershipId: input.uploadedByMembershipId ?? null, entityType: "document", entityId: document.id, dealId: document.dealId, eventType: "document.created", after: mapped });
+    return mapped;
   }
 
   async updateDocument(input: { organizationId: string; documentId: string; title?: string; documentType?: string; visibility?: VisibilityDto; folder?: string | null; tags?: string[] }) {
+    const before = await this.prisma.document.findFirst({
+      where: { id: input.documentId, organizationId: input.organizationId },
+      include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }
+    });
+    if (!before) throw notFound("Document not found");
     const data: Prisma.DocumentUncheckedUpdateInput = {};
     if (input.title !== undefined) data.title = input.title;
     if (input.documentType !== undefined) data.documentType = input.documentType as DocumentType;
@@ -281,7 +303,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       data,
       include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }
     });
-    return mapDocument(document);
+    const mapped = mapDocument(document);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "document", entityId: document.id, dealId: document.dealId, eventType: "document.updated", before: mapDocument(before), after: mapped });
+    return mapped;
   }
 
   async archiveDocument(input: { organizationId: string; documentId: string }) {
@@ -351,10 +375,14 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     const item = await this.prisma.routingReviewItem.create({
       data: { organizationId: input.organizationId, messageId: input.messageId, suggestedDealId: input.suggestedDealId ?? null, confidence: input.confidence }
     });
-    return this.mapRoutingReviewItem(item);
+    const mapped = await this.mapRoutingReviewItem(item);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "routing_review_item", entityId: item.id, dealId: input.suggestedDealId ?? null, eventType: "routing_review.created", after: mapped });
+    return mapped;
   }
 
   async resolveRoutingReviewItem(input: { organizationId: string; itemId: string; resolvedDealId: string | null; resolution: "assigned_to_deal" | "marked_unrelated" | "created_new_deal"; membershipId: string }) {
+    const before = await this.prisma.routingReviewItem.findFirst({ where: { id: input.itemId, organizationId: input.organizationId } });
+    if (!before) throw notFound("Routing review item not found");
     const item = await this.prisma.routingReviewItem.update({
       where: { id: input.itemId, organizationId: input.organizationId },
       data: {
@@ -369,7 +397,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       where: { id: item.messageId, organizationId: input.organizationId },
       data: { dealId: input.resolvedDealId, routingStatus: input.resolution === "marked_unrelated" ? "unrelated" : "routed" }
     });
-    return this.mapRoutingReviewItem(item);
+    const mapped = await this.mapRoutingReviewItem(item);
+    await this.recordAudit({ organizationId: input.organizationId, actorMembershipId: input.membershipId, entityType: "routing_review_item", entityId: item.id, dealId: input.resolvedDealId, eventType: "routing_review.resolved", before: await this.mapRoutingReviewItem(before), after: mapped });
+    return mapped;
   }
 
   async listVaWorkItems(organizationId: string, membershipId?: string) {

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { createDocument, listDocuments } from "./documents.service.js";
 
 describe("documents service", () => {
-  it("files new documents as pending classification", () => {
-    const document = createDocument("deal_sutter", { title: "New lease.pdf" });
+  it("files new documents as pending classification", async () => {
+    const document = await createDocument("deal_sutter", { title: "New lease.pdf" });
     expect(document.classificationStatus).toBe("pending");
-    expect(listDocuments("deal_sutter")).toContainEqual(document);
+    await expect(listDocuments("deal_sutter")).resolves.toContainEqual(document);
   });
 });

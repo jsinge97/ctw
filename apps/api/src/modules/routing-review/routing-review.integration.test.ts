@@ -3,7 +3,7 @@ import { listRoutingReviewItems, resolveRoutingReviewItem } from "./routing-revi
 
 describe("routing review", () => {
   it("resolves an item to unrelated", async () => {
-    const [item] = listRoutingReviewItems();
+    const [item] = await listRoutingReviewItems();
     if (!item) throw new Error("missing item");
     await expect(resolveRoutingReviewItem(item.id, { resolution: "unrelated" })).resolves.toMatchObject({ suggestedDealId: null });
   });

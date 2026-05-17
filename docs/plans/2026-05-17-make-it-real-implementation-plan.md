@@ -440,6 +440,8 @@ git commit -m "feat: persist core crud APIs with prisma"
 
 ## Task 8: Durable Messages, Documents, Routing Review APIs
 
+**Status:** Done.
+
 **Purpose:** Make channel filing and document state durable.
 
 **Files:**
