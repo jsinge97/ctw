@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import type { CurrentSession, TaskDecisionRequest } from "@ctw/contracts";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Check, Clock, FileText, Mail, MoreHorizontal, Users } from "lucide-react";
+import { useEffect } from "react";
 import { AppShell } from "../../components/app-shell.js";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
@@ -30,12 +31,17 @@ export function DealWorkspaceShell({
   children: (workspace: DealWorkspaceModel, session: CurrentSession | undefined) => ReactNode;
   dealId: string;
 }) {
+  const navigate = useNavigate();
   const session = useCurrentSession();
-  const workspace = useDealWorkspace(dealId);
+  const workspace = useDealWorkspace(dealId, Boolean(session.data));
+
+  useEffect(() => {
+    if (session.isError) void navigate({ to: "/login" });
+  }, [navigate, session.isError]);
 
   return (
     <AppShell session={session.data}>
-      {workspace.isPending ? <WorkspaceSkeleton /> : null}
+      {session.isPending || workspace.isPending ? <WorkspaceSkeleton /> : null}
       {workspace.isError ? <div className="error-panel">Could not load deal workspace.</div> : null}
       {workspace.data ? (
         <section className="workspace">

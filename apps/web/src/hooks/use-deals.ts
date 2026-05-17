@@ -45,8 +45,9 @@ export function useCreateDeal() {
   });
 }
 
-export function useDealWorkspace(dealId: string) {
+export function useDealWorkspace(dealId: string, enabled = true) {
   return useQuery({
+    enabled,
     queryKey: dealKeys.workspace(dealId),
     queryFn: () => getDealWorkspace(dealId)
   });
