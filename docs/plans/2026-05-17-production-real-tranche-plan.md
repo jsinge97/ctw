@@ -52,11 +52,11 @@ This tranche finishes the next set of product-hardening work: production auth, O
 
 ## Milestone 4: UI Polish And Hardening
 
-- [ ] Audit active screens for dead controls and unfinished actions.
-- [ ] Add hover/focus states to every clickable button/menu/action.
-- [ ] Add toasts and spinner/progress states for mutations and async work.
-- [ ] Make empty/error/loading states clear without adding marketing copy.
-- [ ] Browser-test the primary flows:
+- [x] Audit active screens for dead controls and unfinished actions.
+- [x] Add hover/focus states to every clickable button/menu/action.
+- [x] Add toasts and spinner/progress states for mutations and async work.
+- [x] Make empty/error/loading states clear without adding marketing copy.
+- [x] Browser-test the primary flows:
   - login
   - create deal
   - move deal

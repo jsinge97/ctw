@@ -3,7 +3,9 @@ import { FileText, MoreHorizontal, Pencil, Trash2, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
+import { ConfirmDialog } from "../../components/ui/confirm-dialog.js";
 import { Dropzone, type DropzoneUploadItem } from "../../components/ui/dropzone.js";
+import { Spinner } from "../../components/ui/spinner.js";
 
 const documentTypes = ["unknown", "loi", "lease", "om", "estoppel", "comp_set", "other"] as const;
 const documentUploadAccept = {
@@ -35,6 +37,7 @@ export function DocumentsTab({
   onUploadDocument: (file: File, onProgress: (progress: number) => void) => Promise<unknown>;
 }) {
   const [editingDocument, setEditingDocument] = useState<DocumentDto | null>(null);
+  const [confirmArchiveDocument, setConfirmArchiveDocument] = useState<DocumentDto | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [uploadItems, setUploadItems] = useState<DropzoneUploadItem[]>([]);
   const listedDocuments = sortDocumentsForList(documents);
@@ -76,7 +79,10 @@ export function DocumentsTab({
                   <span>{document.documentType.replace("_", " ")} · {document.latestVersion}</span>
                 </span>
                 <span className="crud-row-meta">
-                  <Badge tone={document.classificationStatus === "classified" ? "green" : "amber"}>{document.classificationStatus}</Badge>
+                  <Badge tone={document.classificationStatus === "classified" ? "green" : document.classificationStatus === "failed" ? "red" : "amber"}>
+                    {document.classificationStatus === "pending" ? <Spinner size="sm" /> : null}
+                    {document.classificationStatus}
+                  </Badge>
                   <Badge tone={document.visibility === "shared" ? "green" : "amber"}>{document.visibility}</Badge>
                   {document.tags.length > 0 ? <span>{document.tags.join(", ")}</span> : null}
                 </span>
@@ -108,7 +114,7 @@ export function DocumentsTab({
                           role="menuitem"
                           type="button"
                           onClick={() => {
-                            onArchiveDocument(document.id);
+                            setConfirmArchiveDocument(document);
                             setOpenMenuId(null);
                           }}
                         >
@@ -135,6 +141,19 @@ export function DocumentsTab({
           onSave={async (body) => {
             await onUpdateDocument(editingDocument.id, body);
             setEditingDocument(null);
+          }}
+        />
+      ) : null}
+      {confirmArchiveDocument ? (
+        <ConfirmDialog
+          title="Delete document"
+          message={`Delete ${confirmArchiveDocument.title}? This removes it from the deal document list.`}
+          confirmLabel="Delete"
+          isLoading={isMutating}
+          onCancel={() => setConfirmArchiveDocument(null)}
+          onConfirm={() => {
+            onArchiveDocument(confirmArchiveDocument.id);
+            setConfirmArchiveDocument(null);
           }}
         />
       ) : null}

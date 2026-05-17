@@ -512,6 +512,12 @@ label {
   color: #b45309;
 }
 
+.badge-red {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
 .badge-purple {
   border-color: #ddd6fe;
   background: #f5f3ff;

@@ -3,6 +3,7 @@ import { EyeOff, FolderSymlink, Lock, MessageSquareText, ShieldCheck } from "luc
 import { useState } from "react";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
+import { ConfirmDialog } from "../../components/ui/confirm-dialog.js";
 import { useUrlPanelState } from "./panel-search.js";
 
 export function sortMessages(messages: MessageDto[]) {
@@ -21,6 +22,7 @@ export function MessagesTab({
   onUpdateMessage: (messageId: string, body: UpdateMessageRequest) => void;
 }) {
   const [selectedId, setSelectedId] = useUrlPanelState("message");
+  const [confirmAction, setConfirmAction] = useState<"hide" | "redact" | null>(null);
   const [destinationDealId, setDestinationDealId] = useState("");
   const selectedMessage = messages.find((message) => message.id === selectedId) ?? sortMessages(messages)[0] ?? null;
 
@@ -73,11 +75,11 @@ export function MessagesTab({
                     <ShieldCheck size={16} aria-hidden />
                     {selectedMessage.visibility === "shared" ? "Mark internal" : "Share"}
                   </Button>
-                  <Button variant="danger" isLoading={isUpdating} loadingLabel="Hiding" onClick={() => onUpdateMessage(selectedMessage.id, { hidden: true })}>
+                  <Button variant="danger" disabled={selectedMessage.messageStatus === "hidden"} isLoading={isUpdating} loadingLabel="Hiding" onClick={() => setConfirmAction("hide")}>
                     <EyeOff size={16} aria-hidden />
                     Hide
                   </Button>
-                  <Button variant="danger" isLoading={isUpdating} loadingLabel="Redacting" onClick={() => onUpdateMessage(selectedMessage.id, { redacted: true })}>
+                  <Button variant="danger" disabled={selectedMessage.messageStatus === "redacted"} isLoading={isUpdating} loadingLabel="Redacting" onClick={() => setConfirmAction("redact")}>
                     <Lock size={16} aria-hidden />
                     Redact
                   </Button>
@@ -103,6 +105,19 @@ export function MessagesTab({
               </>
             ) : null}
             {isUpdating ? <Badge tone="blue">Updating</Badge> : null}
+            {confirmAction ? (
+              <ConfirmDialog
+                title={confirmAction === "hide" ? "Hide message" : "Redact message"}
+                message={confirmAction === "hide" ? "Hide this message from normal deal views? The audit trail stays intact." : "Redact this message content? Use this when sensitive text should no longer be visible."}
+                confirmLabel={confirmAction === "hide" ? "Hide" : "Redact"}
+                isLoading={isUpdating}
+                onCancel={() => setConfirmAction(null)}
+                onConfirm={() => {
+                  onUpdateMessage(selectedMessage.id, confirmAction === "hide" ? { hidden: true } : { redacted: true });
+                  setConfirmAction(null);
+                }}
+              />
+            ) : null}
           </>
         ) : (
           <p>No messages have been filed to this deal.</p>
