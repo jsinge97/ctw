@@ -11,6 +11,7 @@
         "tags": [
           "system"
         ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -49,6 +50,7 @@
         "tags": [
           "system"
         ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -77,6 +79,7 @@
         "tags": [
           "session"
         ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -220,6 +223,7 @@
         "tags": [
           "session"
         ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -384,6 +388,7 @@
         "tags": [
           "deals"
         ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -507,6 +512,7 @@
         "tags": [
           "deals"
         ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -653,6 +659,16 @@
         "tags": [
           "deals"
         ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -772,6 +788,16 @@
         "summary": "Patch deal",
         "tags": [
           "deals"
+        ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -918,6 +944,16 @@
         "summary": "Move deal stage",
         "tags": [
           "deals"
+        ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -1070,6 +1106,16 @@
         "tags": [
           "deals"
         ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1192,6 +1238,16 @@
         "tags": [
           "participants"
         ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1286,6 +1342,16 @@
         "tags": [
           "participants"
         ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1296,16 +1362,6 @@
                 "properties": {
                   "name": {
                     "type": "string"
-                  },
-                  "company": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
                   },
                   "role": {
                     "type": "string",
@@ -1318,6 +1374,16 @@
                       "observer"
                     ]
                   },
+                  "company": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "capabilities": {
                     "default": [],
                     "type": "array",
@@ -1328,7 +1394,6 @@
                 },
                 "required": [
                   "name",
-                  "company",
                   "role",
                   "capabilities"
                 ],
@@ -1429,6 +1494,24 @@
         "summary": "Update participant",
         "tags": [
           "participants"
+        ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -1557,6 +1640,16 @@
         "tags": [
           "messages"
         ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1664,11 +1757,29 @@
         }
       }
     },
-    "/v1/deals/{dealId}/messages/:messageId": {
+    "/v1/deals/{dealId}/messages/{messageId}": {
       "patch": {
         "summary": "Update message",
         "tags": [
           "messages"
+        ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -1810,6 +1921,16 @@
         "tags": [
           "documents"
         ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1916,6 +2037,16 @@
         "tags": [
           "documents"
         ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1928,7 +2059,16 @@
                     "type": "string"
                   },
                   "documentType": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                      "unknown",
+                      "loi",
+                      "lease",
+                      "om",
+                      "estoppel",
+                      "comp_set",
+                      "other"
+                    ]
                   },
                   "visibility": {
                     "type": "string",
@@ -2058,11 +2198,29 @@
         }
       }
     },
-    "/v1/deals/{dealId}/documents/:documentId": {
+    "/v1/deals/{dealId}/documents/{documentId}": {
       "patch": {
         "summary": "Update document",
         "tags": [
           "documents"
+        ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -2076,7 +2234,16 @@
                     "type": "string"
                   },
                   "documentType": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                      "unknown",
+                      "loi",
+                      "lease",
+                      "om",
+                      "estoppel",
+                      "comp_set",
+                      "other"
+                    ]
                   },
                   "visibility": {
                     "type": "string",
@@ -2212,6 +2379,16 @@
         "tags": [
           "tasks"
         ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2315,6 +2492,16 @@
         "summary": "Create task",
         "tags": [
           "tasks"
+        ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -2453,6 +2640,16 @@
         "tags": [
           "tasks"
         ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2583,6 +2780,16 @@
         "summary": "Reject task",
         "tags": [
           "tasks"
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -2715,6 +2922,16 @@
         "tags": [
           "tasks"
         ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2845,6 +3062,16 @@
         "summary": "Route task",
         "tags": [
           "tasks"
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -2977,6 +3204,7 @@
         "tags": [
           "routing-review"
         ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -3038,6 +3266,49 @@
                       },
                       "explanation": {
                         "type": "string"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "open",
+                          "resolved",
+                          "dismissed"
+                        ]
+                      },
+                      "resolution": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "assigned_to_deal",
+                              "marked_unrelated",
+                              "created_new_deal"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "resolvedDealId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "resolvedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -3050,7 +3321,11 @@
                       "subject",
                       "preview",
                       "ageLabel",
-                      "explanation"
+                      "explanation",
+                      "status",
+                      "resolution",
+                      "resolvedDealId",
+                      "resolvedAt"
                     ],
                     "additionalProperties": false
                   }
@@ -3074,6 +3349,16 @@
         "summary": "Resolve routing review",
         "tags": [
           "routing-review"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -3165,6 +3450,49 @@
                     },
                     "explanation": {
                       "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "resolved",
+                        "dismissed"
+                      ]
+                    },
+                    "resolution": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "assigned_to_deal",
+                            "marked_unrelated",
+                            "created_new_deal"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "resolvedDealId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "resolvedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -3177,7 +3505,11 @@
                     "subject",
                     "preview",
                     "ageLabel",
-                    "explanation"
+                    "explanation",
+                    "status",
+                    "resolution",
+                    "resolvedDealId",
+                    "resolvedAt"
                   ],
                   "additionalProperties": false
                 }
@@ -3201,6 +3533,7 @@
         "tags": [
           "va-work"
         ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -3252,6 +3585,74 @@
                             "type": "null"
                           }
                         ]
+                      },
+                      "submittedPayload": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "notes": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "sentBackReason": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "history": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "status": {
+                              "type": "string"
+                            },
+                            "actor": {
+                              "type": "string"
+                            },
+                            "notes": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "status",
+                            "actor",
+                            "notes",
+                            "createdAt"
+                          ],
+                          "additionalProperties": false
+                        }
                       }
                     },
                     "required": [
@@ -3262,7 +3663,11 @@
                       "dealTitle",
                       "status",
                       "instructions",
-                      "assignedTo"
+                      "assignedTo",
+                      "submittedPayload",
+                      "notes",
+                      "sentBackReason",
+                      "history"
                     ],
                     "additionalProperties": false
                   }
@@ -3281,11 +3686,21 @@
         }
       }
     },
-    "/v1/va-work-items/{itemId}/submit": {
+    "/v1/va-work-items/{itemId}/accept": {
       "post": {
-        "summary": "Submit VA work",
+        "summary": "Accept VA work",
         "tags": [
           "va-work"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
@@ -3360,6 +3775,74 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "submittedPayload": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "notes": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "sentBackReason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          },
+                          "actor": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "actor",
+                          "notes",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
@@ -3370,7 +3853,200 @@
                     "dealTitle",
                     "status",
                     "instructions",
-                    "assignedTo"
+                    "assignedTo",
+                    "submittedPayload",
+                    "notes",
+                    "sentBackReason",
+                    "history"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/va-work-items/{itemId}/submit": {
+      "post": {
+        "summary": "Submit VA work",
+        "tags": [
+          "va-work"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "notes": {
+                    "type": "string"
+                  },
+                  "submittedPayload": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "taskId": {
+                      "type": "string"
+                    },
+                    "dealId": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "dealTitle": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "in_progress",
+                        "blocked",
+                        "submitted",
+                        "accepted",
+                        "rejected",
+                        "canceled",
+                        "sent_back"
+                      ]
+                    },
+                    "instructions": {
+                      "type": "string"
+                    },
+                    "assignedTo": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "submittedPayload": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "notes": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "sentBackReason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          },
+                          "actor": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "actor",
+                          "notes",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "taskId",
+                    "dealId",
+                    "title",
+                    "dealTitle",
+                    "status",
+                    "instructions",
+                    "assignedTo",
+                    "submittedPayload",
+                    "notes",
+                    "sentBackReason",
+                    "history"
                   ],
                   "additionalProperties": false
                 }
@@ -3394,6 +4070,205 @@
         "tags": [
           "va-work"
         ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "taskId": {
+                      "type": "string"
+                    },
+                    "dealId": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "dealTitle": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "in_progress",
+                        "blocked",
+                        "submitted",
+                        "accepted",
+                        "rejected",
+                        "canceled",
+                        "sent_back"
+                      ]
+                    },
+                    "instructions": {
+                      "type": "string"
+                    },
+                    "assignedTo": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "submittedPayload": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "notes": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "sentBackReason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          },
+                          "actor": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "actor",
+                          "notes",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "taskId",
+                    "dealId",
+                    "title",
+                    "dealTitle",
+                    "status",
+                    "instructions",
+                    "assignedTo",
+                    "submittedPayload",
+                    "notes",
+                    "sentBackReason",
+                    "history"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/va-work-items/{itemId}/cancel": {
+      "post": {
+        "summary": "Cancel VA work",
+        "tags": [
+          "va-work"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -3467,6 +4342,74 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "submittedPayload": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "notes": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "sentBackReason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          },
+                          "actor": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "actor",
+                          "notes",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
@@ -3477,7 +4420,11 @@
                     "dealTitle",
                     "status",
                     "instructions",
-                    "assignedTo"
+                    "assignedTo",
+                    "submittedPayload",
+                    "notes",
+                    "sentBackReason",
+                    "history"
                   ],
                   "additionalProperties": false
                 }
@@ -3500,6 +4447,16 @@
         "summary": "List deal activity",
         "tags": [
           "activity"
+        ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -3562,6 +4519,7 @@
         "tags": [
           "settings"
         ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -3646,6 +4604,7 @@
         "tags": [
           "settings"
         ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -3752,6 +4711,7 @@
         "tags": [
           "users"
         ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Success",
@@ -3832,6 +4792,7 @@
         "tags": [
           "users"
         ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -3943,11 +4904,21 @@
         }
       }
     },
-    "/v1/users/:userId": {
+    "/v1/users/{userId}": {
       "patch": {
         "summary": "Update user",
         "tags": [
           "users"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,

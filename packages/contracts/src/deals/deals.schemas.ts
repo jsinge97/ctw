@@ -19,3 +19,6 @@ export const createDealRequestSchema = z.object({ title: z.string().min(1), prim
 export const patchDealRequestSchema = createDealRequestSchema.partial().extend({ staleFlag: z.boolean().optional() });
 export const moveDealStageRequestSchema = z.object({ stage: dealStageSchema });
 export type DealDto = z.infer<typeof dealSchema>;
+export type CreateDealRequest = z.infer<typeof createDealRequestSchema>;
+export type PatchDealRequest = z.infer<typeof patchDealRequestSchema>;
+export type MoveDealStageRequest = z.infer<typeof moveDealStageRequestSchema>;

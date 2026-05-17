@@ -14,6 +14,7 @@ import { registerUsersRoutes } from "./modules/users/users.routes.js";
 import { registerVaWorkRoutes } from "./modules/va-work/va-work.routes.js";
 import { registerResendWebhookRoutes } from "./modules/webhooks/resend.routes.js";
 import { registerTwilioWebhookRoutes } from "./modules/webhooks/twilio.routes.js";
+import { requireAuthenticated } from "./modules/authz.js";
 
 export async function buildServer() {
   const app = Fastify({ logger: false });
@@ -22,6 +23,7 @@ export async function buildServer() {
     const requestId = createRequestId();
     request.headers["x-request-id"] = requestId;
     reply.header("x-request-id", requestId);
+    requireAuthenticated(request);
   });
 
   app.get("/healthz", async () => ({ ok: true }));

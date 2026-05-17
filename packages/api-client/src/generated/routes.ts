@@ -11,9 +11,9 @@ export const generatedRoutes = {
   "dealsdealId_participants": "/v1/deals/{dealId}/participants",
   "dealsdealId_participants_participantId": "/v1/deals/{dealId}/participants/{participantId}",
   "dealsdealId_messages": "/v1/deals/{dealId}/messages",
-  "dealsdealId_messages__messageId": "/v1/deals/{dealId}/messages/:messageId",
+  "dealsdealId_messages_messageId": "/v1/deals/{dealId}/messages/{messageId}",
   "dealsdealId_documents": "/v1/deals/{dealId}/documents",
-  "dealsdealId_documents__documentId": "/v1/deals/{dealId}/documents/:documentId",
+  "dealsdealId_documents_documentId": "/v1/deals/{dealId}/documents/{documentId}",
   "dealsdealId_tasks": "/v1/deals/{dealId}/tasks",
   "taskstaskId_approve": "/v1/tasks/{taskId}/approve",
   "taskstaskId_reject": "/v1/tasks/{taskId}/reject",
@@ -22,10 +22,12 @@ export const generatedRoutes = {
   "routing_review_items": "/v1/routing-review-items",
   "routing_review_itemsitemId_resolve": "/v1/routing-review-items/{itemId}/resolve",
   "va_work_items": "/v1/va-work-items",
+  "va_work_itemsitemId_accept": "/v1/va-work-items/{itemId}/accept",
   "va_work_itemsitemId_submit": "/v1/va-work-items/{itemId}/submit",
   "va_work_itemsitemId_send_back": "/v1/va-work-items/{itemId}/send-back",
+  "va_work_itemsitemId_cancel": "/v1/va-work-items/{itemId}/cancel",
   "dealsdealId_activity": "/v1/deals/{dealId}/activity",
   "settingsorganization": "/v1/settings/organization",
   "users": "/v1/users",
-  "users_userId": "/v1/users/:userId"
+  "usersuserId": "/v1/users/{userId}"
 } as const;

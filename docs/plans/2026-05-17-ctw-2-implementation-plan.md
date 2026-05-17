@@ -46,17 +46,32 @@ Implementation must follow these product decisions:
 
 ## Milestones
 
-1. Repo foundation and typed package boundaries.
-2. Contracts, OpenAPI, generated client.
-3. Database schema, migrations, repositories.
-4. Auth, permissions, audit, approval foundation.
-5. Deals vertical slice.
-6. Frontend foundation and source-of-truth docs.
-7. Deal kanban and workspace screens.
-8. Channel ingestion and filing.
-9. Next action, task execution, outbound approval.
-10. Routing review, VA queue, settings.
-11. E2E hardening and deployment prep.
+1. [x] Repo foundation and typed package boundaries.
+2. [x] Contracts, OpenAPI, generated client.
+3. [x] Database schema, migrations, repositories.
+4. [x] Auth, permissions, audit, approval foundation.
+5. [x] Backend workflow API surface and worker ingestion foundation.
+6. [ ] Frontend foundation and source-of-truth docs.
+7. [ ] Deal kanban and workspace screens.
+8. [ ] Channel ingestion and filing hardening.
+9. [ ] Next action, task execution, outbound approval hardening.
+10. [ ] Routing review, VA queue, settings hardening.
+11. [ ] E2E hardening and deployment prep.
+
+## Progress Log
+
+- [x] Read source-of-truth docs before implementation.
+- [x] Completed Task 1 and committed `chore: scaffold typed monorepo`.
+- [x] Completed Task 2 and committed `chore: add config and observability foundation`.
+- [x] Completed Task 3 and committed `feat: add contract and openapi foundation`.
+- [x] Completed Task 4 and committed `feat: add initial database schema`.
+- [x] Completed Task 5 and committed `feat: add domain rules`.
+- [x] Completed Task 6 and committed `feat: add auth and permission foundation`.
+- [x] Completed Task 7 and committed `feat: add audit approval and outcome services`.
+- [x] Completed Phase 1 review fixes and reviewer pass cleared.
+- [x] Completed initial backend workflow API surface and worker ingestion commits.
+- [x] Completed Phase 2 review pass 1 fixes: route-level auth/capability gates, contract-backed body parsing, typed generated client path params, webhook queueing, task approval side effects, routing review resolution state, and VA work transitions.
+- [ ] Phase 2 reviewer pass 2.
 
 ---
 

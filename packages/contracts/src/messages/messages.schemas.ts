@@ -14,3 +14,4 @@ export const messageSchema = z.object({
 });
 export const updateMessageRequestSchema = z.object({ dealId: z.string().optional(), visibility: z.enum(["internal", "shared"]).optional(), hidden: z.boolean().optional(), redacted: z.boolean().optional() });
 export type MessageDto = z.infer<typeof messageSchema>;
+export type UpdateMessageRequest = z.infer<typeof updateMessageRequestSchema>;

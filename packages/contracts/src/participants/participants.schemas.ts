@@ -10,6 +10,8 @@ export const participantSchema = z.object({
   capabilities: z.array(z.string()),
   status: z.enum(["active", "invited", "removed"])
 });
-export const addParticipantRequestSchema = participantSchema.pick({ name: true, company: true, role: true }).extend({ capabilities: z.array(z.string()).default([]) });
+export const addParticipantRequestSchema = participantSchema.pick({ name: true, role: true }).extend({ company: z.string().nullable().optional(), capabilities: z.array(z.string()).default([]) });
 export const updateParticipantRequestSchema = z.object({ visibility: z.enum(["internal", "shared"]).optional(), capabilities: z.array(z.string()).optional(), status: z.enum(["active", "removed"]).optional() });
 export type ParticipantDto = z.infer<typeof participantSchema>;
+export type AddParticipantRequest = z.infer<typeof addParticipantRequestSchema>;
+export type UpdateParticipantRequest = z.infer<typeof updateParticipantRequestSchema>;

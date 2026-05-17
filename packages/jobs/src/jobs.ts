@@ -14,3 +14,28 @@ export const jobNames = {
   generateSystemDraft: "generate-system-draft",
   proposeNextAction: "propose-next-action"
 } as const;
+
+export type JobName = (typeof jobNames)[keyof typeof jobNames];
+export type QueuedJob = {
+  id: string;
+  name: JobName;
+  payload: unknown;
+  queuedAt: string;
+};
+
+const memoryJobs: QueuedJob[] = [];
+
+export function enqueueJob(name: JobName, payload: unknown): QueuedJob {
+  const job = {
+    id: `job_${memoryJobs.length + 1}`,
+    name,
+    payload,
+    queuedAt: new Date().toISOString()
+  };
+  memoryJobs.push(job);
+  return job;
+}
+
+export function listQueuedJobs(): QueuedJob[] {
+  return [...memoryJobs];
+}

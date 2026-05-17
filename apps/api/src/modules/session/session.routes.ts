@@ -1,4 +1,6 @@
 import type { FastifyInstance } from "fastify";
+import { acceptInvitationRequestSchema } from "@ctw/contracts";
+import { parseBody } from "../validation.js";
 import { acceptInvitation, resolveSessionFromToken } from "./session.service.js";
 
 export async function registerSessionRoutes(app: FastifyInstance) {
@@ -10,5 +12,5 @@ export async function registerSessionRoutes(app: FastifyInstance) {
       throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
     }
   });
-  app.post<{ Body: { token: string } }>("/v1/session/accept-invitation", async (request) => acceptInvitation((request.body as { token: string }).token));
+  app.post("/v1/session/accept-invitation", async (request) => acceptInvitation(parseBody(acceptInvitationRequestSchema, request.body).token));
 }

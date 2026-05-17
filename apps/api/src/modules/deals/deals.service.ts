@@ -1,5 +1,5 @@
 import { canTransitionDealStage } from "@ctw/domain";
-import type { DealDto } from "@ctw/contracts";
+import type { CreateDealRequest, DealDto, PatchDealRequest } from "@ctw/contracts";
 import { activityEvents, deals, nextId } from "../demo-store.js";
 
 export function listDeals(): DealDto[] {
@@ -12,7 +12,7 @@ export function getDeal(dealId: string): DealDto {
   return deal;
 }
 
-export function createDeal(input: { title: string; primaryCompanyName?: string }): DealDto {
+export function createDeal(input: CreateDealRequest): DealDto {
   const deal: DealDto = {
     id: nextId("deal", deals.length),
     organizationId: "org_demo",
@@ -32,7 +32,7 @@ export function createDeal(input: { title: string; primaryCompanyName?: string }
   return deal;
 }
 
-export function patchDeal(dealId: string, input: Partial<Pick<DealDto, "title" | "primaryCompanyName" | "staleFlag">>): DealDto {
+export function patchDeal(dealId: string, input: PatchDealRequest): DealDto {
   const deal = getDeal(dealId);
   Object.assign(deal, input, { lastActivityAt: new Date().toISOString() });
   return deal;

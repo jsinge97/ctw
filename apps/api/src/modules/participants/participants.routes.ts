@@ -1,8 +1,10 @@
 import type { FastifyInstance } from "fastify";
+import { addParticipantRequestSchema, updateParticipantRequestSchema } from "@ctw/contracts";
+import { parseBody } from "../validation.js";
 import { addParticipant, listParticipants, updateParticipant } from "./participants.service.js";
 
 export async function registerParticipantsRoutes(app: FastifyInstance) {
   app.get<{ Params: { dealId: string } }>("/v1/deals/:dealId/participants", async (request) => listParticipants(request.params.dealId));
-  app.post<{ Params: { dealId: string }; Body: any }>("/v1/deals/:dealId/participants", async (request) => addParticipant(request.params.dealId, request.body as any));
-  app.patch<{ Params: { participantId: string }; Body: any }>("/v1/deals/:dealId/participants/:participantId", async (request) => updateParticipant(request.params.participantId, request.body as any));
+  app.post<{ Params: { dealId: string } }>("/v1/deals/:dealId/participants", async (request) => addParticipant(request.params.dealId, parseBody(addParticipantRequestSchema, request.body)));
+  app.patch<{ Params: { participantId: string } }>("/v1/deals/:dealId/participants/:participantId", async (request) => updateParticipant(request.params.participantId, parseBody(updateParticipantRequestSchema, request.body)));
 }

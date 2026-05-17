@@ -28,11 +28,11 @@ export const tasks: TaskDto[] = [
 ];
 
 export const routingReviewItems: RoutingReviewItemDto[] = [
-  { id: "rr_1", messageId: "msg_unknown", suggestedDealId: "deal_bryant", suggestedDealTitle: "401 Bryant - 12k sf office sublease", confidence: 0.41, sender: "unknown@gmail.com", subject: "401 Bryant - interested party", preview: "Saw the listing and can tour Friday.", ageLabel: "28m", explanation: "Subject mentions address; sender is new." }
+  { id: "rr_1", messageId: "msg_unknown", suggestedDealId: "deal_bryant", suggestedDealTitle: "401 Bryant - 12k sf office sublease", confidence: 0.41, sender: "unknown@gmail.com", subject: "401 Bryant - interested party", preview: "Saw the listing and can tour Friday.", ageLabel: "28m", explanation: "Subject mentions address; sender is new.", status: "open", resolution: null, resolvedDealId: null, resolvedAt: null }
 ];
 
 export const vaWorkItems: VaWorkItemDto[] = [
-  { id: "va_1", taskId: "task_va", dealId: "deal_sutter", title: "Pull estoppel cert", dealTitle: "Sutter Tower - Floor 14", status: "queued", instructions: "Reach out to building management.", assignedTo: null }
+  { id: "va_1", taskId: "task_va", dealId: "deal_sutter", title: "Pull estoppel cert", dealTitle: "Sutter Tower - Floor 14", status: "queued", instructions: "Reach out to building management.", assignedTo: null, submittedPayload: null, notes: null, sentBackReason: null, history: [] }
 ];
 
 export const activityEvents: ActivityEventDto[] = [

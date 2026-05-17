@@ -14,3 +14,5 @@ export const taskSchema = z.object({
 export const createTaskRequestSchema = z.object({ title: z.string().min(1), description: z.string().optional(), route: z.enum(["system", "va", "self"]).default("self") });
 export const taskDecisionRequestSchema = z.object({ reason: z.string().optional(), route: z.enum(["system", "va", "self"]).optional(), editedTitle: z.string().optional() });
 export type TaskDto = z.infer<typeof taskSchema>;
+export type CreateTaskRequest = z.infer<typeof createTaskRequestSchema>;
+export type TaskDecisionRequest = z.infer<typeof taskDecisionRequestSchema>;

@@ -8,12 +8,28 @@ export type OpenApiDocument = {
 };
 
 function normalizePath(path: string): string {
-  return path.replaceAll(":dealId", "{dealId}").replaceAll(":taskId", "{taskId}").replaceAll(":itemId", "{itemId}").replaceAll(":participantId", "{participantId}");
+  return path
+    .replaceAll(":dealId", "{dealId}")
+    .replaceAll(":taskId", "{taskId}")
+    .replaceAll(":itemId", "{itemId}")
+    .replaceAll(":participantId", "{participantId}")
+    .replaceAll(":messageId", "{messageId}")
+    .replaceAll(":documentId", "{documentId}")
+    .replaceAll(":userId", "{userId}");
 }
 
 function toJsonSchema(schema: z.ZodType | undefined): unknown {
   if (!schema) return undefined;
   return z.toJSONSchema(schema, { io: "output" });
+}
+
+function pathParameters(path: string): unknown[] {
+  return [...path.matchAll(/\{([^}]+)\}/g)].map((match) => ({
+    name: match[1],
+    in: "path",
+    required: true,
+    schema: { type: "string" }
+  }));
 }
 
 export function buildOpenApiDocument(routes: RouteContract[]): OpenApiDocument {
@@ -24,6 +40,7 @@ export function buildOpenApiDocument(routes: RouteContract[]): OpenApiDocument {
     paths[path][route.method.toLowerCase()] = {
       summary: route.summary,
       tags: route.tags,
+      parameters: pathParameters(path),
       ...(route.body ? {
         requestBody: {
           required: true,

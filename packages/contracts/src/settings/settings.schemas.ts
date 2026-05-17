@@ -9,3 +9,4 @@ export const organizationSettingsSchema = z.object({
 });
 export const updateOrganizationSettingsRequestSchema = organizationSettingsSchema.pick({ name: true, routingConfidenceThreshold: true }).partial();
 export type OrganizationSettingsDto = z.infer<typeof organizationSettingsSchema>;
+export type UpdateOrganizationSettingsRequest = z.infer<typeof updateOrganizationSettingsRequestSchema>;
