@@ -1,1 +1,1 @@
-export const configPackageReady = true;
+export * from "./env.js";

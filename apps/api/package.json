@@ -7,7 +7,7 @@
     "start": "node dist/server.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run src/**/*.test.ts",
+    "test": "vitest run",
     "lint": "eslint src"
   },
   "dependencies": {

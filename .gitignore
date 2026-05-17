@@ -1,5 +1,6 @@
 node_modules
 dist
+dist-ts
 .turbo
 .env
 .env.local
