@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { CurrentSession } from "@ctw/contracts";
+import type { CurrentSession, TaskDecisionRequest } from "@ctw/contracts";
 import { Link } from "@tanstack/react-router";
 import { Check, Clock, FileText, Mail, MoreHorizontal, Users } from "lucide-react";
 import { AppShell } from "../../components/app-shell.js";
@@ -8,7 +8,7 @@ import { Button } from "../../components/ui/button.js";
 import { Skeleton } from "../../components/ui/skeleton.js";
 import { useCurrentSession } from "../../hooks/use-current-session.js";
 import { useDealWorkspace } from "../../hooks/use-deals.js";
-import type { DealWorkspaceModel } from "../../lib/api/adapters/deals.js";
+import type { DealWorkspaceModel, TaskDecisionKind } from "../../lib/api/adapters/deals.js";
 
 export type DealWorkspaceTab = "overview" | "messages" | "documents" | "tasks" | "participants" | "activity";
 
@@ -69,27 +69,45 @@ export function DealWorkspaceShell({
   );
 }
 
-export function OverviewTab({ session, workspace }: { session: CurrentSession | undefined; workspace: DealWorkspaceModel }) {
+export function OverviewTab({
+  isDeciding = false,
+  onDecideTask,
+  session,
+  workspace
+}: {
+  isDeciding?: boolean;
+  onDecideTask?: (taskId: string, decision: TaskDecisionKind, body: TaskDecisionRequest) => void;
+  session: CurrentSession | undefined;
+  workspace: DealWorkspaceModel;
+}) {
   const canApprove = Boolean(session?.capabilities.includes("approveProposedAction"));
   const canEditTask = Boolean(session?.capabilities.includes("editTask"));
+  const canComplete = Boolean(session?.capabilities.includes("completeAssignedTask"));
+  const nextTask = workspace.tasks.find((task) => task.isCurrentNextAction) ?? workspace.tasks.find((task) => task.status === "proposed" || task.status === "waiting_approval");
   return (
     <div className="workspace-grid">
       <article className="next-action-panel">
-        <Badge tone="blue">System proposed</Badge>
-        <h2>{workspace.deal.nextActionLabel ?? "No current next action"}</h2>
-        <p>Review the current recommendation and approve only after checking recipients and payload.</p>
-        {canApprove || canEditTask ? (
+        <Badge tone={nextTask?.route === "va" ? "purple" : "blue"}>{nextTask ? `${nextTask.route} · ${nextTask.status}` : "No next action"}</Badge>
+        <h2>{nextTask?.title ?? workspace.deal.nextActionLabel ?? "No current next action"}</h2>
+        <p>{nextTask?.description ?? "Review the current recommendation and approve only after checking recipients and payload."}</p>
+        {nextTask && Object.keys(nextTask.payload).length > 0 ? <pre className="payload-preview">{JSON.stringify(nextTask.payload, null, 2)}</pre> : null}
+        {nextTask && (canApprove || canEditTask || canComplete) && onDecideTask ? (
           <div className="action-row">
-            {canApprove ? (
-              <Button variant="primary">
+            {nextTask.route === "self" && canComplete ? (
+              <Button variant="primary" isLoading={isDeciding} loadingLabel="Completing" onClick={() => onDecideTask(nextTask.id, "complete", {})}>
+                <Check size={16} aria-hidden />
+                Complete
+              </Button>
+            ) : null}
+            {nextTask.route !== "self" && canApprove ? (
+              <Button variant="primary" isLoading={isDeciding} loadingLabel="Approving" onClick={() => onDecideTask(nextTask.id, "approve", {})}>
                 <Check size={16} aria-hidden />
                 Approve
               </Button>
             ) : null}
-            {canEditTask ? <Button>Edit</Button> : null}
-            {canEditTask ? <Button>Defer</Button> : null}
+            {canEditTask ? <Button isLoading={isDeciding} loadingLabel="Deferring" onClick={() => onDecideTask(nextTask.id, "defer", { reason: "Deferred from overview" })}>Defer</Button> : null}
             {canEditTask ? (
-              <Button variant="ghost" aria-label="More actions">
+              <Button variant="ghost" aria-label="Route to VA" isLoading={isDeciding} onClick={() => onDecideTask(nextTask.id, "route", { route: nextTask.route === "va" ? "self" : "va" })}>
                 <MoreHorizontal size={16} />
               </Button>
             ) : null}
