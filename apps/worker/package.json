@@ -1,0 +1,21 @@
+{
+  "name": "@ctw/worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src/**/*.test.ts",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@ctw/db": "workspace:*",
+    "@ctw/domain": "workspace:*",
+    "@ctw/integrations": "workspace:*",
+    "@ctw/jobs": "workspace:*",
+    "@ctw/observability": "workspace:*",
+    "@ctw/storage": "workspace:*"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules
+dist
+.turbo
+.env
+.env.local
+coverage
+apps/web/dist
+packages/db/src/generated/*
+!packages/db/src/generated/.gitkeep

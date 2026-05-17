@@ -1,0 +1,19 @@
+{
+  "name": "@ctw/db",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src/**/*.test.ts",
+    "lint": "eslint src",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:generate": "prisma validate --schema prisma/schema.prisma",
+    "db:migrate": "prisma validate --schema prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@ctw/domain": "workspace:*",
+    "@ctw/permissions": "workspace:*"
+  }
+}

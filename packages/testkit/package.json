@@ -1,0 +1,17 @@
+{
+  "name": "@ctw/testkit",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src/**/*.test.ts",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@ctw/contracts": "workspace:*",
+    "@ctw/domain": "workspace:*",
+    "@ctw/permissions": "workspace:*"
+  }
+}

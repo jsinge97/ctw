@@ -1,0 +1,25 @@
+{
+  "name": "@ctw/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run src/**/*.test.ts",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@ctw/auth": "workspace:*",
+    "@ctw/config": "workspace:*",
+    "@ctw/contracts": "workspace:*",
+    "@ctw/db": "workspace:*",
+    "@ctw/domain": "workspace:*",
+    "@ctw/integrations": "workspace:*",
+    "@ctw/jobs": "workspace:*",
+    "@ctw/observability": "workspace:*",
+    "@ctw/permissions": "workspace:*",
+    "@ctw/storage": "workspace:*"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "task-cre",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev --parallel",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "prisma:generate": "pnpm --filter @ctw/db prisma:generate",
+    "db:generate": "pnpm --filter @ctw/db db:generate",
+    "db:migrate": "pnpm --filter @ctw/db db:migrate",
+    "openapi:generate": "tsx apps/api/src/openapi.ts",
+    "client:generate": "tsx packages/api-client/src/generate.ts",
+    "build": "turbo build",
+    "e2e": "pnpm --filter @ctw/web e2e"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^22.19.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "eslint": "^9.39.1",
+    "tsx": "^4.21.0",
+    "turbo": "^2.6.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.49.0",
+    "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@tanstack/react-query": "^5.90.12",
+    "@tanstack/react-router": "^1.139.0",
+    "@tanstack/react-table": "^8.21.3",
+    "better-auth": "^1.3.34",
+    "fastify": "^5.6.2",
+    "lucide-react": "^0.561.0",
+    "pg-boss": "^10.4.0",
+    "prisma": "^6.19.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "resend": "^6.6.1",
+    "sonner": "^2.0.7",
+    "tailwindcss": "^4.1.18",
+    "twilio": "^5.10.6",
+    "vite": "^7.2.7",
+    "zod": "^4.2.1"
+  }
+}
