@@ -9,8 +9,8 @@
     "test": "vitest run --config ../../vitest.config.ts",
     "lint": "eslint src",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
-    "db:generate": "prisma validate --schema prisma/schema.prisma",
-    "db:migrate": "prisma validate --schema prisma/schema.prisma"
+    "db:generate": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/ctw} prisma validate --schema prisma/schema.prisma",
+    "db:migrate": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/ctw} prisma validate --schema prisma/schema.prisma"
   },
   "dependencies": {
     "@ctw/domain": "workspace:*",

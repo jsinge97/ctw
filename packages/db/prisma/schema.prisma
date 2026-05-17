@@ -1,0 +1,655 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrgStatus {
+  active
+  archived
+}
+
+enum UserStatus {
+  invited
+  active
+  disabled
+}
+
+enum OrgRole {
+  admin
+  am
+  va
+  broker
+  client
+}
+
+enum ContactType {
+  broker
+  client_contact
+  internal
+  other
+}
+
+enum CompanyType {
+  client
+  landlord
+  tenant
+  buyer
+  seller
+  brokerage
+  other
+}
+
+enum DealStage {
+  prospect
+  loi
+  negotiation
+  diligence
+  close
+  closed_won
+  lost
+}
+
+enum DealStatus {
+  active
+  archived
+  closed
+}
+
+enum SubjectType {
+  membership
+  contact
+  company
+  participant
+  role
+}
+
+enum ParticipantRole {
+  am
+  broker
+  client
+  client_contact
+  va
+  observer
+}
+
+enum Visibility {
+  internal
+  shared_with_deal_participants
+  participants_only
+  uploader_only
+  assignee_only
+  external_activity
+}
+
+enum GrantScopeType {
+  organization
+  deal
+  document
+  task
+}
+
+enum GrantEffect {
+  allow
+  deny
+}
+
+enum ChannelType {
+  email
+  sms
+  voice
+  note
+}
+
+enum ChannelProvider {
+  resend
+  twilio
+  other
+}
+
+enum EngagementMode {
+  observe_only
+  respond_when_addressed
+  outbound_enabled
+  passive
+  active
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+  internal
+}
+
+enum MessageStatus {
+  received
+  draft
+  pending_approval
+  sent
+  failed
+  hidden
+  redacted
+}
+
+enum RoutingStatus {
+  routed
+  review_required
+  unrelated
+}
+
+enum MessageParticipantRole {
+  from
+  to
+  cc
+  bcc
+  speaker
+}
+
+enum RoutingReviewStatus {
+  open
+  resolved
+  dismissed
+}
+
+enum RoutingReviewResolution {
+  assigned_to_deal
+  marked_unrelated
+  created_new_deal
+}
+
+enum DocumentType {
+  unknown
+  loi
+  lease
+  om
+  estoppel
+  comp_set
+  other
+}
+
+enum DocumentStatus {
+  active
+  archived
+}
+
+enum ClassificationStatus {
+  pending
+  classified
+  failed
+}
+
+enum OcrStatus {
+  pending
+  complete
+  failed
+  not_needed
+}
+
+enum TaskStatus {
+  proposed
+  approved
+  in_progress
+  waiting_approval
+  completed
+  rejected
+  deferred
+  canceled
+}
+
+enum TaskRoute {
+  system
+  va
+  self
+}
+
+enum ProposedBy {
+  system
+  user
+}
+
+enum VaWorkStatus {
+  queued
+  in_progress
+  blocked
+  submitted
+  accepted
+  rejected
+  canceled
+  sent_back
+}
+
+enum TaskOutcomeValue {
+  accepted
+  edited
+  rejected
+  deferred
+  rerouted
+  completed
+}
+
+enum ApprovalType {
+  stage_change
+  next_action
+  outbound_send
+  va_submission
+}
+
+enum ApprovalDecision {
+  approved
+  rejected
+  sent_back
+  canceled
+}
+
+enum ActorType {
+  user
+  system
+}
+
+model Organization {
+  id                         String   @id @default(cuid())
+  name                       String
+  slug                       String   @unique
+  status                     OrgStatus @default(active)
+  routingConfidenceThreshold Float    @default(0.8) @map("routing_confidence_threshold")
+  defaultTimezone            String   @default("America/Chicago") @map("default_timezone")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+  archivedAt                 DateTime? @map("archived_at")
+
+  memberships OrganizationMembership[]
+  contacts    Contact[]
+  companies   Company[]
+  deals       Deal[]
+  channels    Channel[]
+  messages    Message[]
+  documents   Document[]
+
+  @@map("organizations")
+}
+
+model User {
+  id                      String     @id @default(cuid())
+  authProvider            String     @map("auth_provider")
+  authSubject             String     @map("auth_subject")
+  email                   String
+  phone                   String?
+  displayName             String     @map("display_name")
+  avatarUrl               String?    @map("avatar_url")
+  status                  UserStatus @default(invited)
+  lastLoginAt             DateTime?  @map("last_login_at")
+  notificationPreferences Json       @default("{}") @map("notification_preferences")
+  createdAt               DateTime   @default(now()) @map("created_at")
+  updatedAt               DateTime   @updatedAt @map("updated_at")
+
+  memberships OrganizationMembership[]
+  contacts    Contact[]
+
+  @@unique([authProvider, authSubject])
+  @@map("users")
+}
+
+model OrganizationMembership {
+  id             String     @id @default(cuid())
+  organizationId String     @map("organization_id")
+  userId         String     @map("user_id")
+  role           OrgRole
+  status         UserStatus @default(invited)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, role, status])
+  @@map("organization_memberships")
+}
+
+model Contact {
+  id                      String      @id @default(cuid())
+  organizationId          String      @map("organization_id")
+  userId                  String?     @map("user_id")
+  companyId               String?     @map("company_id")
+  contactType             ContactType @map("contact_type")
+  name                    String
+  email                   String?
+  phone                   String?
+  notificationPreferences Json        @default("{}") @map("notification_preferences")
+  status                  DocumentStatus @default(active)
+  createdAt               DateTime    @default(now()) @map("created_at")
+  updatedAt               DateTime    @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
+  company      Company?     @relation(fields: [companyId], references: [id])
+
+  @@index([organizationId, email])
+  @@index([organizationId, phone])
+  @@map("contacts")
+}
+
+model Company {
+  id             String      @id @default(cuid())
+  organizationId String      @map("organization_id")
+  name           String
+  companyType    CompanyType @map("company_type")
+  status         DocumentStatus @default(active)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  contacts     Contact[]
+  deals        Deal[]
+
+  @@index([organizationId, name])
+  @@map("companies")
+}
+
+model Deal {
+  id                String     @id @default(cuid())
+  organizationId    String     @map("organization_id")
+  title             String
+  stage             DealStage
+  status            DealStatus @default(active)
+  primaryCompanyId  String?    @map("primary_company_id")
+  ownerMembershipId String     @map("owner_membership_id")
+  priorityRank      Int?       @map("priority_rank")
+  staleFlag         Boolean    @default(false) @map("stale_flag")
+  lastInboundAt     DateTime?  @map("last_inbound_at")
+  lastOutboundAt    DateTime?  @map("last_outbound_at")
+  lastActivityAt    DateTime?  @map("last_activity_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  archivedAt        DateTime?  @map("archived_at")
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  primaryCompany Company?     @relation(fields: [primaryCompanyId], references: [id])
+  participants   DealParticipant[]
+  messages       Message[]
+  documents      Document[]
+  tasks          Task[]
+
+  @@index([organizationId, stage, status])
+  @@index([organizationId, ownerMembershipId, status])
+  @@map("deals")
+}
+
+model DealParticipant {
+  id              String          @id @default(cuid())
+  organizationId  String          @map("organization_id")
+  dealId          String          @map("deal_id")
+  subjectType     SubjectType     @map("subject_type")
+  subjectId       String          @map("subject_id")
+  participantRole ParticipantRole @map("participant_role")
+  visibility      Visibility      @default(shared_with_deal_participants)
+  status          DocumentStatus  @default(active)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  deal Deal @relation(fields: [dealId], references: [id])
+
+  @@unique([dealId, subjectType, subjectId, participantRole])
+  @@index([organizationId, dealId])
+  @@map("deal_participants")
+}
+
+model PermissionGrant {
+  id                    String         @id @default(cuid())
+  organizationId        String         @map("organization_id")
+  scopeType             GrantScopeType @map("scope_type")
+  scopeId               String         @map("scope_id")
+  subjectType           SubjectType    @map("subject_type")
+  subjectId             String?        @map("subject_id")
+  capability            String
+  effect                GrantEffect
+  createdByMembershipId String?        @map("created_by_membership_id")
+  metadata              Json           @default("{}")
+  createdAt             DateTime       @default(now()) @map("created_at")
+  revokedAt             DateTime?      @map("revoked_at")
+
+  @@index([organizationId, scopeType, scopeId])
+  @@map("permission_grants")
+}
+
+model Channel {
+  id                    String          @id @default(cuid())
+  organizationId        String          @map("organization_id")
+  channelType           ChannelType     @map("channel_type")
+  address               String
+  provider              ChannelProvider
+  defaultEngagementMode EngagementMode  @default(observe_only) @map("default_engagement_mode")
+  status                DocumentStatus  @default(active)
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  messages     Message[]
+
+  @@index([organizationId, channelType, status])
+  @@map("channels")
+}
+
+model Message {
+  id                  String           @id @default(cuid())
+  organizationId      String           @map("organization_id")
+  dealId              String?          @map("deal_id")
+  channelId           String?          @map("channel_id")
+  channelType         ChannelType      @map("channel_type")
+  direction           MessageDirection
+  messageStatus       MessageStatus    @default(received) @map("message_status")
+  providerMessageId   String?          @map("provider_message_id")
+  sourceTaskId        String?          @map("source_task_id")
+  threadKey           String?          @map("thread_key")
+  subject             String?
+  bodyText            String           @map("body_text")
+  bodyHtml            String?          @map("body_html")
+  rawSourceStorageKey String?          @map("raw_source_storage_key")
+  redactedAt          DateTime?        @map("redacted_at")
+  occurredAt          DateTime         @map("occurred_at")
+  routedAt            DateTime?        @map("routed_at")
+  routingConfidence   Float?           @map("routing_confidence")
+  routingStatus       RoutingStatus    @default(review_required) @map("routing_status")
+  visibility          Visibility       @default(internal)
+  engagementMode      EngagementMode   @default(passive) @map("engagement_mode")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  deal         Deal?        @relation(fields: [dealId], references: [id])
+  channel      Channel?     @relation(fields: [channelId], references: [id])
+  participants MessageParticipant[]
+  documents    Document[]
+
+  @@index([organizationId, dealId, occurredAt])
+  @@index([organizationId, threadKey])
+  @@index([organizationId, routingStatus])
+  @@unique([channelId, providerMessageId])
+  @@map("messages")
+}
+
+model MessageParticipant {
+  id              String                 @id @default(cuid())
+  organizationId  String                 @map("organization_id")
+  messageId       String                 @map("message_id")
+  contactId       String?                @map("contact_id")
+  membershipId    String?                @map("membership_id")
+  rawName         String?                @map("raw_name")
+  rawHandle       String                 @map("raw_handle")
+  participantRole MessageParticipantRole @map("participant_role")
+  createdAt       DateTime               @default(now()) @map("created_at")
+
+  message Message @relation(fields: [messageId], references: [id])
+
+  @@index([organizationId, rawHandle])
+  @@map("message_participants")
+}
+
+model RoutingReviewItem {
+  id                     String                   @id @default(cuid())
+  organizationId         String                   @map("organization_id")
+  messageId              String                   @map("message_id")
+  suggestedDealId        String?                  @map("suggested_deal_id")
+  resolvedDealId         String?                  @map("resolved_deal_id")
+  confidence             Float
+  status                 RoutingReviewStatus      @default(open)
+  resolution             RoutingReviewResolution?
+  resolvedByMembershipId String?                  @map("resolved_by_membership_id")
+  resolvedAt             DateTime?                @map("resolved_at")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+
+  @@index([organizationId, status, createdAt])
+  @@map("routing_review_items")
+}
+
+model Document {
+  id                     String               @id @default(cuid())
+  organizationId         String               @map("organization_id")
+  dealId                 String?              @map("deal_id")
+  sourceMessageId        String?              @map("source_message_id")
+  uploadedByMembershipId String?              @map("uploaded_by_membership_id")
+  title                  String
+  documentType           DocumentType         @default(unknown) @map("document_type")
+  stage                  String?
+  folder                 String?
+  tags                   Json                 @default("[]")
+  visibility             Visibility           @default(internal)
+  status                 DocumentStatus       @default(active)
+  classificationStatus   ClassificationStatus @default(pending) @map("classification_status")
+  createdAt              DateTime             @default(now()) @map("created_at")
+  updatedAt              DateTime             @updatedAt @map("updated_at")
+  archivedAt             DateTime?            @map("archived_at")
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  deal          Deal?        @relation(fields: [dealId], references: [id])
+  sourceMessage Message?     @relation(fields: [sourceMessageId], references: [id])
+  versions      DocumentVersion[]
+
+  @@index([organizationId, dealId, status])
+  @@index([organizationId, classificationStatus])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  documentId     String    @map("document_id")
+  storageKey     String    @map("storage_key")
+  filename       String
+  mimeType       String    @map("mime_type")
+  fileSizeBytes  Int       @map("file_size_bytes")
+  checksum       String
+  versionNumber  Int       @map("version_number")
+  ocrStatus      OcrStatus @default(pending) @map("ocr_status")
+  extractedText  String?   @map("extracted_text")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@unique([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+model Task {
+  id                    String     @id @default(cuid())
+  organizationId        String     @map("organization_id")
+  dealId                String     @map("deal_id")
+  parentMessageId       String?    @map("parent_message_id")
+  taskType              String     @map("task_type")
+  title                 String
+  description           String?
+  status                TaskStatus @default(proposed)
+  route                 TaskRoute
+  visibility            Visibility @default(internal)
+  isCurrentNextAction   Boolean    @default(false) @map("is_current_next_action")
+  proposedBy            ProposedBy @default(user) @map("proposed_by")
+  assignedToMembershipId String?   @map("assigned_to_membership_id")
+  approvedByMembershipId String?   @map("approved_by_membership_id")
+  payload               Json       @default("{}")
+  dueAt                 DateTime?  @map("due_at")
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
+  completedAt           DateTime?  @map("completed_at")
+
+  deal        Deal @relation(fields: [dealId], references: [id])
+  vaWorkItems VaWorkItem[]
+
+  @@index([organizationId, dealId, status])
+  @@index([organizationId, assignedToMembershipId, status])
+  @@map("tasks")
+}
+
+model VaWorkItem {
+  id                     String       @id @default(cuid())
+  organizationId         String       @map("organization_id")
+  taskId                 String       @map("task_id")
+  dealId                 String       @map("deal_id")
+  assignedToMembershipId String?      @map("assigned_to_membership_id")
+  status                 VaWorkStatus @default(queued)
+  instructions           String
+  submittedPayload       Json?        @map("submitted_payload")
+  submittedAt            DateTime?    @map("submitted_at")
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  task Task @relation(fields: [taskId], references: [id])
+
+  @@index([organizationId, assignedToMembershipId, status])
+  @@map("va_work_items")
+}
+
+model TaskOutcome {
+  id                    String           @id @default(cuid())
+  organizationId        String           @map("organization_id")
+  taskId                String           @map("task_id")
+  dealId                String           @map("deal_id")
+  outcome               TaskOutcomeValue
+  fromRoute             TaskRoute?       @map("from_route")
+  toRoute               TaskRoute?       @map("to_route")
+  editSummary           String?          @map("edit_summary")
+  createdByMembershipId String           @map("created_by_membership_id")
+  createdAt             DateTime         @default(now()) @map("created_at")
+
+  @@index([organizationId, dealId, createdAt])
+  @@map("task_outcomes")
+}
+
+model ApprovalEvent {
+  id                     String           @id @default(cuid())
+  organizationId         String           @map("organization_id")
+  dealId                 String           @map("deal_id")
+  taskId                 String?          @map("task_id")
+  messageId              String?          @map("message_id")
+  documentId             String?          @map("document_id")
+  approvalType           ApprovalType     @map("approval_type")
+  decision               ApprovalDecision
+  decisionByMembershipId String           @map("decision_by_membership_id")
+  decisionReason         String?          @map("decision_reason")
+  createdAt              DateTime         @default(now()) @map("created_at")
+
+  @@index([organizationId, dealId, createdAt])
+  @@map("approval_events")
+}
+
+model AuditEvent {
+  id                String    @id @default(cuid())
+  organizationId    String    @map("organization_id")
+  actorMembershipId String?   @map("actor_membership_id")
+  actorType         ActorType @map("actor_type")
+  entityType        String    @map("entity_type")
+  entityId          String    @map("entity_id")
+  dealId            String?   @map("deal_id")
+  eventType         String    @map("event_type")
+  before            Json?
+  after             Json?
+  metadata          Json      @default("{}")
+  visibility        Visibility @default(internal)
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  @@index([organizationId, dealId, createdAt])
+  @@map("audit_events")
+}
