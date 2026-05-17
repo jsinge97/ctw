@@ -5,7 +5,7 @@ test("admin can see seeded organization users and settings controls", async ({ p
   await loginAs(page, "admin@northgate.cre");
 
   await expectSignedIn(page, /\/settings\/organization$/);
-  await expect(page.getByRole("heading", { name: "Organization settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Organization settings" })).toBeVisible();
   await expect(page.getByLabel("Routing confidence threshold")).toHaveValue("0.8");
 
   await page.goto("/settings/users");

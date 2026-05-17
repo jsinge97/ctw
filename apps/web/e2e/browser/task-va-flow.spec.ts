@@ -10,7 +10,7 @@ test("AM approves system work and VA submits assigned work", async ({ page }) =>
   await page.getByText("Sutter Tower - Floor 14").click();
   await page.getByRole("link", { name: "Tasks" }).click();
 
-  await expect(page.getByText("Send LOI response to Halcyon")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Send LOI response to Halcyon" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Approve" })).toBeVisible();
   const tasks = await apiJson<TaskDto[]>(page, "/v1/deals/deal_sutter/tasks");
   const systemTask = tasks.find((task) => task.id === "task_next");

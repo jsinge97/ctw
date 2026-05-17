@@ -28,7 +28,7 @@ test("AM can inspect low-confidence routing and admin threshold changes affect r
   await page.getByRole("link", { name: "Routing review" }).click();
 
   await expect(page.getByRole("heading", { name: "Routing review" })).toBeVisible();
-  await expect(page.getByText("41% confidence")).toBeVisible();
+  await expect(page.getByText("41% confidence").first()).toBeVisible();
 
   await loginAs(page, "admin@northgate.cre");
   const updatedSettings = await apiJson<OrganizationSettingsDto>(page, "/v1/settings/organization", {

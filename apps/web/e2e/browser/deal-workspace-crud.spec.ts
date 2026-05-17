@@ -31,7 +31,7 @@ test("AM can create a deal, add participants, set grants, and edit workspace met
   await page.getByPlaceholder("New lease.pdf").fill(documentTitle);
   await page.getByPlaceholder("Diligence").fill("Diligence");
   await page.getByRole("button", { name: "Add metadata" }).click();
-  await expect(page.getByText(documentTitle)).toBeVisible();
+  await expect(page.getByRole("button", { name: new RegExp(documentTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) })).toBeVisible();
 
   await page.getByRole("link", { name: "Participants" }).click();
   const clientName = uniqueName("Casey Client");
