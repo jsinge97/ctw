@@ -808,6 +808,8 @@ git commit -m "feat: add real settings management"
 
 **Purpose:** Use the requested `janhesters/shadcn-kanban-board` component rather than local HTML drag/drop.
 
+**Status:** Done.
+
 **Files:**
 
 - Create/modify: `apps/web/components.json`

@@ -1,10 +1,11 @@
 import type { DealDto } from "@ctw/contracts";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { AlertCircle, GripVertical, Plus } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "../components/app-shell.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
+import { KanbanBoard, KanbanBoardProvider, KanbanCard, KanbanColumn, KanbanColumnHeader, KanbanColumnList, KanbanColumnTitle } from "../components/ui/kanban.js";
 import { Skeleton } from "../components/ui/skeleton.js";
 import { useCurrentSession } from "../hooks/use-current-session.js";
 import { useDealCards, useMoveDealStage } from "../hooks/use-deals.js";
@@ -55,93 +56,90 @@ export function DealsRoute() {
 
 function DealKanban({ deals }: { deals: DealCardModel[] }) {
   const moveDeal = useMoveDealStage();
+  const navigate = useNavigate();
   const [draggingDealId, setDraggingDealId] = useState<string | null>(null);
-  const [activeDropStage, setActiveDropStage] = useState<DealDto["stage"] | null>(null);
+  const [moveFeedback, setMoveFeedback] = useState<{ dealId: string; fromStage: DealDto["stage"]; toStage: DealDto["stage"] } | null>(null);
   const draggingDeal = draggingDealId ? deals.find((deal) => deal.id === draggingDealId) : undefined;
 
-  function moveToStage(stage: DealDto["stage"]) {
-    if (!draggingDeal || draggingDeal.stage === stage || !draggingDeal.canMove) {
-      setActiveDropStage(null);
+  function moveToStage(deal: DealCardModel, stage: DealDto["stage"]) {
+    const reason = stageDropReason(deal, stage);
+    if (reason) {
       setDraggingDealId(null);
       return;
     }
-    moveDeal.mutate({ dealId: draggingDeal.id, stage });
-    setActiveDropStage(null);
+    setMoveFeedback({ dealId: deal.id, fromStage: deal.stage, toStage: stage });
+    moveDeal.mutate({ dealId: deal.id, stage });
     setDraggingDealId(null);
   }
 
   return (
-    <section className="kanban-board" aria-label="Deal kanban board">
-      {stages.map((stage) => {
-        const stageDeals = deals.filter((deal) => deal.stage === stage.id);
-        return (
-          <article
-            className={activeDropStage === stage.id ? "kanban-column kanban-column-drop" : "kanban-column"}
-            key={stage.id}
-            onDragLeave={() => setActiveDropStage(null)}
-            onDragOver={(event) => {
-              if (!draggingDeal || draggingDeal.stage === stage.id || !draggingDeal.canMove) return;
-              event.preventDefault();
-              setActiveDropStage(stage.id);
-            }}
-            onDrop={(event) => {
-              event.preventDefault();
-              moveToStage(stage.id);
-            }}
-          >
-            <header>
-              <span>{stage.label}</span>
-              <Badge>{stageDeals.length}</Badge>
-            </header>
-            <div className="kanban-card-list">
-              {stageDeals.map((deal) => (
-                <DealCard
-                  dragging={draggingDealId === deal.id}
-                  key={deal.id}
-                  deal={deal}
-                  moving={moveDeal.isPending && moveDeal.variables?.dealId === deal.id}
-                  onDragEnd={() => {
-                    setDraggingDealId(null);
-                    setActiveDropStage(null);
-                  }}
-                  onDragStart={() => setDraggingDealId(deal.id)}
-                />
-              ))}
-            </div>
-            {moveDeal.isError ? <p className="kanban-error">That stage move is not allowed yet.</p> : null}
-          </article>
-        );
-      })}
-    </section>
+    <KanbanBoardProvider>
+      {moveFeedback ? (
+        <div className="kanban-feedback">
+          <span>Moved to {labelForStage(moveFeedback.toStage)}.</span>
+          <Button size="sm" onClick={() => moveDeal.mutate({ dealId: moveFeedback.dealId, stage: moveFeedback.fromStage })}>Undo</Button>
+        </div>
+      ) : null}
+      <KanbanBoard aria-label="Deal kanban board">
+        {stages.map((stage) => {
+          const stageDeals = deals.filter((deal) => deal.stage === stage.id);
+          const invalidReason = draggingDeal ? stageDropReason(draggingDeal, stage.id) : null;
+          return (
+            <KanbanColumn
+              canDrop={!invalidReason}
+              columnId={stage.id}
+              invalidReason={invalidReason}
+              key={stage.id}
+              onDropOverColumn={(data) => {
+                const deal = deals.find((item) => item.id === data.id);
+                if (deal) moveToStage(deal, stage.id);
+              }}
+            >
+              <KanbanColumnHeader>
+                <KanbanColumnTitle columnId={stage.id}>{stage.label}</KanbanColumnTitle>
+                <Badge>{stageDeals.length}</Badge>
+              </KanbanColumnHeader>
+              <KanbanColumnList>
+                {stageDeals.map((deal) => (
+                  <DealCard
+                    key={deal.id}
+                    deal={deal}
+                    moving={moveDeal.isPending && moveDeal.variables?.dealId === deal.id}
+                    onDragEnd={() => setDraggingDealId(null)}
+                    onDragStart={() => setDraggingDealId(deal.id)}
+                    onOpen={() => void navigate({ to: "/deals/$dealId", params: { dealId: deal.id } })}
+                  />
+                ))}
+              </KanbanColumnList>
+              {moveDeal.isError ? <p className="kanban-error">That stage move is not allowed yet.</p> : null}
+            </KanbanColumn>
+          );
+        })}
+      </KanbanBoard>
+    </KanbanBoardProvider>
   );
 }
 
 function DealCard({
   deal,
-  dragging,
   moving,
   onDragEnd,
-  onDragStart
+  onDragStart,
+  onOpen
 }: {
   deal: DealCardModel;
-  dragging: boolean;
   moving: boolean;
   onDragEnd: () => void;
   onDragStart: () => void;
+  onOpen: () => void;
 }) {
   return (
-    <Link
-      className={dragging ? "deal-card deal-card-dragging" : "deal-card"}
-      draggable={deal.canMove}
+    <KanbanCard
+      data={{ id: deal.id }}
+      disabled={!deal.canMove}
+      onClick={onOpen}
       onDragEnd={onDragEnd}
-      onDragStart={(event) => {
-        if (!deal.canMove) return;
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", deal.id);
-        onDragStart();
-      }}
-      to="/deals/$dealId"
-      params={{ dealId: deal.id }}
+      onKanbanDragStart={onDragStart}
     >
       <span className="deal-card-topline">
         {deal.canMove ? <GripVertical className="drag-handle" size={14} aria-label="Drag to move stage" /> : <span />}
@@ -161,8 +159,18 @@ function DealCard({
         {deal.pendingApprovals > 0 ? <Badge tone="blue">{deal.pendingApprovals} approval</Badge> : null}
         <span>{deal.lastActivityLabel}</span>
       </span>
-    </Link>
+    </KanbanCard>
   );
+}
+
+export function stageDropReason(deal: DealCardModel, stage: DealDto["stage"]) {
+  if (!deal.canMove) return "You do not have permission to move this deal.";
+  if (deal.stage === stage) return "Already in this stage.";
+  return null;
+}
+
+function labelForStage(stage: DealDto["stage"]) {
+  return stages.find((item) => item.id === stage)?.label ?? stage;
 }
 
 function KanbanSkeleton() {
