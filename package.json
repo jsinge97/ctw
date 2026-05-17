@@ -2,6 +2,7 @@
   "name": "task-cre",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
     "dev": "turbo dev --parallel",
     "typecheck": "tsc -b",

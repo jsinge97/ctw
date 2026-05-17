@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+dist
+**/dist
+.turbo
+.git
+.env
+.env.*
+coverage
+.playwright-mcp
