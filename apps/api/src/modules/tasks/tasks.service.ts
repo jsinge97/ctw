@@ -1,9 +1,9 @@
 import type { CreateTaskRequest, CurrentSession, TaskDecisionRequest, TaskDto } from "@ctw/contracts";
 import { sendOutboundEmail } from "@ctw/integrations";
 import { activityEvents, messages, nextId, orgId, tasks } from "../demo-store.js";
-import { createAuditService, createMemoryAuditRepositories } from "../audit/audit.service.js";
+import { getRuntimeAuditService } from "../audit/audit.service.js";
 
-const auditService = createAuditService(createMemoryAuditRepositories());
+const auditService = getRuntimeAuditService();
 
 export function listTasks(dealId: string): TaskDto[] {
   return tasks.filter((task) => task.dealId === dealId);

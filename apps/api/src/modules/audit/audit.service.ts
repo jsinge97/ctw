@@ -71,3 +71,12 @@ export function createAuditService(repositories: AuditRepositories = createPrism
     }
   };
 }
+
+let runtimeAuditService: AuditService | undefined;
+
+export function getRuntimeAuditService(): AuditService {
+  runtimeAuditService ??= process.env.CTW_DB_MODE === "prisma"
+    ? createAuditService(createPrismaAuditRepositories())
+    : createAuditService(createMemoryAuditRepositories());
+  return runtimeAuditService;
+}
