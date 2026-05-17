@@ -348,6 +348,8 @@ Review focus:
 
 ## Task 6: Prisma Workflow Repository Coverage
 
+**Status:** Done.
+
 **Purpose:** Make the Prisma repository cover every object that currently comes from `demo-store.ts`.
 
 **Files:**
