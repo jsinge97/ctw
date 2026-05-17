@@ -1,4 +1,5 @@
 import { z } from "zod";
+import PgBoss from "pg-boss";
 
 export const ingestEmailJobSchema = z.object({ payload: z.unknown() });
 export const ingestTwilioJobSchema = z.object({ payload: z.unknown() });
@@ -24,14 +25,30 @@ export type QueuedJob = {
 };
 
 const memoryJobs: QueuedJob[] = [];
+let bossPromise: Promise<PgBoss> | undefined;
 
-export function enqueueJob(name: JobName, payload: unknown): QueuedJob {
+async function getBoss(): Promise<PgBoss> {
+  bossPromise ??= (async () => {
+    if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required for pg-boss jobs");
+    const boss = new PgBoss({ connectionString: process.env.DATABASE_URL });
+    await boss.start();
+    return boss;
+  })();
+  return bossPromise;
+}
+
+export async function enqueueJob(name: JobName, payload: unknown): Promise<QueuedJob> {
   const job = {
     id: `job_${memoryJobs.length + 1}`,
     name,
     payload,
     queuedAt: new Date().toISOString()
   };
+  if (process.env.CTW_JOBS_MODE === "pgboss") {
+    const boss = await getBoss();
+    const id = await boss.send(name, { payload });
+    return { ...job, id: String(id) };
+  }
   memoryJobs.push(job);
   return job;
 }
