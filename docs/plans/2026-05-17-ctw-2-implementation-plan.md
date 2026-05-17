@@ -73,6 +73,7 @@ Implementation must follow these product decisions:
 - [x] Completed Phase 2 review pass 1 fixes: route-level auth/capability gates, contract-backed body parsing, typed generated client path params, webhook queueing, task approval side effects, routing review resolution state, and VA work transitions.
 - [ ] Phase 2 reviewer pass 2.
 - [x] Completed Task 10 source-of-truth frontend docs.
+- [x] Completed Task 11 web app foundation.
 
 ---
 
