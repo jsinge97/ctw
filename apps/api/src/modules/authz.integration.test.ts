@@ -46,7 +46,7 @@ describe("route authorization", () => {
 
   it("lets VAs execute assigned queue work without granting admin review actions", async () => {
     const app = await buildServer();
-    const [item] = listVaWork(resolveSessionFromToken("va-token"));
+    const [item] = await listVaWork(resolveSessionFromToken("va-token"));
     if (!item) throw new Error("missing VA item");
 
     const started = await app.inject({ method: "POST", url: `/v1/va-work-items/${item.id}/start`, headers: { authorization: "Bearer va-token" }, payload: { notes: "Starting" } });

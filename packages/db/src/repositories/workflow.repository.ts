@@ -32,6 +32,7 @@ export type WorkflowRepository = {
   updateDocument: (input: { organizationId: string; documentId: string; title?: string; documentType?: string; visibility?: VisibilityDto; folder?: string | null; tags?: string[] }) => Promise<unknown>;
   archiveDocument: (input: { organizationId: string; documentId: string }) => Promise<unknown>;
   listTasksForDeal: (organizationId: string, dealId: string) => Promise<unknown[]>;
+  getTask: (organizationId: string, taskId: string) => Promise<unknown>;
   createTask: (input: { organizationId: string; dealId: string; title: string; description?: string | null; route: TaskRoute; assignedToMembershipId?: string | null; payload?: unknown }) => Promise<unknown>;
   updateTask: (input: { organizationId: string; taskId: string; title?: string; status?: string; route?: TaskRoute; payload?: unknown; completedAt?: Date | null }) => Promise<unknown>;
   setCurrentNextAction: (input: { organizationId: string; dealId: string; taskId: string }) => Promise<unknown>;
@@ -322,6 +323,12 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return tasks.map(mapTask);
   }
 
+  async getTask(organizationId: string, taskId: string) {
+    const task = await this.prisma.task.findFirst({ where: { id: taskId, organizationId } });
+    if (!task) throw notFound("Task not found");
+    return mapTask(task);
+  }
+
   async createTask(input: { organizationId: string; dealId: string; title: string; description?: string | null; route: TaskRoute; assignedToMembershipId?: string | null; payload?: unknown }) {
     const task = await this.prisma.task.create({
       data: {
@@ -412,15 +419,32 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
   }
 
   async updateVaWorkItem(input: { organizationId: string; itemId: string; status: VaWorkStatus; assignedToMembershipId?: string | null; submittedPayload?: unknown }) {
-    const item = await this.prisma.vaWorkItem.update({
-      where: { id: input.itemId, organizationId: input.organizationId },
-      data: {
-        status: input.status,
-        ...(input.assignedToMembershipId !== undefined ? { assignedToMembershipId: input.assignedToMembershipId } : {}),
-        ...(input.submittedPayload !== undefined ? { submittedPayload: input.submittedPayload as Prisma.InputJsonValue } : {}),
-        ...(input.status === "submitted" ? { submittedAt: new Date() } : {})
-      },
-      include: { task: { include: { deal: true } } }
+    const taskStatusByVaStatus: Partial<Record<VaWorkStatus, TaskStatus>> = {
+      in_progress: "in_progress",
+      submitted: "waiting_approval",
+      accepted: "completed",
+      canceled: "canceled",
+      sent_back: "deferred"
+    };
+    const item = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.vaWorkItem.update({
+        where: { id: input.itemId, organizationId: input.organizationId },
+        data: {
+          status: input.status,
+          ...(input.assignedToMembershipId !== undefined ? { assignedToMembershipId: input.assignedToMembershipId } : {}),
+          ...(input.submittedPayload !== undefined ? { submittedPayload: input.submittedPayload as Prisma.InputJsonValue } : {}),
+          ...(input.status === "submitted" ? { submittedAt: new Date() } : {})
+        },
+        include: { task: { include: { deal: true } } }
+      });
+      const taskStatus = taskStatusByVaStatus[input.status];
+      if (taskStatus) {
+        await tx.task.update({
+          where: { id: updated.taskId, organizationId: input.organizationId },
+          data: { status: taskStatus, ...(taskStatus === "completed" ? { completedAt: new Date() } : {}) }
+        });
+      }
+      return updated;
     });
     return mapVaWorkItem(item);
   }

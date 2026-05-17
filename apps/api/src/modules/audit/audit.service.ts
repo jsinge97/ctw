@@ -27,9 +27,9 @@ type AuditRepositories = {
 
 export function createMemoryAuditRepositories() {
   return {
-  audit: new AuditRepository(),
-  approvals: new ApprovalEventsRepository(),
-  outcomes: new TaskOutcomesRepository()
+    audit: new AuditRepository(),
+    approvals: new ApprovalEventsRepository(),
+    outcomes: new TaskOutcomesRepository()
   };
 }
 

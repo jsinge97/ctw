@@ -4,7 +4,7 @@ import { createTask, decideTask } from "./tasks.service.js";
 
 describe("tasks service", () => {
   it("creates and approves system tasks with sent-message side effect", async () => {
-    const task = createTask("deal_sutter", { title: "Send draft", route: "system" });
+    const task = await createTask("deal_sutter", { title: "Send draft", route: "system" });
     const approved = await decideTask(task.id, resolveSessionFromToken("am-token"), "approve");
     expect(approved.status).toBe("completed");
   });

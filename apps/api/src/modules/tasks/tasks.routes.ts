@@ -5,8 +5,8 @@ import { parseBody } from "../validation.js";
 import { createTask, decideTask, listTasks } from "./tasks.service.js";
 
 export async function registerTasksRoutes(app: FastifyInstance) {
-  app.get<{ Params: { dealId: string } }>("/v1/deals/:dealId/tasks", async (request) => listTasks(request.params.dealId));
-  app.post<{ Params: { dealId: string } }>("/v1/deals/:dealId/tasks", async (request) => createTask(request.params.dealId, parseBody(createTaskRequestSchema, request.body)));
+  app.get<{ Params: { dealId: string } }>("/v1/deals/:dealId/tasks", async (request) => listTasks(request.params.dealId, getRequiredSession(request)));
+  app.post<{ Params: { dealId: string } }>("/v1/deals/:dealId/tasks", async (request) => createTask(request.params.dealId, parseBody(createTaskRequestSchema, request.body), getRequiredSession(request)));
   app.post<{ Params: { taskId: string } }>("/v1/tasks/:taskId/approve", async (request) => decideTask(request.params.taskId, getRequiredSession(request), "approve", parseBody(taskDecisionRequestSchema, request.body ?? {})));
   app.post<{ Params: { taskId: string } }>("/v1/tasks/:taskId/reject", async (request) => decideTask(request.params.taskId, getRequiredSession(request), "reject", parseBody(taskDecisionRequestSchema, request.body ?? {})));
   app.post<{ Params: { taskId: string } }>("/v1/tasks/:taskId/defer", async (request) => decideTask(request.params.taskId, getRequiredSession(request), "defer", parseBody(taskDecisionRequestSchema, request.body ?? {})));

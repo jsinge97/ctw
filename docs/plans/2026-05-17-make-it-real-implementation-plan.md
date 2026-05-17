@@ -487,6 +487,8 @@ git commit -m "feat: persist channel filing workflows"
 
 ## Task 9: Durable Tasks, Next Action, VA Work, Audit
 
+**Status:** Done.
+
 **Purpose:** Make the main work execution loop durable end to end.
 
 **Files:**
