@@ -1,5 +1,7 @@
 # CTW 2.0 Frontend Rules
 
+For repository-wide agent instructions, start with `AGENTS.md`.
+
 Read these source docs before frontend work:
 
 - `docs/feature-plan.md`
@@ -11,6 +13,46 @@ Read these source docs before frontend work:
 - `docs/design-philosophy.md`
 - `docs/design-system.md`
 - `docs/frontend-architecture.md`
+- `docs/plans/2026-05-17-make-it-real-implementation-plan.md`
+
+## Command Quick Reference
+
+Use these from the repository root unless a task says otherwise:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm --filter @ctw/api test
+pnpm --filter @ctw/web test
+pnpm --filter @ctw/web e2e
+pnpm --filter @ctw/worker test
+pnpm prisma:generate
+pnpm db:generate
+pnpm db:migrate
+pnpm openapi:generate
+pnpm client:generate
+pnpm build
+docker compose up -d postgres minio
+docker compose config
+```
+
+Expected durable local flow after the seed lifecycle lands:
+
+```bash
+docker compose up -d postgres minio
+pnpm db:migrate
+pnpm db:seed
+pnpm --filter @ctw/api dev
+pnpm --filter @ctw/web dev
+```
+
+Regeneration rules:
+
+- Run `pnpm prisma:generate` after Prisma schema changes.
+- Run `pnpm openapi:generate` after contract or API route contract changes.
+- Run `pnpm client:generate` after OpenAPI changes.
+- Never hand-edit generated Prisma client or generated API client files.
 
 ## Stack
 
