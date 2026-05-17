@@ -1,9 +1,8 @@
-import type { ParticipantDto } from "@ctw/contracts";
+import type { AddParticipantRequest, ParticipantDto, UpdateParticipantRequest } from "@ctw/contracts";
 import { RotateCcw, UserPlus, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
-import { useAddParticipant, useUpdateParticipant } from "../../hooks/use-deals.js";
 import { useUrlPanelState } from "./panel-search.js";
 
 const roles = ["am", "broker", "client", "client_contact", "va", "observer"] as const;
@@ -16,9 +15,19 @@ export function groupParticipantsByRole(participants: ParticipantDto[]) {
   }, {});
 }
 
-export function ParticipantsTab({ dealId, participants }: { dealId: string; participants: ParticipantDto[] }) {
-  const addParticipant = useAddParticipant(dealId);
-  const updateParticipant = useUpdateParticipant(dealId);
+export function ParticipantsTab({
+  canManage,
+  hasError,
+  onAddParticipant,
+  onUpdateParticipant,
+  participants
+}: {
+  canManage: boolean;
+  hasError: boolean;
+  onAddParticipant: (body: AddParticipantRequest) => void;
+  onUpdateParticipant: (participantId: string, body: UpdateParticipantRequest) => void;
+  participants: ParticipantDto[];
+}) {
   const [selectedId, setSelectedId] = useUrlPanelState("participant");
   const [removedParticipant, setRemovedParticipant] = useState<ParticipantDto | null>(null);
   const [name, setName] = useState("");
@@ -30,26 +39,28 @@ export function ParticipantsTab({ dealId, participants }: { dealId: string; part
   return (
     <div className="crud-surface">
       <section className="crud-list" aria-label="Participants">
-        <form
-          className="create-strip"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!name.trim()) return;
-            addParticipant.mutate({ name: name.trim(), company: company.trim() || null, role, capabilities: ["viewDeal"] });
-            setName("");
-            setCompany("");
-          }}
-        >
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Add participant" />
-          <input value={company} onChange={(event) => setCompany(event.target.value)} placeholder="Company" />
-          <select value={role} onChange={(event) => setRole(event.target.value as ParticipantDto["role"])}>
-            {roles.map((item) => <option key={item} value={item}>{item.replace("_", " ")}</option>)}
-          </select>
-          <Button type="submit">
-            <UserPlus size={16} aria-hidden />
-            Add
-          </Button>
-        </form>
+        {canManage ? (
+          <form
+            className="create-strip"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!name.trim()) return;
+              onAddParticipant({ name: name.trim(), company: company.trim() || null, role, capabilities: ["viewDeal"] });
+              setName("");
+              setCompany("");
+            }}
+          >
+            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Add participant" />
+            <input value={company} onChange={(event) => setCompany(event.target.value)} placeholder="Company" />
+            <select value={role} onChange={(event) => setRole(event.target.value as ParticipantDto["role"])}>
+              {roles.map((item) => <option key={item} value={item}>{item.replace("_", " ")}</option>)}
+            </select>
+            <Button type="submit">
+              <UserPlus size={16} aria-hidden />
+              Add
+            </Button>
+          </form>
+        ) : null}
 
         {roles.map((item) => {
           const roleParticipants = groupedParticipants[item] ?? [];
@@ -68,7 +79,7 @@ export function ParticipantsTab({ dealId, participants }: { dealId: string; part
                   </span>
                   <span className="crud-row-meta">
                     <Badge tone={participant.visibility === "shared" ? "green" : "amber"}>{participant.visibility}</Badge>
-                    <span>{participant.capabilities.length} capabilities</span>
+                    {canManage ? <span>{participant.capabilities.length} capabilities</span> : null}
                   </span>
                 </button>
               ))}
@@ -82,7 +93,7 @@ export function ParticipantsTab({ dealId, participants }: { dealId: string; part
           <div className="undo-strip">
             <span>Removed {removedParticipant.name}</span>
             <Button size="sm" onClick={() => {
-              updateParticipant.mutate({ participantId: removedParticipant.id, body: { status: "active" } });
+              onUpdateParticipant(removedParticipant.id, { status: "active" });
               setRemovedParticipant(null);
             }}>
               <RotateCcw size={14} aria-hidden />
@@ -90,20 +101,25 @@ export function ParticipantsTab({ dealId, participants }: { dealId: string; part
             </Button>
           </div>
         ) : null}
-        {selectedParticipant ? (
+        {selectedParticipant && canManage ? (
           <ParticipantEditor
             key={selectedParticipant.id}
             participant={selectedParticipant}
             onRemove={() => {
               setRemovedParticipant(selectedParticipant);
-              updateParticipant.mutate({ participantId: selectedParticipant.id, body: { status: "removed" } });
+              onUpdateParticipant(selectedParticipant.id, { status: "removed" });
             }}
-            onSave={(body) => updateParticipant.mutate({ participantId: selectedParticipant.id, body })}
+            onSave={(body) => onUpdateParticipant(selectedParticipant.id, body)}
           />
+        ) : selectedParticipant ? (
+          <div className="detail-editor">
+            <h2>{selectedParticipant.name}</h2>
+            <p>{selectedParticipant.role.replace("_", " ")} · {selectedParticipant.company ?? "No company"}</p>
+          </div>
         ) : (
           <p>No participants yet.</p>
         )}
-        {addParticipant.isError || updateParticipant.isError ? <p className="form-error">Participant change failed.</p> : null}
+        {hasError ? <p className="form-error">Participant change failed.</p> : null}
       </aside>
     </div>
   );

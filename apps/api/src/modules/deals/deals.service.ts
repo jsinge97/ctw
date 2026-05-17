@@ -13,21 +13,26 @@ export async function listDeals(session?: CurrentSession): Promise<DealDto[]> {
   }
   const memory = workflow.memory;
   const activeDeals = memory.deals.filter((deal) => deal.status !== "archived");
-  if (!session || ["admin", "am", "va"].includes(session.membership.role)) return activeDeals;
+  if (!session || ["admin", "am"].includes(session.membership.role)) return activeDeals;
+  if (session.membership.role === "va") return activeDeals.map(stripDealMutationCapabilities);
   const visibleDealIds = new Set(
     memory.participants
       .filter((participant) => participant.membershipId === session.membership.id && participant.status === "active" && participant.capabilities.some((capability) => capability.toLowerCase().replace(/\s+/g, "") === "viewdeal"))
       .map((participant) => participant.dealId)
   );
-  return activeDeals.filter((deal) => visibleDealIds.has(deal.id));
+  return activeDeals.filter((deal) => visibleDealIds.has(deal.id)).map(stripDealMutationCapabilities);
 }
 
 export async function getDeal(dealId: string, session?: CurrentSession): Promise<DealDto> {
   const workflow = provider();
-  if (workflow.mode === "prisma" && workflow.prisma) return workflow.prisma.getDeal(session?.activeOrganization.id ?? "org_northgate", dealId) as Promise<DealDto>;
+  if (workflow.mode === "prisma" && workflow.prisma) return workflow.prisma.getDeal(session?.activeOrganization.id ?? "org_northgate", dealId, session?.membership.role) as Promise<DealDto>;
   const deal = workflow.memory.deals.find((item) => item.id === dealId);
   if (!deal) throw Object.assign(new Error("Deal not found"), { statusCode: 404 });
-  return deal;
+  return session && !["admin", "am"].includes(session.membership.role) ? stripDealMutationCapabilities(deal) : deal;
+}
+
+function stripDealMutationCapabilities(deal: DealDto): DealDto {
+  return { ...deal, capabilities: deal.capabilities.filter((capability) => capability === "viewDeal") };
 }
 
 export async function createDeal(input: CreateDealRequest, session?: CurrentSession): Promise<DealDto> {

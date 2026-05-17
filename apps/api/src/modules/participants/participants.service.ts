@@ -5,10 +5,11 @@ export async function listParticipants(dealId: string, session?: CurrentSession)
   const workflow = getWorkflowProvider();
   if (workflow.mode === "prisma" && workflow.prisma) {
     const includeInternal = !session || ["admin", "am"].includes(session.membership.role);
-    return workflow.prisma.listParticipants(session?.activeOrganization.id ?? "org_northgate", dealId, includeInternal) as Promise<ParticipantDto[]>;
+    const participants = (await workflow.prisma.listParticipants(session?.activeOrganization.id ?? "org_northgate", dealId, includeInternal)) as ParticipantDto[];
+    return includeInternal ? participants : participants.map((participant) => ({ ...participant, capabilities: [] }));
   }
   const participants = workflow.memory.participants.filter((participant) => participant.dealId === dealId && participant.status !== "removed");
-  if (session && !["admin", "am"].includes(session.membership.role)) return participants.filter((participant) => participant.visibility === "shared");
+  if (session && !["admin", "am"].includes(session.membership.role)) return participants.filter((participant) => participant.visibility === "shared").map((participant) => ({ ...participant, capabilities: [] }));
   return participants;
 }
 

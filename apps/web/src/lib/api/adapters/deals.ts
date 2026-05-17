@@ -55,18 +55,38 @@ export type DealWorkspaceModel = {
   documents: DocumentDto[];
   tasks: TaskDto[];
   activity: ActivityEventDto[];
+  unavailable: Array<"participants" | "messages" | "documents" | "tasks" | "activity">;
 };
 
 export async function getDealWorkspace(dealId: string): Promise<DealWorkspaceModel> {
-  const [deal, participants, messages, documents, tasks, activity] = await Promise.all([
-    api.getDealsdealId({ dealId }),
-    api.getDealsdealIdParticipants({ dealId }),
-    api.getDealsdealIdMessages({ dealId }),
-    api.getDealsdealIdDocuments({ dealId }),
-    api.getDealsdealIdTasks({ dealId }),
-    api.getDealsdealIdActivity({ dealId })
+  const deal = await api.getDealsdealId({ dealId });
+  const [participants, messages, documents, tasks, activity] = await Promise.all([
+    optionalWorkspaceList("participants", () => api.getDealsdealIdParticipants({ dealId })),
+    optionalWorkspaceList("messages", () => api.getDealsdealIdMessages({ dealId })),
+    optionalWorkspaceList("documents", () => api.getDealsdealIdDocuments({ dealId })),
+    optionalWorkspaceList("tasks", () => api.getDealsdealIdTasks({ dealId })),
+    optionalWorkspaceList("activity", () => api.getDealsdealIdActivity({ dealId }))
   ]);
-  return { deal, participants, messages, documents, tasks, activity };
+  return {
+    deal,
+    participants: participants.data,
+    messages: messages.data,
+    documents: documents.data,
+    tasks: tasks.data,
+    activity: activity.data,
+    unavailable: [participants, messages, documents, tasks, activity].filter((result) => !result.available).map((result) => result.key)
+  };
+}
+
+async function optionalWorkspaceList<TKey extends DealWorkspaceModel["unavailable"][number], TValue>(
+  key: TKey,
+  fetchList: () => Promise<TValue[]>
+): Promise<{ available: boolean; data: TValue[]; key: TKey }> {
+  try {
+    return { available: true, data: await fetchList(), key };
+  } catch {
+    return { available: false, data: [], key };
+  }
 }
 
 export async function updateMessage(dealId: string, messageId: string, body: UpdateMessageRequest): Promise<MessageDto> {

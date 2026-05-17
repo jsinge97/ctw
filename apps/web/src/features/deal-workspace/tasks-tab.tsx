@@ -1,10 +1,10 @@
-import type { TaskDto } from "@ctw/contracts";
+import type { CreateTaskRequest, TaskDecisionRequest, TaskDto } from "@ctw/contracts";
 import { Check, Clock, GitBranch, Plus, RotateCcw, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
-import { useCreateTask, useDecideTask } from "../../hooks/use-deals.js";
 import { useUrlPanelState } from "./panel-search.js";
+import type { TaskDecisionKind } from "../../lib/api/adapters/deals.js";
 
 const statusOrder = ["in_progress", "waiting_approval", "proposed", "approved", "deferred", "completed", "rejected", "canceled"] as const;
 const taskRoutes = ["self", "va", "system"] as const;
@@ -16,9 +16,25 @@ export function groupTasksByStatus(tasks: TaskDto[]) {
   }, {});
 }
 
-export function TasksTab({ dealId, tasks }: { dealId: string; tasks: TaskDto[] }) {
-  const createTask = useCreateTask(dealId);
-  const decideTask = useDecideTask(dealId);
+export function TasksTab({
+  canApprove,
+  canComplete,
+  canCreate,
+  canEdit,
+  hasError,
+  onCreateTask,
+  onDecideTask,
+  tasks
+}: {
+  canApprove: boolean;
+  canComplete: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  hasError: boolean;
+  onCreateTask: (body: CreateTaskRequest) => void;
+  onDecideTask: (taskId: string, decision: TaskDecisionKind, body: TaskDecisionRequest) => void;
+  tasks: TaskDto[];
+}) {
   const [selectedId, setSelectedId] = useUrlPanelState("task");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -38,26 +54,28 @@ export function TasksTab({ dealId, tasks }: { dealId: string; tasks: TaskDto[] }
           </button>
         ) : null}
 
-        <form
-          className="create-strip"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!title.trim()) return;
-            createTask.mutate({ title: title.trim(), description: description.trim() || undefined, route });
-            setTitle("");
-            setDescription("");
-          }}
-        >
-          <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Create manual task" />
-          <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Optional instructions" />
-          <select value={route} onChange={(event) => setRoute(event.target.value as TaskDto["route"])}>
-            {taskRoutes.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-          <Button type="submit">
-            <Plus size={16} aria-hidden />
-            Add
-          </Button>
-        </form>
+        {canCreate ? (
+          <form
+            className="create-strip"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!title.trim()) return;
+              onCreateTask({ title: title.trim(), description: description.trim() || undefined, route });
+              setTitle("");
+              setDescription("");
+            }}
+          >
+            <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Create manual task" />
+            <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Optional instructions" />
+            <select value={route} onChange={(event) => setRoute(event.target.value as TaskDto["route"])}>
+              {taskRoutes.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+            <Button type="submit">
+              <Plus size={16} aria-hidden />
+              Add
+            </Button>
+          </form>
+        ) : null}
 
         {statusOrder.map((status) => {
           const items = groupedTasks[status] ?? [];
@@ -86,17 +104,33 @@ export function TasksTab({ dealId, tasks }: { dealId: string; tasks: TaskDto[] }
       </section>
 
       <aside className="crud-detail" aria-label="Task detail">
-        {selectedTask ? <TaskDecisionPanel task={selectedTask} onDecide={(decision, body) => decideTask.mutate({ taskId: selectedTask.id, decision, body })} /> : <p>No tasks yet.</p>}
-        {createTask.isError || decideTask.isError ? <p className="form-error">Task change failed.</p> : null}
+        {selectedTask ? (
+          <TaskDecisionPanel
+            canApprove={canApprove}
+            canComplete={canComplete}
+            canEdit={canEdit}
+            task={selectedTask}
+            onDecide={(decision, body) => onDecideTask(selectedTask.id, decision, body)}
+          />
+        ) : (
+          <p>No tasks yet.</p>
+        )}
+        {hasError ? <p className="form-error">Task change failed.</p> : null}
       </aside>
     </div>
   );
 }
 
 function TaskDecisionPanel({
+  canApprove,
+  canComplete,
+  canEdit,
   onDecide,
   task
 }: {
+  canApprove: boolean;
+  canComplete: boolean;
+  canEdit: boolean;
   onDecide: (decision: "approve" | "reject" | "defer" | "route" | "complete", body: { reason?: string; route?: TaskDto["route"]; editedTitle?: string }) => void;
   task: TaskDto;
 }) {
@@ -113,39 +147,57 @@ function TaskDecisionPanel({
         </div>
         {task.isCurrentNextAction ? <Badge tone="blue">Next action</Badge> : null}
       </div>
-      <label>
-        Edit title
-        <input value={editedTitle} onChange={(event) => setEditedTitle(event.target.value)} />
-      </label>
-      <label>
-        Reason
-        <input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Optional reason for history" />
-      </label>
-      <label>
-        Route
-        <select value={route} onChange={(event) => setRoute(event.target.value as TaskDto["route"])}>
-          {taskRoutes.map((item) => <option key={item} value={item}>{item}</option>)}
-        </select>
-      </label>
+      {canEdit ? (
+        <>
+          <label>
+            Edit title
+            <input value={editedTitle} onChange={(event) => setEditedTitle(event.target.value)} />
+          </label>
+          <label>
+            Reason
+            <input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Optional reason for history" />
+          </label>
+          <label>
+            Route
+            <select value={route} onChange={(event) => setRoute(event.target.value as TaskDto["route"])}>
+              {taskRoutes.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+        </>
+      ) : null}
       {Object.keys(task.payload).length > 0 ? <pre className="payload-preview">{JSON.stringify(task.payload, null, 2)}</pre> : null}
-      <div className="action-row">
-        <Button type="button" variant="primary" onClick={() => onDecide(task.route === "self" ? "complete" : "approve", { editedTitle, reason })}>
-          <Check size={16} aria-hidden />
-          {task.route === "self" ? "Complete" : "Approve"}
-        </Button>
-        <Button type="button" onClick={() => onDecide("defer", { editedTitle, reason })}>
-          <RotateCcw size={16} aria-hidden />
-          Defer
-        </Button>
-        <Button type="button" onClick={() => onDecide("route", { editedTitle, reason, route })}>
-          <GitBranch size={16} aria-hidden />
-          Route
-        </Button>
-        <Button type="button" variant="danger" onClick={() => onDecide("reject", { editedTitle, reason })}>
-          <X size={16} aria-hidden />
-          Reject
-        </Button>
-      </div>
+      {canApprove || canComplete || canEdit ? (
+        <div className="action-row">
+          {task.route === "self" && canComplete ? (
+            <Button type="button" variant="primary" onClick={() => onDecide("complete", { editedTitle, reason })}>
+              <Check size={16} aria-hidden />
+              Complete
+            </Button>
+          ) : null}
+          {task.route !== "self" && canApprove ? (
+            <Button type="button" variant="primary" onClick={() => onDecide("approve", { editedTitle, reason })}>
+              <Check size={16} aria-hidden />
+              Approve
+            </Button>
+          ) : null}
+          {canEdit ? (
+            <>
+              <Button type="button" onClick={() => onDecide("defer", { editedTitle, reason })}>
+                <RotateCcw size={16} aria-hidden />
+                Defer
+              </Button>
+              <Button type="button" onClick={() => onDecide("route", { editedTitle, reason, route })}>
+                <GitBranch size={16} aria-hidden />
+                Route
+              </Button>
+              <Button type="button" variant="danger" onClick={() => onDecide("reject", { editedTitle, reason })}>
+                <X size={16} aria-hidden />
+                Reject
+              </Button>
+            </>
+          ) : null}
+        </div>
+      ) : null}
     </form>
   );
 }

@@ -4,5 +4,5 @@ import { DealWorkspaceShell, OverviewTab } from "../features/deal-workspace/work
 export function DealWorkspaceRoute() {
   const { dealId } = useParams({ from: "/deals/$dealId" });
 
-  return <DealWorkspaceShell dealId={dealId} activeTab="overview">{(workspace) => <OverviewTab workspace={workspace} />}</DealWorkspaceShell>;
+  return <DealWorkspaceShell dealId={dealId} activeTab="overview">{(workspace, session) => <OverviewTab workspace={workspace} session={session} />}</DealWorkspaceShell>;
 }

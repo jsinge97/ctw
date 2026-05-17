@@ -3,6 +3,8 @@ import { groupDocumentsByType } from "./documents-tab.js";
 import { sortMessages } from "./messages-tab.js";
 import { groupParticipantsByRole } from "./participants-tab.js";
 import { groupTasksByStatus } from "./tasks-tab.js";
+import { canViewWorkspaceTab } from "./workspace-shell.js";
+import type { CurrentSession } from "@ctw/contracts";
 
 describe("deal workspace tab helpers", () => {
   it("groups document rows by type", () => {
@@ -27,5 +29,14 @@ describe("deal workspace tab helpers", () => {
     expect(groupParticipantsByRole([
       { id: "part_1", dealId: "deal_1", subjectType: "contact", subjectId: "contact_1", membershipId: null, contactId: "contact_1", name: "Devon", company: "Halcyon", role: "broker", visibility: "shared", capabilities: ["viewDeal"], status: "active" }
     ])).toHaveProperty("broker");
+  });
+
+  it("hides privileged workspace tabs without matching capabilities", () => {
+    const session = { capabilities: ["viewDeal"] } as CurrentSession;
+    expect(canViewWorkspaceTab("overview", session)).toBe(true);
+    expect(canViewWorkspaceTab("participants", session)).toBe(true);
+    expect(canViewWorkspaceTab("messages", session)).toBe(false);
+    expect(canViewWorkspaceTab("documents", session)).toBe(false);
+    expect(canViewWorkspaceTab("activity", session)).toBe(false);
   });
 });

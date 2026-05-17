@@ -65,7 +65,7 @@ export function AppShell({ session, children }: AppShellProps) {
             <span>Search deals, contacts, documents</span>
           </div>
           <div className="top-actions">
-            <Badge tone="amber">3 messages to review</Badge>
+            {capabilities.includes("viewRoutingReview") ? <Badge tone="amber">3 messages to review</Badge> : null}
             <button className="icon-button" aria-label="Notifications">
               <Bell size={16} />
             </button>

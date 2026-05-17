@@ -1,9 +1,8 @@
-import type { DocumentDto } from "@ctw/contracts";
+import type { DocumentDto, UpdateDocumentRequest } from "@ctw/contracts";
 import { Archive, FileText, Upload } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
-import { useArchiveDocument, useCreateDocument, useUpdateDocument, useUploadDocument } from "../../hooks/use-deals.js";
 import { useUrlPanelState } from "./panel-search.js";
 
 const documentTypes = ["unknown", "loi", "lease", "om", "estoppel", "comp_set", "other"] as const;
@@ -15,15 +14,27 @@ export function groupDocumentsByType(documents: DocumentDto[]) {
   }, {});
 }
 
-export function DocumentsTab({ dealId, documents }: { dealId: string; documents: DocumentDto[] }) {
+export function DocumentsTab({
+  canManage,
+  documents,
+  hasError,
+  onArchiveDocument,
+  onCreateDocument,
+  onUpdateDocument,
+  onUploadDocument
+}: {
+  canManage: boolean;
+  documents: DocumentDto[];
+  hasError: boolean;
+  onArchiveDocument: (documentId: string) => void;
+  onCreateDocument: (body: UpdateDocumentRequest) => void;
+  onUpdateDocument: (documentId: string, body: UpdateDocumentRequest) => void;
+  onUploadDocument: (file: File) => void;
+}) {
   const [selectedId, setSelectedId] = useUrlPanelState("document");
   const [draftTitle, setDraftTitle] = useState("");
   const [draftFolder, setDraftFolder] = useState("");
   const [draftTags, setDraftTags] = useState("");
-  const createDocument = useCreateDocument(dealId);
-  const updateDocument = useUpdateDocument(dealId);
-  const archiveDocument = useArchiveDocument(dealId);
-  const uploadDocument = useUploadDocument(dealId);
   const groupedDocuments = groupDocumentsByType(documents);
   const selectedDocument = documents.find((document) => document.id === selectedId) ?? documents[0] ?? null;
 
@@ -35,18 +46,20 @@ export function DocumentsTab({ dealId, documents }: { dealId: string; documents:
             <h2>Documents</h2>
             <p>Classified files, versions, folders, and shared visibility.</p>
           </div>
-          <label className="upload-button">
-            <Upload size={16} aria-hidden />
-            Upload
-            <input
-              type="file"
-              onChange={(event) => {
-                const file = event.currentTarget.files?.[0];
-                if (file) uploadDocument.mutate(file);
-                event.currentTarget.value = "";
-              }}
-            />
-          </label>
+          {canManage ? (
+            <label className="upload-button">
+              <Upload size={16} aria-hidden />
+              Upload
+              <input
+                type="file"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  if (file) onUploadDocument(file);
+                  event.currentTarget.value = "";
+                }}
+              />
+            </label>
+          ) : null}
         </header>
         {documentTypes.map((type) => {
           const items = groupedDocuments[type] ?? [];
@@ -75,43 +88,50 @@ export function DocumentsTab({ dealId, documents }: { dealId: string; documents:
       </section>
 
       <aside className="crud-detail" aria-label="Document detail">
-        <form
-          className="inline-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!draftTitle.trim()) return;
-            createDocument.mutate({ title: draftTitle.trim(), folder: draftFolder.trim() || null, tags: parseTags(draftTags) });
-            setDraftTitle("");
-            setDraftFolder("");
-            setDraftTags("");
-          }}
-        >
-          <h2>Add document metadata</h2>
-          <label>
-            Title
-            <input value={draftTitle} onChange={(event) => setDraftTitle(event.target.value)} placeholder="New lease.pdf" />
-          </label>
-          <label>
-            Folder
-            <input value={draftFolder} onChange={(event) => setDraftFolder(event.target.value)} placeholder="Diligence" />
-          </label>
-          <label>
-            Tags
-            <input value={draftTags} onChange={(event) => setDraftTags(event.target.value)} placeholder="lease, signed" />
-          </label>
-          <Button type="submit">Add metadata</Button>
-        </form>
+        {canManage ? (
+          <form
+            className="inline-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!draftTitle.trim()) return;
+              onCreateDocument({ title: draftTitle.trim(), folder: draftFolder.trim() || null, tags: parseTags(draftTags) });
+              setDraftTitle("");
+              setDraftFolder("");
+              setDraftTags("");
+            }}
+          >
+            <h2>Add document metadata</h2>
+            <label>
+              Title
+              <input value={draftTitle} onChange={(event) => setDraftTitle(event.target.value)} placeholder="New lease.pdf" />
+            </label>
+            <label>
+              Folder
+              <input value={draftFolder} onChange={(event) => setDraftFolder(event.target.value)} placeholder="Diligence" />
+            </label>
+            <label>
+              Tags
+              <input value={draftTags} onChange={(event) => setDraftTags(event.target.value)} placeholder="lease, signed" />
+            </label>
+            <Button type="submit">Add metadata</Button>
+          </form>
+        ) : null}
 
-        {selectedDocument ? (
+        {selectedDocument && canManage ? (
           <DocumentEditor
             document={selectedDocument}
-            onArchive={() => archiveDocument.mutate(selectedDocument.id)}
-            onSave={(body) => updateDocument.mutate({ documentId: selectedDocument.id, body })}
+            onArchive={() => onArchiveDocument(selectedDocument.id)}
+            onSave={(body) => onUpdateDocument(selectedDocument.id, body)}
           />
+        ) : selectedDocument ? (
+          <div className="detail-editor">
+            <h2>{selectedDocument.title}</h2>
+            <p>{selectedDocument.documentType.replace("_", " ")} · {selectedDocument.visibility}</p>
+          </div>
         ) : (
           <p>No documents yet.</p>
         )}
-        {createDocument.isError || updateDocument.isError || archiveDocument.isError || uploadDocument.isError ? <p className="form-error">Document change failed.</p> : null}
+        {hasError ? <p className="form-error">Document change failed.</p> : null}
       </aside>
     </div>
   );

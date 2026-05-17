@@ -15,7 +15,7 @@ type DocumentVersionInput = { storageKey: string; filename: string; mimeType: st
 
 export type WorkflowRepository = {
   listDeals: (organizationId: string, membershipId?: string, role?: string) => Promise<unknown[]>;
-  getDeal: (organizationId: string, dealId: string) => Promise<unknown>;
+  getDeal: (organizationId: string, dealId: string, role?: string) => Promise<unknown>;
   createDeal: (input: { organizationId: string; title: string; primaryCompanyName?: string | null; ownerMembershipId: string }) => Promise<unknown>;
   patchDeal: (input: { organizationId: string; dealId: string; title?: string; primaryCompanyName?: string | null; staleFlag?: boolean }) => Promise<unknown>;
   moveDealStage: (input: { organizationId: string; dealId: string; stage: DealStage; membershipId: string }) => Promise<unknown>;
@@ -64,16 +64,16 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       include: { primaryCompany: true, tasks: true },
       orderBy: [{ priorityRank: "asc" }, { lastActivityAt: "desc" }]
     });
-    return deals.map(mapDeal);
+    return deals.map((deal) => mapDeal(deal, role));
   }
 
-  async getDeal(organizationId: string, dealId: string) {
+  async getDeal(organizationId: string, dealId: string, role?: string) {
     const deal = await this.prisma.deal.findFirst({
       where: { id: dealId, organizationId },
       include: { primaryCompany: true, tasks: true }
     });
     if (!deal) throw notFound("Deal not found");
-    return mapDeal(deal);
+    return mapDeal(deal, role);
   }
 
   async createDeal(input: { organizationId: string; title: string; primaryCompanyName?: string | null; ownerMembershipId: string }) {
@@ -346,12 +346,19 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
   }
 
   async archiveDocument(input: { organizationId: string; dealId: string; documentId: string }) {
+    const before = await this.prisma.document.findFirst({
+      where: { id: input.documentId, organizationId: input.organizationId, dealId: input.dealId },
+      include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }
+    });
+    if (!before) throw notFound("Document not found");
     const document = await this.prisma.document.update({
       where: { id: input.documentId, organizationId: input.organizationId, dealId: input.dealId },
       data: { status: "archived", archivedAt: new Date() },
       include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }
     });
-    return mapDocument(document);
+    const mapped = mapDocument(document);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "document", entityId: document.id, dealId: document.dealId, eventType: "document.archived", before: mapDocument(before), after: mapped });
+    return mapped;
   }
 
   async listTasksForDeal(organizationId: string, dealId: string) {
@@ -521,6 +528,8 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
   }
 
   async updateOrganizationSettings(input: { organizationId: string; name?: string; routingConfidenceThreshold?: number }) {
+    const before = await this.prisma.organization.findFirst({ where: { id: input.organizationId }, include: { channels: { where: { status: "active" }, orderBy: { createdAt: "asc" } } } });
+    if (!before) throw notFound("Organization not found");
     const org = await this.prisma.organization.update({
       where: { id: input.organizationId },
       data: {
@@ -529,17 +538,22 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       },
       include: { channels: { where: { status: "active" }, orderBy: { createdAt: "asc" } } }
     });
-    return mapOrganizationSettings(org);
+    const mapped = mapOrganizationSettings(org);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "organization", entityId: input.organizationId, eventType: "organization.settings.updated", before: mapOrganizationSettings(before), after: mapped });
+    return mapped;
   }
 
   async updateOrganizationChannel(input: { organizationId: string; channelId: string; mode?: string; status?: string }) {
-    await this.prisma.channel.update({
+    const before = await this.prisma.channel.findFirst({ where: { id: input.channelId, organizationId: input.organizationId } });
+    if (!before) throw notFound("Channel not found");
+    const channel = await this.prisma.channel.update({
       where: { id: input.channelId, organizationId: input.organizationId },
       data: {
         ...(input.mode ? { defaultEngagementMode: input.mode as EngagementMode } : {}),
         ...(input.status ? { status: input.status === "archived" ? "archived" : "active" } : {})
       }
     });
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "channel", entityId: input.channelId, eventType: "channel.updated", before, after: channel });
     return this.getOrganizationSettings(input.organizationId);
   }
 
@@ -579,17 +593,26 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       },
       include: { memberships: true }
     });
-    return { id: user.id, name: user.displayName, email: user.email, role: input.role, status: "invited", lastLoginAt: null };
+    const mapped = { id: user.id, name: user.displayName, email: user.email, role: input.role, status: "invited", lastLoginAt: null };
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "user", entityId: user.id, eventType: "user.invited", after: mapped });
+    return mapped;
   }
 
   async updateUser(input: { organizationId: string; userId: string; role?: "admin" | "am" | "va" | "broker" | "client"; status?: "active" | "disabled" }) {
+    const before = await this.prisma.organizationMembership.findUnique({
+      where: { organizationId_userId: { organizationId: input.organizationId, userId: input.userId } },
+      include: { user: true }
+    });
+    if (!before) throw notFound("User not found");
     const membership = await this.prisma.organizationMembership.update({
       where: { organizationId_userId: { organizationId: input.organizationId, userId: input.userId } },
       data: { ...(input.role ? { role: input.role } : {}), ...(input.status ? { status: input.status } : {}) },
       include: { user: true }
     });
     if (input.status) await this.prisma.user.update({ where: { id: input.userId }, data: { status: input.status } });
-    return { id: membership.user.id, name: membership.user.displayName, email: membership.user.email, role: membership.role, status: membership.status, lastLoginAt: membership.user.lastLoginAt?.toISOString() ?? null };
+    const mapped = mapUserMembership(membership);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "user", entityId: membership.user.id, eventType: "user.updated", before: mapUserMembership(before), after: mapped });
+    return mapped;
   }
 
   async resendUserInvitation(input: { organizationId: string; userId: string }) {
@@ -598,7 +621,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       include: { user: true }
     });
     if (!membership) throw notFound("User not found");
-    return { id: membership.user.id, name: membership.user.displayName, email: membership.user.email, role: membership.role, status: membership.status, lastLoginAt: membership.user.lastLoginAt?.toISOString() ?? null };
+    const mapped = mapUserMembership(membership);
+    await this.recordAudit({ organizationId: input.organizationId, entityType: "user", entityId: membership.user.id, eventType: "user.invitation_resent", after: mapped });
+    return mapped;
   }
 
   private async scopedDealIds(organizationId: string, membershipId?: string, role?: string): Promise<string[] | null> {
@@ -722,8 +747,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
   }
 }
 
-function mapDeal(deal: DealRow) {
+function mapDeal(deal: DealRow, role?: string) {
   const currentTask = deal.tasks.find((task) => task.isCurrentNextAction);
+  const capabilities = ["admin", "am"].includes(role ?? "") ? ["viewDeal", "moveDealStage", "approveOutboundSend"] : ["viewDeal"];
   return {
     id: deal.id,
     organizationId: deal.organizationId,
@@ -736,7 +762,18 @@ function mapDeal(deal: DealRow) {
     lastActivityAt: deal.lastActivityAt?.toISOString() ?? null,
     nextActionLabel: currentTask?.title ?? null,
     pendingApprovals: deal.tasks.filter((task) => task.status === "waiting_approval").length,
-    capabilities: ["viewDeal", "moveDealStage", "approveOutboundSend"]
+    capabilities
+  };
+}
+
+function mapUserMembership(membership: Prisma.OrganizationMembershipGetPayload<{ include: { user: true } }>) {
+  return {
+    id: membership.user.id,
+    name: membership.user.displayName,
+    email: membership.user.email,
+    role: membership.role,
+    status: membership.status,
+    lastLoginAt: membership.user.lastLoginAt?.toISOString() ?? null
   };
 }
 

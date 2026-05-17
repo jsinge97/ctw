@@ -1,17 +1,25 @@
-import type { MessageDto } from "@ctw/contracts";
+import type { MessageDto, UpdateMessageRequest } from "@ctw/contracts";
 import { EyeOff, FolderSymlink, Lock, MessageSquareText, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
-import { useUpdateMessage } from "../../hooks/use-deals.js";
 import { useUrlPanelState } from "./panel-search.js";
 
 export function sortMessages(messages: MessageDto[]) {
   return [...messages].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
 }
 
-export function MessagesTab({ dealId, messages }: { dealId: string; messages: MessageDto[] }) {
-  const updateMessage = useUpdateMessage(dealId);
+export function MessagesTab({
+  canManage,
+  isUpdating,
+  messages,
+  onUpdateMessage
+}: {
+  canManage: boolean;
+  isUpdating: boolean;
+  messages: MessageDto[];
+  onUpdateMessage: (messageId: string, body: UpdateMessageRequest) => void;
+}) {
   const [selectedId, setSelectedId] = useUrlPanelState("message");
   const [destinationDealId, setDestinationDealId] = useState("");
   const selectedMessage = messages.find((message) => message.id === selectedId) ?? sortMessages(messages)[0] ?? null;
@@ -54,41 +62,45 @@ export function MessagesTab({ dealId, messages }: { dealId: string; messages: Me
               {selectedMessage.routingConfidence !== null ? <Badge tone="amber">{Math.round(selectedMessage.routingConfidence * 100)}% routing confidence</Badge> : null}
             </div>
             <div className={selectedMessage.visibility === "internal" ? "message-body message-body-internal" : "message-body"}>{selectedMessage.bodyText}</div>
-            <div className="action-row">
-              <Button
-                onClick={() => updateMessage.mutate({ messageId: selectedMessage.id, body: { visibility: selectedMessage.visibility === "shared" ? "internal" : "shared" } })}
-              >
-                <ShieldCheck size={16} aria-hidden />
-                {selectedMessage.visibility === "shared" ? "Mark internal" : "Share"}
-              </Button>
-              <Button variant="danger" onClick={() => updateMessage.mutate({ messageId: selectedMessage.id, body: { hidden: true } })}>
-                <EyeOff size={16} aria-hidden />
-                Hide
-              </Button>
-              <Button variant="danger" onClick={() => updateMessage.mutate({ messageId: selectedMessage.id, body: { redacted: true } })}>
-                <Lock size={16} aria-hidden />
-                Redact
-              </Button>
-            </div>
-            <form
-              className="inline-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (!destinationDealId.trim()) return;
-                updateMessage.mutate({ messageId: selectedMessage.id, body: { dealId: destinationDealId.trim() } });
-                setDestinationDealId("");
-              }}
-            >
-              <label>
-                Reassign to deal ID
-                <input value={destinationDealId} onChange={(event) => setDestinationDealId(event.target.value)} placeholder="deal_sutter" />
-              </label>
-              <Button type="submit">
-                <FolderSymlink size={16} aria-hidden />
-                Reassign
-              </Button>
-            </form>
-            {updateMessage.isError ? <p className="form-error">Message update failed.</p> : null}
+            {canManage ? (
+              <>
+                <div className="action-row">
+                  <Button
+                    onClick={() => onUpdateMessage(selectedMessage.id, { visibility: selectedMessage.visibility === "shared" ? "internal" : "shared" })}
+                  >
+                    <ShieldCheck size={16} aria-hidden />
+                    {selectedMessage.visibility === "shared" ? "Mark internal" : "Share"}
+                  </Button>
+                  <Button variant="danger" onClick={() => onUpdateMessage(selectedMessage.id, { hidden: true })}>
+                    <EyeOff size={16} aria-hidden />
+                    Hide
+                  </Button>
+                  <Button variant="danger" onClick={() => onUpdateMessage(selectedMessage.id, { redacted: true })}>
+                    <Lock size={16} aria-hidden />
+                    Redact
+                  </Button>
+                </div>
+                <form
+                  className="inline-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!destinationDealId.trim()) return;
+                    onUpdateMessage(selectedMessage.id, { dealId: destinationDealId.trim() });
+                    setDestinationDealId("");
+                  }}
+                >
+                  <label>
+                    Reassign to deal ID
+                    <input value={destinationDealId} onChange={(event) => setDestinationDealId(event.target.value)} placeholder="deal_sutter" />
+                  </label>
+                  <Button type="submit">
+                    <FolderSymlink size={16} aria-hidden />
+                    Reassign
+                  </Button>
+                </form>
+              </>
+            ) : null}
+            {isUpdating ? <Badge tone="blue">Updating</Badge> : null}
           </>
         ) : (
           <p>No messages have been filed to this deal.</p>

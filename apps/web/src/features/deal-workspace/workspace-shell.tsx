@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { CurrentSession } from "@ctw/contracts";
 import { Link } from "@tanstack/react-router";
 import { Check, Clock, FileText, Mail, MoreHorizontal, Users } from "lucide-react";
 import { AppShell } from "../../components/app-shell.js";
@@ -26,7 +27,7 @@ export function DealWorkspaceShell({
   dealId
 }: {
   activeTab: DealWorkspaceTab;
-  children: (workspace: DealWorkspaceModel) => ReactNode;
+  children: (workspace: DealWorkspaceModel, session: CurrentSession | undefined) => ReactNode;
   dealId: string;
 }) {
   const session = useCurrentSession();
@@ -53,38 +54,47 @@ export function DealWorkspaceShell({
           </header>
 
           <nav className="workspace-tabs" aria-label="Deal workspace tabs">
-            {tabLinks.map((tab) => (
+            {tabLinks.filter((tab) => canViewWorkspaceTab(tab.id, session.data)).map((tab) => (
               <Link className={tab.id === activeTab ? "workspace-tab workspace-tab-active" : "workspace-tab"} key={tab.id} to={tab.to} params={{ dealId }}>
                 {tab.label}
               </Link>
             ))}
           </nav>
 
-          {children(workspace.data)}
+          {workspace.data.unavailable.length > 0 ? <p className="workspace-limited-note">Some internal deal data is hidden for your role.</p> : null}
+          {children(workspace.data, session.data)}
         </section>
       ) : null}
     </AppShell>
   );
 }
 
-export function OverviewTab({ workspace }: { workspace: DealWorkspaceModel }) {
+export function OverviewTab({ session, workspace }: { session: CurrentSession | undefined; workspace: DealWorkspaceModel }) {
+  const canApprove = Boolean(session?.capabilities.includes("approveProposedAction"));
+  const canEditTask = Boolean(session?.capabilities.includes("editTask"));
   return (
     <div className="workspace-grid">
       <article className="next-action-panel">
         <Badge tone="blue">System proposed</Badge>
         <h2>{workspace.deal.nextActionLabel ?? "No current next action"}</h2>
         <p>Review the current recommendation and approve only after checking recipients and payload.</p>
-        <div className="action-row">
-          <Button variant="primary">
-            <Check size={16} aria-hidden />
-            Approve
-          </Button>
-          <Button>Edit</Button>
-          <Button>Defer</Button>
-          <Button variant="ghost" aria-label="More actions">
-            <MoreHorizontal size={16} />
-          </Button>
-        </div>
+        {canApprove || canEditTask ? (
+          <div className="action-row">
+            {canApprove ? (
+              <Button variant="primary">
+                <Check size={16} aria-hidden />
+                Approve
+              </Button>
+            ) : null}
+            {canEditTask ? <Button>Edit</Button> : null}
+            {canEditTask ? <Button>Defer</Button> : null}
+            {canEditTask ? (
+              <Button variant="ghost" aria-label="More actions">
+                <MoreHorizontal size={16} />
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </article>
 
       <aside className="workspace-summary">
@@ -119,6 +129,15 @@ export function OverviewTab({ workspace }: { workspace: DealWorkspaceModel }) {
       </article>
     </div>
   );
+}
+
+export function canViewWorkspaceTab(tab: DealWorkspaceTab, session: CurrentSession | undefined) {
+  if (tab === "overview" || tab === "participants") return Boolean(session?.capabilities.includes("viewDeal"));
+  if (tab === "messages") return Boolean(session?.capabilities.includes("viewMessages"));
+  if (tab === "documents") return Boolean(session?.capabilities.includes("viewDocuments"));
+  if (tab === "tasks") return Boolean(session?.capabilities.includes("viewDeal"));
+  if (tab === "activity") return Boolean(session?.capabilities.includes("viewActivity"));
+  return false;
 }
 
 function SummaryMetric({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {

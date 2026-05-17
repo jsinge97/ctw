@@ -1,8 +1,27 @@
 import { useParams } from "@tanstack/react-router";
 import { DocumentsTab } from "../features/deal-workspace/documents-tab.js";
 import { DealWorkspaceShell } from "../features/deal-workspace/workspace-shell.js";
+import { useArchiveDocument, useCreateDocument, useUpdateDocument, useUploadDocument } from "../hooks/use-deals.js";
 
 export function DealDocumentsRoute() {
   const { dealId } = useParams({ from: "/deals/$dealId/documents" });
-  return <DealWorkspaceShell dealId={dealId} activeTab="documents">{(workspace) => <DocumentsTab dealId={dealId} documents={workspace.documents} />}</DealWorkspaceShell>;
+  const createDocument = useCreateDocument(dealId);
+  const updateDocument = useUpdateDocument(dealId);
+  const archiveDocument = useArchiveDocument(dealId);
+  const uploadDocument = useUploadDocument(dealId);
+  return (
+    <DealWorkspaceShell dealId={dealId} activeTab="documents">
+      {(workspace, session) => (
+        <DocumentsTab
+          documents={workspace.documents}
+          canManage={Boolean(session?.capabilities.includes("uploadDocuments"))}
+          hasError={createDocument.isError || updateDocument.isError || archiveDocument.isError || uploadDocument.isError}
+          onArchiveDocument={(documentId) => archiveDocument.mutate(documentId)}
+          onCreateDocument={(body) => createDocument.mutate(body)}
+          onUpdateDocument={(documentId, body) => updateDocument.mutate({ documentId, body })}
+          onUploadDocument={(file) => uploadDocument.mutate(file)}
+        />
+      )}
+    </DealWorkspaceShell>
+  );
 }

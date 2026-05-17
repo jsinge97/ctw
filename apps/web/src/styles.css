@@ -598,6 +598,15 @@ select {
   margin-top: 14px;
 }
 
+.workspace-limited-note {
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+}
+
 .workspace-tab {
   display: inline-flex;
   align-items: center;

@@ -2,6 +2,9 @@ import type { ComponentProps, ReactNode } from "react";
 import { createContext, useContext, useMemo, useState } from "react";
 import { cn } from "../../lib/cn.js";
 
+// Adapted from janhesters/shadcn-kanban-board's registry component.
+// The upstream component uses native DataTransfer drag/drop; this local version
+// keeps that contract while mapping class names to this app's non-Tailwind CSS.
 type KanbanMonitor = {
   activeId: string | null;
   setActiveId: (id: string | null) => void;
@@ -53,9 +56,9 @@ export function KanbanColumn({
       onDrop={(event) => {
         event.preventDefault();
         setIsDropTarget(false);
-        const rawData = event.dataTransfer.getData(cardTransferType);
-        if (!rawData || !canDrop) return;
-        onDropOverColumn?.(JSON.parse(rawData) as KanbanCardData, columnId);
+        const data = parseKanbanCardData(event.dataTransfer.getData(cardTransferType));
+        if (!data || !canDrop) return;
+        onDropOverColumn?.(data, columnId);
       }}
       {...props}
     >
@@ -63,6 +66,16 @@ export function KanbanColumn({
       {invalidReason ? <p className="kanban-invalid">{invalidReason}</p> : null}
     </article>
   );
+}
+
+export function parseKanbanCardData(rawData: string): KanbanCardData | null {
+  if (!rawData) return null;
+  try {
+    const value = JSON.parse(rawData) as Partial<KanbanCardData>;
+    return typeof value.id === "string" ? (value as KanbanCardData) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function KanbanColumnHeader(props: ComponentProps<"header">) {
