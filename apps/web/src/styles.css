@@ -649,6 +649,12 @@ label {
   background: #f8fafc;
 }
 
+.queue-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .detail-panel,
 .settings-panel {
   padding: 16px;
@@ -746,6 +752,12 @@ label {
   background: #fef2f2;
   color: #991b1b;
   padding: 16px;
+}
+
+.error-panel-neutral {
+  border-color: #dbe3ea;
+  background: #fff;
+  color: #334155;
 }
 
 .workspace {
@@ -1066,11 +1078,31 @@ label {
 .detail-editor input,
 .detail-editor select,
 .create-strip input,
-.create-strip select {
+.create-strip select,
+.inline-label textarea {
   min-height: 36px;
   border: 1px solid #dbe3ea;
   border-radius: 6px;
   padding: 0 10px;
+}
+
+.inline-label {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  color: #334155;
+  font-weight: 700;
+}
+
+.inline-label textarea {
+  min-height: 96px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.link-button {
+  width: max-content;
+  text-decoration: none;
 }
 
 .create-strip {
