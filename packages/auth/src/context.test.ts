@@ -9,6 +9,7 @@ describe("auth foundation", () => {
   it("configures Better Auth wrapper", () => {
     expect(configureBetterAuth({ appBaseUrl: "http://localhost:5173", secret: "secret" })).toMatchObject({
       kind: "better-auth",
+      sessionCookieName: "better-auth.session_token",
       hasSecret: true
     });
   });

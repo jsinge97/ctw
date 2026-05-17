@@ -15,6 +15,12 @@ describe("seed data contract", () => {
     ]);
     expect(seed.users).toHaveLength(5);
     expect(seed.memberships.map((membership) => membership.role).sort()).toEqual(["admin", "am", "broker", "client", "va"]);
+    expect(seed.authSessions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ token: seedIds.authTokens.am, userId: seedIds.users.am, activeOrganizationId: seedIds.organization }),
+        expect.objectContaining({ token: seedIds.authTokens.broker, userId: seedIds.users.broker, activeOrganizationId: seedIds.organization })
+      ])
+    );
     expect(seed.channels).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: seedIds.channels.email, channelType: "email", provider: "resend" }),

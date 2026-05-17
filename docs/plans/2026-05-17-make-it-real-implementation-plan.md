@@ -239,6 +239,8 @@ git commit -m "feat: add durable seed data lifecycle"
 
 ## Task 4: Better Auth Database Integration
 
+**Status:** Done.
+
 **Purpose:** Replace hardcoded bearer-token sessions with Better Auth-backed users and sessions.
 
 **Files:**

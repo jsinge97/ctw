@@ -262,6 +262,7 @@ model Organization {
   archivedAt                 DateTime? @map("archived_at")
 
   memberships OrganizationMembership[]
+  authSessions AuthSession[]
   contacts    Contact[]
   companies   Company[]
   deals       Deal[]
@@ -287,10 +288,28 @@ model User {
   updatedAt               DateTime   @updatedAt @map("updated_at")
 
   memberships OrganizationMembership[]
+  authSessions AuthSession[]
   contacts    Contact[]
 
   @@unique([authProvider, authSubject])
   @@map("users")
+}
+
+model AuthSession {
+  id                   String   @id @default(cuid())
+  token                String   @unique
+  userId               String   @map("user_id")
+  activeOrganizationId String   @map("active_organization_id")
+  expiresAt            DateTime @map("expires_at")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user               User         @relation(fields: [userId], references: [id])
+  activeOrganization Organization @relation(fields: [activeOrganizationId], references: [id])
+
+  @@index([userId, expiresAt])
+  @@index([activeOrganizationId])
+  @@map("auth_sessions")
 }
 
 model OrganizationMembership {

@@ -1,8 +1,10 @@
+import { lookupBetterAuthSession, sessionTokenFromCookieHeader, type DurableSessionLookup } from "@ctw/auth";
 import { roleDefaults, type Role } from "@ctw/permissions";
 import type { CurrentSession } from "@ctw/contracts";
 import { assertProductionRuntimeSafety } from "@ctw/config";
+import { getPrismaClient } from "@ctw/db";
 
-export type SessionLookup = {
+export type SessionLookup = DurableSessionLookup & {
   userId: string;
   email: string;
   displayName: string;
@@ -12,6 +14,16 @@ export type SessionLookup = {
   membershipId: string;
   role: Role;
 };
+
+let durableSessionLookup = (token: string) => lookupBetterAuthSession(getPrismaClient(), token);
+
+export function setDurableSessionLookupForTests(lookup: typeof durableSessionLookup) {
+  durableSessionLookup = lookup;
+}
+
+export function resetDurableSessionLookupForTests() {
+  durableSessionLookup = (token: string) => lookupBetterAuthSession(getPrismaClient(), token);
+}
 
 const demoSessions: Record<string, SessionLookup> = {
   "am-token": {
@@ -84,6 +96,21 @@ export function resolveSessionFromToken(token: string | undefined): CurrentSessi
   const lookup = demoSessions[token];
   if (!lookup) throw new Error("Unauthorized");
   return buildSession(lookup);
+}
+
+export async function resolveSessionFromCookieHeader(cookieHeader: string | undefined): Promise<CurrentSession> {
+  const token = sessionTokenFromCookieHeader(cookieHeader);
+  if (!token) throw new Error("Unauthorized");
+  const lookup = await durableSessionLookup(token);
+  if (!lookup) throw new Error("Unauthorized");
+  return buildSession(lookup);
+}
+
+export async function resolveSessionFromHeaders(headers: { authorization?: string | string[] | undefined; cookie?: string | string[] | undefined }): Promise<CurrentSession> {
+  const cookieHeader = Array.isArray(headers.cookie) ? headers.cookie.join("; ") : headers.cookie;
+  if (sessionTokenFromCookieHeader(cookieHeader)) return resolveSessionFromCookieHeader(cookieHeader);
+  const authorization = Array.isArray(headers.authorization) ? headers.authorization[0] : headers.authorization;
+  return resolveSessionFromToken(authorization?.replace("Bearer ", ""));
 }
 
 export function acceptInvitation(token: string): CurrentSession {

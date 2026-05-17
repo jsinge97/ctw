@@ -16,6 +16,20 @@ export const seedIds = {
     broker: "mem_broker",
     client: "mem_client"
   },
+  authSessions: {
+    admin: "auth_session_admin",
+    am: "auth_session_am",
+    va: "auth_session_va",
+    broker: "auth_session_broker",
+    client: "auth_session_client"
+  },
+  authTokens: {
+    admin: "seed-session-admin",
+    am: "seed-session-am",
+    va: "seed-session-va",
+    broker: "seed-session-broker",
+    client: "seed-session-client"
+  },
   companies: {
     northgate: "company_northgate",
     halcyon: "company_halcyon",
@@ -162,6 +176,14 @@ export function buildSeedData() {
     { id: seedIds.memberships.client, organizationId, userId: seedIds.users.client, role: "client", status: "active", createdAt: now, updatedAt: now }
   ] satisfies Prisma.OrganizationMembershipCreateManyInput[];
 
+  const authSessions = [
+    { id: seedIds.authSessions.admin, token: seedIds.authTokens.admin, userId: seedIds.users.admin, activeOrganizationId: organizationId, expiresAt: new Date("2026-06-17T15:45:00.000Z"), createdAt: now, updatedAt: now },
+    { id: seedIds.authSessions.am, token: seedIds.authTokens.am, userId: seedIds.users.am, activeOrganizationId: organizationId, expiresAt: new Date("2026-06-17T15:45:00.000Z"), createdAt: now, updatedAt: now },
+    { id: seedIds.authSessions.va, token: seedIds.authTokens.va, userId: seedIds.users.va, activeOrganizationId: organizationId, expiresAt: new Date("2026-06-17T15:45:00.000Z"), createdAt: now, updatedAt: now },
+    { id: seedIds.authSessions.broker, token: seedIds.authTokens.broker, userId: seedIds.users.broker, activeOrganizationId: organizationId, expiresAt: new Date("2026-06-17T15:45:00.000Z"), createdAt: now, updatedAt: now },
+    { id: seedIds.authSessions.client, token: seedIds.authTokens.client, userId: seedIds.users.client, activeOrganizationId: organizationId, expiresAt: new Date("2026-06-17T15:45:00.000Z"), createdAt: now, updatedAt: now }
+  ] satisfies Prisma.AuthSessionCreateManyInput[];
+
   const companies = [
     { id: seedIds.companies.northgate, organizationId, name: "Northgate CRE", companyType: "other", status: "active", createdAt: now, updatedAt: now },
     { id: seedIds.companies.halcyon, organizationId, name: "Halcyon Capital", companyType: "brokerage", status: "active", createdAt: now, updatedAt: now },
@@ -284,6 +306,7 @@ export function buildSeedData() {
     organizations,
     users,
     memberships,
+    authSessions,
     companies,
     contacts,
     channels,

@@ -22,6 +22,7 @@ export async function resetSeedData(prisma: PrismaClient = getPrismaClient()) {
     await tx.deal.deleteMany({ where: { organizationId } });
     await tx.contact.deleteMany({ where: { organizationId } });
     await tx.channel.deleteMany({ where: { organizationId } });
+    await tx.authSession.deleteMany({ where: { activeOrganizationId: organizationId } });
     await tx.organizationMembership.deleteMany({ where: { organizationId } });
     await tx.company.deleteMany({ where: { organizationId } });
     await tx.organization.deleteMany({ where: { id: organizationId } });

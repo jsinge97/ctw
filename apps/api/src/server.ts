@@ -23,7 +23,7 @@ export async function buildServer() {
     const requestId = createRequestId();
     request.headers["x-request-id"] = requestId;
     reply.header("x-request-id", requestId);
-    requireAuthenticated(request);
+    await requireAuthenticated(request);
   });
 
   app.get("/healthz", async () => ({ ok: true }));

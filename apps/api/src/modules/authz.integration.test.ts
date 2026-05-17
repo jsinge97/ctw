@@ -1,7 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { sessionCookieHeader } from "@ctw/auth";
 import { buildServer } from "../server.js";
-import { resolveSessionFromToken } from "./session/session.service.js";
+import { resetDurableSessionLookupForTests, resolveSessionFromToken, setDurableSessionLookupForTests } from "./session/session.service.js";
 import { listVaWork } from "./va-work/va-work.service.js";
+
+afterEach(() => {
+  resetDurableSessionLookupForTests();
+});
 
 describe("route authorization", () => {
   it("lets broker participants see only their permitted deals", async () => {
@@ -13,6 +18,30 @@ describe("route authorization", () => {
     expect(response.json()).toEqual(expect.arrayContaining([expect.objectContaining({ id: "deal_sutter" })]));
     expect(response.json()).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: "deal_bryant" })]));
     expect(otherBroker.statusCode).toBe(403);
+  });
+
+  it("applies participant authorization to Better Auth cookie sessions", async () => {
+    setDurableSessionLookupForTests(async (token) =>
+      token === "seed-session-broker"
+        ? {
+            userId: "user_broker",
+            email: "broker@halcyon.com",
+            displayName: "Devon Asherton",
+            organizationId: "org_northgate",
+            organizationName: "Northgate CRE",
+            organizationSlug: "northgate",
+            membershipId: "mem_broker",
+            role: "broker"
+          }
+        : null
+    );
+
+    const app = await buildServer();
+    const response = await app.inject({ method: "GET", url: "/v1/deals", headers: { cookie: sessionCookieHeader("seed-session-broker") } });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual(expect.arrayContaining([expect.objectContaining({ id: "deal_sutter" })]));
+    expect(response.json()).not.toEqual(expect.arrayContaining([expect.objectContaining({ id: "deal_bryant" })]));
   });
 
   it("lets VAs execute assigned queue work without granting admin review actions", async () => {

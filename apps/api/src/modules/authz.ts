@@ -1,7 +1,7 @@
 import type { FastifyRequest } from "fastify";
 import { assertCan, roleDefaults, type Capability, type Role } from "@ctw/permissions";
 import type { CurrentSession } from "@ctw/contracts";
-import { resolveSessionFromToken } from "./session/session.service.js";
+import { resolveSessionFromHeaders } from "./session/session.service.js";
 import { getWorkflowProvider } from "./workflow-provider.js";
 
 const workflow = getWorkflowProvider().memory;
@@ -58,12 +58,12 @@ function participantAllows(session: CurrentSession, capability: Capability, deal
   return normalized.includes(capabilityName) || (capability === "viewKanban" && normalized.includes("viewdeal"));
 }
 
-export function requireAuthenticated(request: FastifyRequest) {
+export async function requireAuthenticated(request: FastifyRequest) {
   const path = request.url.split("?")[0] ?? request.url;
   if (isPublicPath(path)) return null;
-  let session: ReturnType<typeof resolveSessionFromToken>;
+  let session: CurrentSession;
   try {
-    session = resolveSessionFromToken(tokenFromRequest(request));
+    session = await resolveSessionFromHeaders(request.headers);
   } catch {
     throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
   }
@@ -77,7 +77,7 @@ export function requireAuthenticated(request: FastifyRequest) {
   return session;
 }
 
-function requireCapabilityForSession(session: ReturnType<typeof resolveSessionFromToken>, capability: Capability, dealId: string | null = null) {
+function requireCapabilityForSession(session: CurrentSession, capability: Capability, dealId: string | null = null) {
   if (participantAllows(session, capability, dealId)) return;
   const role = session.membership.role as Role;
   const scope = dealId ? { scopeType: "deal" as const, scopeId: dealId } : { scopeType: "organization" as const, scopeId: session.activeOrganization.id };
@@ -91,14 +91,14 @@ function requireCapabilityForSession(session: ReturnType<typeof resolveSessionFr
   );
 }
 
-export function requireCapability(request: FastifyRequest, capability: Capability) {
-  const session = requireAuthenticated(request);
+export async function requireCapability(request: FastifyRequest, capability: Capability) {
+  const session = await requireAuthenticated(request);
   if (!session) return;
   requireCapabilityForSession(session, capability);
 }
 
 export function getRequiredSession(request: FastifyRequest): CurrentSession {
-  const session = requestSessions.get(request) ?? requireAuthenticated(request);
+  const session = requestSessions.get(request);
   if (!session) throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
   return session;
 }
