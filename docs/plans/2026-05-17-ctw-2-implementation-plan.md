@@ -51,12 +51,12 @@ Implementation must follow these product decisions:
 3. [x] Database schema, migrations, repositories.
 4. [x] Auth, permissions, audit, approval foundation.
 5. [x] Backend workflow API surface and worker ingestion foundation.
-6. [ ] Frontend foundation and source-of-truth docs.
-7. [ ] Deal kanban and workspace screens.
-8. [ ] Channel ingestion and filing hardening.
-9. [ ] Next action, task execution, outbound approval hardening.
-10. [ ] Routing review, VA queue, settings hardening.
-11. [ ] E2E hardening and deployment prep.
+6. [x] Frontend foundation and source-of-truth docs.
+7. [x] Deal kanban and workspace screens.
+8. [x] Channel ingestion and filing hardening.
+9. [x] Next action, task execution, outbound approval hardening.
+10. [x] Routing review, VA queue, settings hardening.
+11. [x] E2E hardening and deployment prep.
 
 ## Progress Log
 
@@ -71,11 +71,15 @@ Implementation must follow these product decisions:
 - [x] Completed Phase 1 review fixes and reviewer pass cleared.
 - [x] Completed initial backend workflow API surface and worker ingestion commits.
 - [x] Completed Phase 2 review pass 1 fixes: route-level auth/capability gates, contract-backed body parsing, typed generated client path params, webhook queueing, task approval side effects, routing review resolution state, and VA work transitions.
-- [ ] Phase 2 reviewer pass 2.
+- [x] Phase 2 reviewer pass 2.
 - [x] Completed Task 10 source-of-truth frontend docs.
 - [x] Completed Task 11 web app foundation.
 - [x] Completed Phase 2 review pass 2 fixes: deal-scoped activity auth, participant-aware deal visibility, VA execute capability, stricter routing resolution schema, real low-confidence message seed, routing status updates, outbound send status/provider tracking, and VA task state synchronization.
 - [x] Completed Phase 2 durability follow-up after five review passes: pg-boss queue boundary, Prisma workflow repository boundary, runtime audit repository selection, and API services routed through a workflow provider instead of importing demo state directly.
+- [x] Completed frontend vertical slices for the app shell, kanban, deal workspace, routing review, VA queue, and organization settings; committed `docs: add frontend source of truth`, `feat: add web app foundation`, and `feat: add deal workspace shell`.
+- [x] Completed backend hardening for participant-scoped access, workflow transitions, pg-boss job boundary, and Prisma repository boundaries; committed the Phase 2 follow-up fixes.
+- [x] Completed Task 22 end-to-end smoke flows with injected API coverage and committed `test: add end-to-end workflow smoke flows`.
+- [x] Completed Task 23 deployment prep with Docker, compose, Railway config, package manager pinning, and committed `chore: add deployment prep`.
 
 ---
 
