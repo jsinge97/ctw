@@ -50,8 +50,8 @@ Current known demo seams to remove:
 
 ## Milestones
 
-1. [ ] Agent docs, reality guardrails, and local data lifecycle.
-2. [ ] Real Better Auth sessions and role-aware login.
+1. [x] Agent docs, reality guardrails, and local data lifecycle.
+2. [x] Real Better Auth sessions and role-aware login.
 3. [ ] Durable Prisma workflow services.
 4. [ ] Real ingestion, storage, providers, and worker runtime.
 5. [ ] Real CRUD surfaces and kanban component.
