@@ -80,6 +80,7 @@ Implementation must follow these product decisions:
 - [x] Completed backend hardening for participant-scoped access, workflow transitions, pg-boss job boundary, and Prisma repository boundaries; committed the Phase 2 follow-up fixes.
 - [x] Completed Task 22 end-to-end smoke flows with injected API coverage and committed `test: add end-to-end workflow smoke flows`.
 - [x] Completed Task 23 deployment prep with Docker, compose, Railway config, package manager pinning, and committed `chore: add deployment prep`.
+- [x] Completed final milestone review fixes: production package exports, Prisma generated-client runtime copy, Playwright browser e2e, MinIO compose service, worker health/runtime, app-owned inbound routing review creation, and reviewer pass 4 cleared.
 
 ---
 
