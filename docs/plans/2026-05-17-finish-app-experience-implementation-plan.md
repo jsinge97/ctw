@@ -1071,13 +1071,19 @@ The work is complete only when:
 ## Progress
 
 - [x] Plan written.
-- [ ] Milestone 1: Experience Inventory And Test Harness.
-- [ ] Milestone 2: App Foundation Feedback System.
-- [ ] Milestone 3: Typed Search And App Summary API.
-- [ ] Milestone 4: Deals Kanban Becomes Fully Usable.
-- [ ] Milestone 5: Deal Workspace Actions And CRUD Polish.
-- [ ] Milestone 6: Routing Review Queue Becomes Real.
-- [ ] Milestone 7: VA Queue Becomes Real.
-- [ ] Milestone 8: Settings, Permissions, And Account Polish.
-- [ ] Milestone 9: Replace API-Shortcut Browser Tests With Real UI Flows.
-- [ ] Milestone 10: Final Production-Readiness Pass.
+- [x] Milestone 1: Experience Inventory And Test Harness. Existing browser specs were tightened and an app-shell interactivity spec was added; no subagent review per user instruction.
+- [x] Milestone 2: App Foundation Feedback System.
+- [x] Milestone 3: Typed Search And App Summary API. Implemented as typed frontend adapters/hooks over existing typed endpoints instead of adding new backend endpoints.
+- [x] Milestone 4: Deals Kanban Becomes Fully Usable.
+- [x] Milestone 5: Deal Workspace Actions And CRUD Polish.
+- [x] Milestone 6: Routing Review Queue Becomes Real.
+- [x] Milestone 7: VA Queue Becomes Real.
+- [x] Milestone 8: Settings, Permissions, And Account Polish.
+- [x] Milestone 9: Replace API-Shortcut Browser Tests With Real UI Flows. Browser coverage now passes for the real app surfaces; some API helpers remain for deterministic setup/assertions.
+- [x] Milestone 10: Final Production-Readiness Pass.
+
+Completion notes:
+
+- Subagent reviews were intentionally skipped because the user requested no subagents.
+- Browser E2E now runs in deterministic memory mode locally so it does not require Docker/Postgres just to validate frontend flows.
+- Full verification passed: lint, typecheck, unit tests, build, OpenAPI/client generation, and browser E2E.
