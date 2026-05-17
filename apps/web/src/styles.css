@@ -220,6 +220,11 @@ input {
   background: #f1f5f9;
 }
 
+.kanban-column-drop {
+  border-color: #0f766e;
+  background: #e6f3f1;
+}
+
 .kanban-column header {
   display: flex;
   align-items: center;
@@ -249,13 +254,35 @@ input {
   text-decoration: none;
 }
 
+.deal-card[draggable="true"] {
+  cursor: grab;
+}
+
+.deal-card-dragging {
+  opacity: 0.58;
+}
+
 .deal-card:hover {
   border-color: #9fb2c2;
+}
+
+.drag-handle {
+  color: #64748b;
 }
 
 .deal-card-topline,
 .deal-card-footer {
   justify-content: space-between;
+}
+
+.kanban-error {
+  margin: 8px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 8px;
+  font-size: 13px;
 }
 
 .next-action {

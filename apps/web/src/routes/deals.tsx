@@ -1,11 +1,13 @@
 import type { DealDto } from "@ctw/contracts";
+import { Link } from "@tanstack/react-router";
 import { AlertCircle, GripVertical, Plus } from "lucide-react";
+import { useState } from "react";
 import { AppShell } from "../components/app-shell.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 import { Skeleton } from "../components/ui/skeleton.js";
 import { useCurrentSession } from "../hooks/use-current-session.js";
-import { useDealCards } from "../hooks/use-deals.js";
+import { useDealCards, useMoveDealStage } from "../hooks/use-deals.js";
 import type { DealCardModel } from "../lib/api/adapters/deals.js";
 
 const stages: Array<{ id: DealDto["stage"]; label: string }> = [
@@ -52,21 +54,61 @@ export function DealsRoute() {
 }
 
 function DealKanban({ deals }: { deals: DealCardModel[] }) {
+  const moveDeal = useMoveDealStage();
+  const [draggingDealId, setDraggingDealId] = useState<string | null>(null);
+  const [activeDropStage, setActiveDropStage] = useState<DealDto["stage"] | null>(null);
+  const draggingDeal = draggingDealId ? deals.find((deal) => deal.id === draggingDealId) : undefined;
+
+  function moveToStage(stage: DealDto["stage"]) {
+    if (!draggingDeal || draggingDeal.stage === stage || !draggingDeal.canMove) {
+      setActiveDropStage(null);
+      setDraggingDealId(null);
+      return;
+    }
+    moveDeal.mutate({ dealId: draggingDeal.id, stage });
+    setActiveDropStage(null);
+    setDraggingDealId(null);
+  }
+
   return (
     <section className="kanban-board" aria-label="Deal kanban board">
       {stages.map((stage) => {
         const stageDeals = deals.filter((deal) => deal.stage === stage.id);
         return (
-          <article className="kanban-column" key={stage.id}>
+          <article
+            className={activeDropStage === stage.id ? "kanban-column kanban-column-drop" : "kanban-column"}
+            key={stage.id}
+            onDragLeave={() => setActiveDropStage(null)}
+            onDragOver={(event) => {
+              if (!draggingDeal || draggingDeal.stage === stage.id || !draggingDeal.canMove) return;
+              event.preventDefault();
+              setActiveDropStage(stage.id);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              moveToStage(stage.id);
+            }}
+          >
             <header>
               <span>{stage.label}</span>
               <Badge>{stageDeals.length}</Badge>
             </header>
             <div className="kanban-card-list">
               {stageDeals.map((deal) => (
-                <DealCard key={deal.id} deal={deal} />
+                <DealCard
+                  dragging={draggingDealId === deal.id}
+                  key={deal.id}
+                  deal={deal}
+                  moving={moveDeal.isPending && moveDeal.variables?.dealId === deal.id}
+                  onDragEnd={() => {
+                    setDraggingDealId(null);
+                    setActiveDropStage(null);
+                  }}
+                  onDragStart={() => setDraggingDealId(deal.id)}
+                />
               ))}
             </div>
+            {moveDeal.isError ? <p className="kanban-error">That stage move is not allowed yet.</p> : null}
           </article>
         );
       })}
@@ -74,17 +116,42 @@ function DealKanban({ deals }: { deals: DealCardModel[] }) {
   );
 }
 
-function DealCard({ deal }: { deal: DealCardModel }) {
+function DealCard({
+  deal,
+  dragging,
+  moving,
+  onDragEnd,
+  onDragStart
+}: {
+  deal: DealCardModel;
+  dragging: boolean;
+  moving: boolean;
+  onDragEnd: () => void;
+  onDragStart: () => void;
+}) {
   return (
-    <Link className="deal-card" to="/deals/$dealId" params={{ dealId: deal.id }}>
+    <Link
+      className={dragging ? "deal-card deal-card-dragging" : "deal-card"}
+      draggable={deal.canMove}
+      onDragEnd={onDragEnd}
+      onDragStart={(event) => {
+        if (!deal.canMove) return;
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", deal.id);
+        onDragStart();
+      }}
+      to="/deals/$dealId"
+      params={{ dealId: deal.id }}
+    >
       <span className="deal-card-topline">
-        {deal.canMove ? <GripVertical size={14} aria-label="Can move stage" /> : <span />}
+        {deal.canMove ? <GripVertical className="drag-handle" size={14} aria-label="Drag to move stage" /> : <span />}
         <span className="avatar avatar-sm">{deal.ownerInitials}</span>
       </span>
       <strong>{deal.title}</strong>
       <span className="muted">{deal.company}</span>
       <span className="next-action">{deal.nextAction}</span>
       <span className="deal-card-footer">
+        {moving ? <Badge tone="blue">Moving</Badge> : null}
         {deal.stale ? (
           <Badge tone="amber">
             <AlertCircle size={12} aria-hidden />
@@ -113,4 +180,3 @@ function KanbanSkeleton() {
     </section>
   );
 }
-import { Link } from "@tanstack/react-router";
