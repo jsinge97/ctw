@@ -1,5 +1,6 @@
 import { roleDefaults, type Role } from "@ctw/permissions";
 import type { CurrentSession } from "@ctw/contracts";
+import { assertProductionRuntimeSafety } from "@ctw/config";
 
 export type SessionLookup = {
   userId: string;
@@ -77,6 +78,8 @@ export function buildSession(lookup: SessionLookup): CurrentSession {
 }
 
 export function resolveSessionFromToken(token: string | undefined): CurrentSession {
+  const runtimeEnv = assertProductionRuntimeSafety();
+  if (runtimeEnv.CTW_RUNTIME_MODE === "production" && runtimeEnv.CTW_ALLOW_DEMO_TOKENS !== "true") throw new Error("Demo bearer tokens are not allowed in production");
   if (!token) throw new Error("Unauthorized");
   const lookup = demoSessions[token];
   if (!lookup) throw new Error("Unauthorized");

@@ -1,4 +1,5 @@
 import { getPrismaClient, PrismaWorkflowRepository } from "@ctw/db";
+import { assertProductionRuntimeSafety } from "@ctw/config";
 import {
   activityEvents,
   deals,
@@ -36,9 +37,12 @@ export type RuntimeWorkflowProvider = {
 let provider: RuntimeWorkflowProvider | undefined;
 
 export function getWorkflowProvider(): RuntimeWorkflowProvider {
+  const runtimeEnv = assertProductionRuntimeSafety();
+  const mode = runtimeEnv.CTW_DB_MODE === "prisma" ? "prisma" : "memory";
+  if (runtimeEnv.CTW_RUNTIME_MODE === "production" && mode === "memory") throw new Error("Memory workflow provider is not allowed in production");
   provider ??= {
-    mode: process.env.CTW_DB_MODE === "prisma" ? "prisma" : "memory",
-    prisma: process.env.CTW_DB_MODE === "prisma" ? new PrismaWorkflowRepository(getPrismaClient()) : null,
+    mode,
+    prisma: mode === "prisma" ? new PrismaWorkflowRepository(getPrismaClient()) : null,
     memory: {
       activityEvents,
       deals,
