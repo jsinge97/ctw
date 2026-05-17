@@ -1,3 +1,5 @@
+import type { CurrentSession } from "@ctw/contracts";
+
 export type ApiClientOptions = {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
@@ -27,6 +29,14 @@ export class ApiClient {
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, init);
     if (!response.ok) throw new Error(`API request failed: ${response.status}`);
     return response.json() as Promise<T>;
+  }
+
+  getCurrentSession(): Promise<CurrentSession> {
+    return this.get<CurrentSession>("/v1/session/current");
+  }
+
+  acceptInvitation(body: { token: string }): Promise<CurrentSession> {
+    return this.post<CurrentSession>("/v1/session/accept-invitation", body);
   }
 }
 

@@ -590,3 +590,9 @@ ALTER TABLE "tasks" ADD CONSTRAINT "tasks_deal_id_fkey" FOREIGN KEY ("deal_id") 
 -- AddForeignKey
 ALTER TABLE "va_work_items" ADD CONSTRAINT "va_work_items_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "tasks"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
+
+-- Enforce one active current next action per deal. Prisma schema cannot express a partial unique index.
+CREATE UNIQUE INDEX IF NOT EXISTS "tasks_one_current_next_action_per_deal"
+  ON "tasks" ("deal_id")
+  WHERE "is_current_next_action" = true
+    AND "status" NOT IN ('completed', 'rejected', 'canceled');

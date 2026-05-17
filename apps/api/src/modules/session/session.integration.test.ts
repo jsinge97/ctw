@@ -15,4 +15,10 @@ describe("session service", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ membership: { role: "am" } });
   });
+
+  it("rejects missing session token", async () => {
+    const app = await buildServer();
+    const response = await app.inject({ method: "GET", url: "/v1/session/current" });
+    expect(response.statusCode).toBe(401);
+  });
 });

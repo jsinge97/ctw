@@ -67,8 +67,9 @@ export function buildSession(lookup: SessionLookup): CurrentSession {
 }
 
 export function resolveSessionFromToken(token: string | undefined): CurrentSession {
-  const lookup = demoSessions[token ?? "am-token"] ?? demoSessions["am-token"];
-  if (!lookup) throw new Error("Default demo session is not configured");
+  if (!token) throw new Error("Unauthorized");
+  const lookup = demoSessions[token];
+  if (!lookup) throw new Error("Unauthorized");
   return buildSession(lookup);
 }
 
