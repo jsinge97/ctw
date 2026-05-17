@@ -26,6 +26,9 @@ pnpm test
 pnpm --filter @ctw/api test
 pnpm --filter @ctw/web test
 pnpm --filter @ctw/web e2e
+pnpm --filter @ctw/mcp test
+pnpm --filter @ctw/mcp dev
+pnpm --filter @ctw/mcp start
 pnpm --filter @ctw/worker test
 pnpm --filter @ctw/worker health
 pnpm prisma:generate
@@ -49,6 +52,7 @@ pnpm db:seed
 pnpm --filter @ctw/api dev
 pnpm --filter @ctw/worker dev
 pnpm --filter @ctw/web dev
+pnpm --filter @ctw/mcp dev
 ```
 
 Docker compose now runs the durable stack by default:
@@ -56,6 +60,14 @@ Docker compose now runs the durable stack by default:
 ```bash
 docker compose up api worker web
 ```
+
+Local MCP HTTP server:
+
+```bash
+CTW_MCP_API_BASE_URL=http://127.0.0.1:3000 CTW_MCP_API_TOKEN=am-token pnpm --filter @ctw/mcp dev
+```
+
+The MCP endpoint is `http://127.0.0.1:3010/mcp`.
 
 Regeneration rules:
 

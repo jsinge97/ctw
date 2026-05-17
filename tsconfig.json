@@ -14,6 +14,7 @@
     { "path": "packages/api-client" },
     { "path": "packages/testkit" },
     { "path": "apps/api" },
+    { "path": "apps/mcp" },
     { "path": "apps/worker" },
     { "path": "apps/web" }
   ]
