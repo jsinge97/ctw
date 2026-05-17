@@ -15,7 +15,9 @@
     "lint": "eslint src",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "db:generate": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/ctw} prisma validate --schema prisma/schema.prisma",
-    "db:migrate": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/ctw} prisma migrate deploy --schema prisma/schema.prisma"
+    "db:migrate": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/ctw} prisma migrate deploy --schema prisma/schema.prisma",
+    "db:seed": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/ctw} tsx src/seed.ts",
+    "db:reset": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/ctw} tsx src/reset.ts"
   },
   "dependencies": {
     "@ctw/domain": "workspace:*",

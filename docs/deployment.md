@@ -19,8 +19,11 @@ Use the repository `Dockerfile` for API and worker services. Set the Railway ser
 ## Required Environment
 
 - `DATABASE_URL`
+- `CTW_RUNTIME_MODE=production`
 - `CTW_DB_MODE=prisma`
 - `CTW_JOBS_MODE=pgboss`
+- `CTW_PROVIDER_MODE=live`
+- `CTW_ALLOW_DEMO_TOKENS=false`
 - `APP_BASE_URL`
 - `BETTER_AUTH_SECRET`
 - `RESEND_API_KEY`
@@ -43,3 +46,21 @@ Use the repository `Dockerfile` for API and worker services. Set the Railway ser
 5. Deploy API and worker with the same `DATABASE_URL`, `STORAGE_ENDPOINT`, and `STORAGE_BUCKET`.
 6. Deploy web with `APP_BASE_URL` pointing at the API/web origin.
 7. Configure Resend and Twilio webhook URLs.
+
+## Local Durable Seed
+
+Use the seed lifecycle for local development, reviewer environments, and e2e setup:
+
+```bash
+docker compose up -d postgres minio
+pnpm db:migrate
+pnpm db:seed
+```
+
+The seed creates the Northgate CRE organization, admin/AM/VA/broker/client users, Sutter and Bryant deals, scoped external permissions, Resend/Twilio channels, documents, messages, one current next action, one VA queue item, routing review, approvals, and audit history.
+
+Reset only the seeded Northgate dataset with:
+
+```bash
+pnpm db:reset
+```

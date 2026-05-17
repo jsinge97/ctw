@@ -61,6 +61,8 @@ Current known demo seams to remove:
 
 ## Task 1: Agent Source-of-Truth Docs
 
+**Status:** Done in `232cf4c`.
+
 **Purpose:** Give future agents and humans one obvious place to find the source docs, execution rules, and important commands before they touch code.
 
 **Files:**
@@ -142,6 +144,8 @@ git commit -m "docs: add agent source of truth docs"
 
 ## Task 2: Demo Seam Guardrails
 
+**Status:** Done in `0f582e7`.
+
 **Purpose:** Make demo-only paths explicit so they cannot accidentally remain in production.
 
 **Files:**
@@ -177,6 +181,8 @@ git commit -m "chore: add runtime mode guardrails"
 ---
 
 ## Task 3: Database Seed and Reset Lifecycle
+
+**Status:** Done.
 
 **Purpose:** Give local dev, Playwright, and reviewers a real Postgres-backed dataset instead of `demo-store.ts`.
 

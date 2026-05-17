@@ -27,8 +27,11 @@ services:
     command: pnpm --filter @ctw/api dev
     environment:
       DATABASE_URL: postgresql://ctw:ctw@postgres:5432/ctw
+      CTW_RUNTIME_MODE: demo
       CTW_DB_MODE: prisma
       CTW_JOBS_MODE: pgboss
+      CTW_PROVIDER_MODE: fake
+      CTW_ALLOW_DEMO_TOKENS: "true"
       API_PORT: 3000
       STORAGE_ENDPOINT: http://minio:9000
       STORAGE_BUCKET: ctw-documents
@@ -43,8 +46,11 @@ services:
     command: pnpm --filter @ctw/worker dev
     environment:
       DATABASE_URL: postgresql://ctw:ctw@postgres:5432/ctw
+      CTW_RUNTIME_MODE: demo
       CTW_DB_MODE: prisma
       CTW_JOBS_MODE: pgboss
+      CTW_PROVIDER_MODE: fake
+      CTW_ALLOW_DEMO_TOKENS: "true"
       STORAGE_ENDPOINT: http://minio:9000
       STORAGE_BUCKET: ctw-documents
     depends_on:

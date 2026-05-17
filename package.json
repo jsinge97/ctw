@@ -11,6 +11,8 @@
     "prisma:generate": "pnpm --filter @ctw/db prisma:generate",
     "db:generate": "pnpm --filter @ctw/db db:generate",
     "db:migrate": "pnpm --filter @ctw/db db:migrate",
+    "db:seed": "pnpm --filter @ctw/db db:seed",
+    "db:reset": "pnpm --filter @ctw/db db:reset",
     "openapi:generate": "tsx apps/api/src/openapi.ts",
     "client:generate": "tsx packages/api-client/src/generate.ts",
     "build": "turbo build",

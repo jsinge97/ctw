@@ -30,6 +30,8 @@ pnpm --filter @ctw/worker test
 pnpm prisma:generate
 pnpm db:generate
 pnpm db:migrate
+pnpm db:seed
+pnpm db:reset
 pnpm openapi:generate
 pnpm client:generate
 pnpm build
