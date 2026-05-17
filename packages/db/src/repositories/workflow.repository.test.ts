@@ -43,7 +43,12 @@ describe("PrismaWorkflowRepository", () => {
     const prisma = {
       dealParticipant: {
         async findMany() {
-          return [{ dealId: "deal_sutter" }];
+          return [{ id: "part_broker", dealId: "deal_sutter" }];
+        }
+      },
+      permissionGrant: {
+        async findMany() {
+          return [{ scopeId: "deal_sutter" }];
         }
       },
       deal: {

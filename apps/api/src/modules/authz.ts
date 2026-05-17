@@ -32,8 +32,8 @@ function requiredCapability(method: string, path: string): Capability | null {
   if (path === "/v1/routing-review-items") return "viewRoutingReview";
   if (/^\/v1\/routing-review-items\/[^/]+\/resolve$/.test(path)) return "routeWork";
   if (path === "/v1/va-work-items") return "viewVaQueue";
-  if (/^\/v1\/va-work-items\/[^/]+\/(start|submit|send-back)$/.test(path)) return "completeAssignedTask";
-  if (/^\/v1\/va-work-items\/[^/]+\/(accept|cancel)$/.test(path)) return "approveProposedAction";
+  if (/^\/v1\/va-work-items\/[^/]+\/(start|submit)$/.test(path)) return "completeAssignedTask";
+  if (/^\/v1\/va-work-items\/[^/]+\/(accept|cancel|send-back)$/.test(path)) return "approveProposedAction";
   if (path === "/v1/settings/organization") return method === "GET" ? "viewSettingsOrganization" : "manageOrganizationSettings";
   if (path === "/v1/users") return method === "GET" ? "viewSettingsUsers" : "managePermissions";
   if (/^\/v1\/users\/[^/]+$/.test(path)) return "managePermissions";
@@ -62,11 +62,25 @@ async function participantAllows(session: CurrentSession, capability: Capability
 
 async function prismaParticipantAllows(session: CurrentSession, capability: Capability, dealId: string | null): Promise<boolean> {
   const prisma = getPrismaClient();
+  const dbCapability = dbCapabilityFor(capability);
   if (!dealId && capability === "viewKanban") {
-    const count = await prisma.dealParticipant.count({
-      where: { organizationId: session.activeOrganization.id, subjectType: "membership", subjectId: session.membership.id, status: "active" }
+    const participants = await prisma.dealParticipant.findMany({
+      where: { organizationId: session.activeOrganization.id, subjectType: "membership", subjectId: session.membership.id, status: "active" },
+      select: { id: true, dealId: true }
     });
-    return count > 0;
+    if (participants.length === 0) return false;
+    const grant = await prisma.permissionGrant.findFirst({
+      where: {
+        organizationId: session.activeOrganization.id,
+        scopeType: "deal",
+        scopeId: { in: participants.map((participant) => participant.dealId) },
+        effect: "allow",
+        revokedAt: null,
+        capability: dbCapability,
+        OR: [{ subjectId: session.membership.id }, { subjectId: { in: participants.map((participant) => participant.id) } }]
+      }
+    });
+    return Boolean(grant);
   }
   if (!dealId) return false;
   const participant = await prisma.dealParticipant.findFirst({
@@ -80,12 +94,11 @@ async function prismaParticipantAllows(session: CurrentSession, capability: Capa
       scopeId: dealId,
       effect: "allow",
       revokedAt: null,
+      capability: dbCapability,
       OR: [{ subjectId: session.membership.id }, { subjectId: participant.id }]
     }
   });
-  const normalized = grants.map((grant) => grant.capability.toLowerCase().replace(/[.\s]+/g, ""));
-  const capabilityName = capability.toLowerCase();
-  return normalized.includes(capabilityName) || (capability === "viewKanban" && normalized.includes("dealview"));
+  return grants.length > 0;
 }
 
 export async function requireAuthenticated(request: FastifyRequest) {
@@ -109,6 +122,7 @@ export async function requireAuthenticated(request: FastifyRequest) {
 
 async function requireCapabilityForSession(session: CurrentSession, capability: Capability, dealId: string | null = null) {
   if (await participantAllows(session, capability, dealId)) return;
+  if (dealId && getWorkflowProvider().mode === "prisma") await assertDealBelongsToSessionOrganization(session, dealId);
   const role = session.membership.role as Role;
   const scope = dealId ? { scopeType: "deal" as const, scopeId: dealId } : { scopeType: "organization" as const, scopeId: session.activeOrganization.id };
   assertCan(
@@ -119,6 +133,19 @@ async function requireCapabilityForSession(session: CurrentSession, capability: 
       ? [{ capability, effect: "allow", scopeType: scope.scopeType, scopeId: scope.scopeId, subjectType: "membership", subjectId: session.membership.id }]
       : []
   );
+}
+
+async function assertDealBelongsToSessionOrganization(session: CurrentSession, dealId: string) {
+  const deal = await getPrismaClient().deal.findFirst({ where: { id: dealId, organizationId: session.activeOrganization.id }, select: { id: true } });
+  if (!deal) throw new Error("Deal not found");
+}
+
+function dbCapabilityFor(capability: Capability): string {
+  if (capability === "viewDeal" || capability === "viewKanban") return "deal.view";
+  if (capability === "viewMessages") return "message.view";
+  if (capability === "viewDocuments") return "document.view";
+  if (capability === "uploadDocuments") return "document.upload";
+  return capability;
 }
 
 export async function requireCapability(request: FastifyRequest, capability: Capability) {

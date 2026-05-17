@@ -21,7 +21,7 @@ export async function submitVaWork(itemId: string, session: CurrentSession, inpu
 }
 
 export async function sendBackVaWork(itemId: string, session: CurrentSession, input: SendBackVaWorkRequest): Promise<VaWorkItemDto> {
-  const item = await transitionVaWork(itemId, session, "sent_back", { notes: input.notes ?? input.reason }, "execute");
+  const item = await transitionVaWork(itemId, session, "sent_back", { notes: input.notes ?? input.reason }, "review");
   if (getWorkflowProvider().mode === "memory") item.sentBackReason = input.reason;
   return item;
 }

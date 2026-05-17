@@ -4,9 +4,12 @@ import { getWorkflowProvider } from "../workflow-provider.js";
 export async function listDocuments(dealId: string, session?: CurrentSession): Promise<DocumentDto[]> {
   const workflow = getWorkflowProvider();
   if (workflow.mode === "prisma" && workflow.prisma) {
-    return workflow.prisma.listDocumentsForDeal(session?.activeOrganization.id ?? "org_northgate", dealId) as Promise<DocumentDto[]>;
+    const includeInternal = !session || ["admin", "am"].includes(session.membership.role);
+    return workflow.prisma.listDocumentsForDeal(session?.activeOrganization.id ?? "org_northgate", dealId, includeInternal) as Promise<DocumentDto[]>;
   }
-  return workflow.memory.documents.filter((document) => document.dealId === dealId);
+  const documents = workflow.memory.documents.filter((document) => document.dealId === dealId);
+  if (session && !["admin", "am"].includes(session.membership.role)) return documents.filter((document) => document.visibility === "shared");
+  return documents;
 }
 
 export async function createDocument(dealId: string, input: UpdateDocumentRequest, session?: CurrentSession): Promise<DocumentDto> {
@@ -28,11 +31,12 @@ export async function createDocument(dealId: string, input: UpdateDocumentReques
   return document;
 }
 
-export async function updateDocument(documentId: string, input: UpdateDocumentRequest, session?: CurrentSession): Promise<DocumentDto> {
+export async function updateDocument(dealId: string, documentId: string, input: UpdateDocumentRequest, session?: CurrentSession): Promise<DocumentDto> {
   const workflow = getWorkflowProvider();
   if (workflow.mode === "prisma" && workflow.prisma) {
     return workflow.prisma.updateDocument({
       organizationId: session?.activeOrganization.id ?? "org_northgate",
+      dealId,
       documentId,
       ...(input.title !== undefined ? { title: input.title } : {}),
       ...(input.documentType !== undefined ? { documentType: input.documentType } : {}),
@@ -41,7 +45,7 @@ export async function updateDocument(documentId: string, input: UpdateDocumentRe
       ...(input.tags !== undefined ? { tags: input.tags } : {})
     }) as Promise<DocumentDto>;
   }
-  const document = workflow.memory.documents.find((item) => item.id === documentId);
+  const document = workflow.memory.documents.find((item) => item.id === documentId && item.dealId === dealId);
   if (!document) throw Object.assign(new Error("Document not found"), { statusCode: 404 });
   Object.assign(document, input);
   return document;

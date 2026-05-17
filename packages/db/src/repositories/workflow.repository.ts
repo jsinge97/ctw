@@ -19,17 +19,17 @@ export type WorkflowRepository = {
   patchDeal: (input: { organizationId: string; dealId: string; title?: string; primaryCompanyName?: string | null; staleFlag?: boolean }) => Promise<unknown>;
   moveDealStage: (input: { organizationId: string; dealId: string; stage: DealStage; membershipId: string }) => Promise<unknown>;
   archiveDeal: (input: { organizationId: string; dealId: string; membershipId: string }) => Promise<unknown>;
-  listParticipants: (organizationId: string, dealId: string) => Promise<unknown[]>;
-  addParticipant: (input: { organizationId: string; dealId: string; name: string; company?: string | null; role: string; capabilities: string[]; membershipId?: string | null }) => Promise<unknown>;
-  updateParticipant: (input: { organizationId: string; participantId: string; visibility?: VisibilityDto; capabilities?: string[]; status?: "active" | "removed" }) => Promise<unknown>;
-  listMessagesForDeal: (organizationId: string, dealId: string) => Promise<unknown[]>;
-  createInboundMessage: (input: { organizationId: string; dealId: string | null; channelType: "email" | "sms"; providerMessageId?: string | null; subject?: string | null; bodyText: string; sender?: string | null; recipient?: string | null; routingConfidence?: number | null; routingStatus: "routed" | "review_required" | "unrelated"; visibility: VisibilityDto }) => Promise<unknown>;
+  listParticipants: (organizationId: string, dealId: string, includeInternal?: boolean) => Promise<unknown[]>;
+  addParticipant: (input: { organizationId: string; dealId: string; name: string; company?: string | null; role: string; capabilities: string[]; membershipId?: string | null; actorMembershipId?: string | null }) => Promise<unknown>;
+  updateParticipant: (input: { organizationId: string; dealId: string; participantId: string; visibility?: VisibilityDto; capabilities?: string[]; status?: "active" | "removed"; actorMembershipId?: string | null }) => Promise<unknown>;
+  listMessagesForDeal: (organizationId: string, dealId: string, includeInternal?: boolean) => Promise<unknown[]>;
+  createInboundMessage: (input: { organizationId: string; dealId: string | null; channelId?: string | null; channelType: "email" | "sms"; providerMessageId?: string | null; subject?: string | null; bodyText: string; sender?: string | null; recipient?: string | null; routingConfidence?: number | null; routingStatus: "routed" | "review_required" | "unrelated"; visibility: VisibilityDto }) => Promise<unknown>;
   updateMessageRouting: (input: { organizationId: string; messageId: string; dealId: string | null; routingStatus: "routed" | "review_required" | "unrelated" }) => Promise<unknown>;
-  updateMessage: (input: { organizationId: string; messageId: string; dealId?: string | null; visibility?: VisibilityDto; hidden?: boolean; redacted?: boolean }) => Promise<unknown>;
+  updateMessage: (input: { organizationId: string; dealId: string; messageId: string; nextDealId?: string | null; visibility?: VisibilityDto; hidden?: boolean; redacted?: boolean }) => Promise<unknown>;
   appendOutboundMessage: (input: { organizationId: string; dealId: string; taskId: string; providerMessageId: string | null; messageStatus: "sent" | "failed"; subject: string; bodyText: string }) => Promise<unknown>;
-  listDocumentsForDeal: (organizationId: string, dealId: string) => Promise<unknown[]>;
+  listDocumentsForDeal: (organizationId: string, dealId: string, includeInternal?: boolean) => Promise<unknown[]>;
   createDocument: (input: { organizationId: string; dealId: string; title: string; documentType?: string; visibility: VisibilityDto; folder?: string | null; tags?: string[]; uploadedByMembershipId?: string | null }) => Promise<unknown>;
-  updateDocument: (input: { organizationId: string; documentId: string; title?: string; documentType?: string; visibility?: VisibilityDto; folder?: string | null; tags?: string[] }) => Promise<unknown>;
+  updateDocument: (input: { organizationId: string; dealId: string; documentId: string; title?: string; documentType?: string; visibility?: VisibilityDto; folder?: string | null; tags?: string[] }) => Promise<unknown>;
   archiveDocument: (input: { organizationId: string; documentId: string }) => Promise<unknown>;
   listTasksForDeal: (organizationId: string, dealId: string) => Promise<unknown[]>;
   getTask: (organizationId: string, taskId: string) => Promise<unknown>;
@@ -43,6 +43,7 @@ export type WorkflowRepository = {
   updateVaWorkItem: (input: { organizationId: string; itemId: string; status: VaWorkStatus; assignedToMembershipId?: string | null; submittedPayload?: unknown }) => Promise<unknown>;
   listDealActivity: (organizationId: string, dealId: string, includeInternal?: boolean) => Promise<unknown[]>;
   getOrganizationSettings: (organizationId: string) => Promise<unknown>;
+  findOrganizationByChannelAddress: (channelType: "email" | "sms", address: string) => Promise<{ organizationId: string; channelId: string } | null>;
   updateOrganizationSettings: (input: { organizationId: string; name?: string; routingConfidenceThreshold?: number }) => Promise<unknown>;
   listUsers: (organizationId: string) => Promise<unknown[]>;
   inviteUser: (input: { organizationId: string; email: string; name: string; role: "admin" | "am" | "va" | "broker" | "client" }) => Promise<unknown>;
@@ -130,15 +131,16 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return mapDeal(deal);
   }
 
-  async listParticipants(organizationId: string, dealId: string) {
+  async listParticipants(organizationId: string, dealId: string, includeInternal = true) {
     const participants = await this.prisma.dealParticipant.findMany({
-      where: { organizationId, dealId, status: "active" },
+      where: { organizationId, dealId, status: "active", ...(includeInternal ? {} : { visibility: "shared_with_deal_participants" }) },
       orderBy: { createdAt: "asc" }
     });
     return Promise.all(participants.map((participant) => this.mapParticipant(participant)));
   }
 
-  async addParticipant(input: { organizationId: string; dealId: string; name: string; company?: string | null; role: string; capabilities: string[]; membershipId?: string | null }) {
+  async addParticipant(input: { organizationId: string; dealId: string; name: string; company?: string | null; role: string; capabilities: string[]; membershipId?: string | null; actorMembershipId?: string | null }) {
+    await this.assertDealBelongsToOrganization(input.organizationId, input.dealId);
     const company = input.company
       ? await this.prisma.company.create({ data: { organizationId: input.organizationId, name: input.company, companyType: "other" } })
       : null;
@@ -156,34 +158,43 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       }
     });
     await this.replaceParticipantCapabilities(input.organizationId, participant.id, input.capabilities);
-    return this.mapParticipant(participant);
+    const mapped = await this.mapParticipant(participant);
+    await this.recordAudit({ organizationId: input.organizationId, actorMembershipId: input.actorMembershipId ?? null, entityType: "deal_participant", entityId: participant.id, dealId: participant.dealId, eventType: "participant.added", after: mapped });
+    return mapped;
   }
 
-  async updateParticipant(input: { organizationId: string; participantId: string; visibility?: VisibilityDto; capabilities?: string[]; status?: "active" | "removed" }) {
+  async updateParticipant(input: { organizationId: string; dealId: string; participantId: string; visibility?: VisibilityDto; capabilities?: string[]; status?: "active" | "removed"; actorMembershipId?: string | null }) {
+    const before = await this.prisma.dealParticipant.findFirst({ where: { id: input.participantId, organizationId: input.organizationId, dealId: input.dealId } });
+    if (!before) throw notFound("Participant not found");
+    const beforeMapped = await this.mapParticipant(before);
     const participant = await this.prisma.dealParticipant.update({
-      where: { id: input.participantId, organizationId: input.organizationId },
+      where: { id: input.participantId, organizationId: input.organizationId, dealId: input.dealId },
       data: {
         ...(input.visibility ? { visibility: toDbVisibility(input.visibility) } : {}),
         ...(input.status ? { status: input.status === "removed" ? "archived" : "active" } : {})
       }
     });
     if (input.capabilities) await this.replaceParticipantCapabilities(input.organizationId, participant.id, input.capabilities);
-    return this.mapParticipant(participant);
+    const mapped = await this.mapParticipant(participant);
+    await this.recordAudit({ organizationId: input.organizationId, actorMembershipId: input.actorMembershipId ?? null, entityType: "deal_participant", entityId: participant.id, dealId: participant.dealId, eventType: "participant.updated", before: beforeMapped, after: mapped });
+    return mapped;
   }
 
-  async listMessagesForDeal(organizationId: string, dealId: string) {
+  async listMessagesForDeal(organizationId: string, dealId: string, includeInternal = true) {
     const messages = await this.prisma.message.findMany({
-      where: { organizationId, dealId },
+      where: { organizationId, dealId, ...(includeInternal ? {} : { visibility: "shared_with_deal_participants" }) },
       orderBy: { occurredAt: "desc" }
     });
     return messages.map(mapMessage);
   }
 
-  async createInboundMessage(input: { organizationId: string; dealId: string | null; channelType: "email" | "sms"; providerMessageId?: string | null; subject?: string | null; bodyText: string; sender?: string | null; recipient?: string | null; routingConfidence?: number | null; routingStatus: "routed" | "review_required" | "unrelated"; visibility: VisibilityDto }) {
+  async createInboundMessage(input: { organizationId: string; dealId: string | null; channelId?: string | null; channelType: "email" | "sms"; providerMessageId?: string | null; subject?: string | null; bodyText: string; sender?: string | null; recipient?: string | null; routingConfidence?: number | null; routingStatus: "routed" | "review_required" | "unrelated"; visibility: VisibilityDto }) {
+    if (input.dealId) await this.assertDealBelongsToOrganization(input.organizationId, input.dealId);
     const message = await this.prisma.message.create({
       data: {
         organizationId: input.organizationId,
         dealId: input.dealId,
+        channelId: input.channelId ?? null,
         channelType: input.channelType,
         direction: "inbound",
         providerMessageId: input.providerMessageId ?? null,
@@ -221,13 +232,14 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return mapped;
   }
 
-  async updateMessage(input: { organizationId: string; messageId: string; dealId?: string | null; visibility?: VisibilityDto; hidden?: boolean; redacted?: boolean }) {
-    const before = await this.prisma.message.findFirst({ where: { id: input.messageId, organizationId: input.organizationId } });
+  async updateMessage(input: { organizationId: string; dealId: string; messageId: string; nextDealId?: string | null; visibility?: VisibilityDto; hidden?: boolean; redacted?: boolean }) {
+    if (input.nextDealId) await this.assertDealBelongsToOrganization(input.organizationId, input.nextDealId);
+    const before = await this.prisma.message.findFirst({ where: { id: input.messageId, organizationId: input.organizationId, dealId: input.dealId } });
     if (!before) throw notFound("Message not found");
     const message = await this.prisma.message.update({
-      where: { id: input.messageId, organizationId: input.organizationId },
+      where: { id: input.messageId, organizationId: input.organizationId, dealId: input.dealId },
       data: {
-        ...(input.dealId !== undefined ? { dealId: input.dealId } : {}),
+        ...(input.nextDealId !== undefined ? { dealId: input.nextDealId } : {}),
         ...(input.visibility ? { visibility: toDbVisibility(input.visibility) } : {}),
         ...(input.hidden ? { messageStatus: "hidden" } : {}),
         ...(input.redacted ? { messageStatus: "redacted", bodyText: "[redacted]", redactedAt: new Date() } : {})
@@ -258,9 +270,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return mapMessage(message);
   }
 
-  async listDocumentsForDeal(organizationId: string, dealId: string) {
+  async listDocumentsForDeal(organizationId: string, dealId: string, includeInternal = true) {
     const documents = await this.prisma.document.findMany({
-      where: { organizationId, dealId, status: "active" },
+      where: { organizationId, dealId, status: "active", ...(includeInternal ? {} : { visibility: "shared_with_deal_participants" }) },
       include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } },
       orderBy: { createdAt: "desc" }
     });
@@ -268,6 +280,7 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
   }
 
   async createDocument(input: { organizationId: string; dealId: string; title: string; documentType?: string; visibility: VisibilityDto; folder?: string | null; tags?: string[]; uploadedByMembershipId?: string | null }) {
+    await this.assertDealBelongsToOrganization(input.organizationId, input.dealId);
     const data: Prisma.DocumentUncheckedCreateInput = {
       organizationId: input.organizationId,
       dealId: input.dealId,
@@ -287,9 +300,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return mapped;
   }
 
-  async updateDocument(input: { organizationId: string; documentId: string; title?: string; documentType?: string; visibility?: VisibilityDto; folder?: string | null; tags?: string[] }) {
+  async updateDocument(input: { organizationId: string; dealId: string; documentId: string; title?: string; documentType?: string; visibility?: VisibilityDto; folder?: string | null; tags?: string[] }) {
     const before = await this.prisma.document.findFirst({
-      where: { id: input.documentId, organizationId: input.organizationId },
+      where: { id: input.documentId, organizationId: input.organizationId, dealId: input.dealId },
       include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }
     });
     if (!before) throw notFound("Document not found");
@@ -300,7 +313,7 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     if (input.folder !== undefined) data.folder = input.folder;
     if (input.tags !== undefined) data.tags = input.tags as Prisma.InputJsonValue;
     const document = await this.prisma.document.update({
-      where: { id: input.documentId, organizationId: input.organizationId },
+      where: { id: input.documentId, organizationId: input.organizationId, dealId: input.dealId },
       data,
       include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }
     });
@@ -330,6 +343,7 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
   }
 
   async createTask(input: { organizationId: string; dealId: string; title: string; description?: string | null; route: TaskRoute; assignedToMembershipId?: string | null; payload?: unknown }) {
+    await this.assertDealBelongsToOrganization(input.organizationId, input.dealId);
     const task = await this.prisma.task.create({
       data: {
         organizationId: input.organizationId,
@@ -472,6 +486,17 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return mapOrganizationSettings(org);
   }
 
+  async findOrganizationByChannelAddress(channelType: "email" | "sms", address: string) {
+    const channels = await this.prisma.channel.findMany({
+      where: { channelType, address, status: "active" },
+      take: 2,
+      select: { id: true, organizationId: true }
+    });
+    if (channels.length > 1) throw Object.assign(new Error("Inbound channel address is ambiguous"), { statusCode: 409 });
+    const channel = channels[0];
+    return channel ? { organizationId: channel.organizationId, channelId: channel.id } : null;
+  }
+
   async updateOrganizationSettings(input: { organizationId: string; name?: string; routingConfidenceThreshold?: number }) {
     const org = await this.prisma.organization.update({
       where: { id: input.organizationId },
@@ -529,16 +554,37 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     if (!membershipId || !role || ["admin", "am", "va"].includes(role)) return null;
     const participants = await this.prisma.dealParticipant.findMany({
       where: { organizationId, subjectType: "membership", subjectId: membershipId, status: "active" },
-      select: { dealId: true }
+      select: { id: true, dealId: true }
     });
-    return participants.map((participant) => participant.dealId);
+    if (participants.length === 0) return [];
+    const grants = await this.prisma.permissionGrant.findMany({
+      where: {
+        organizationId,
+        scopeType: "deal",
+        effect: "allow",
+        revokedAt: null,
+        capability: "deal.view",
+        OR: [{ subjectId: membershipId }, { subjectId: { in: participants.map((participant) => participant.id) } }]
+      },
+      select: { scopeId: true }
+    });
+    const visibleDealIds = new Set(grants.map((grant) => grant.scopeId));
+    return participants.map((participant) => participant.dealId).filter((dealId) => visibleDealIds.has(dealId));
   }
 
   private async mapParticipant(participant: Prisma.DealParticipantGetPayload<object>) {
     const [membership, contact, grants] = await Promise.all([
       participant.subjectType === "membership" ? this.prisma.organizationMembership.findUnique({ where: { id: participant.subjectId }, include: { user: true } }) : null,
       participant.subjectType === "contact" ? this.prisma.contact.findUnique({ where: { id: participant.subjectId }, include: { company: true } }) : null,
-      this.prisma.permissionGrant.findMany({ where: { organizationId: participant.organizationId, scopeType: "deal", scopeId: participant.dealId, subjectId: participant.subjectId, revokedAt: null } })
+      this.prisma.permissionGrant.findMany({
+        where: {
+          organizationId: participant.organizationId,
+          scopeType: "deal",
+          scopeId: participant.dealId,
+          revokedAt: null,
+          OR: [{ subjectId: participant.subjectId }, { subjectId: participant.id }]
+        }
+      })
     ]);
     const name = membership?.user.displayName ?? contact?.name ?? participant.subjectId;
     return {
@@ -600,6 +646,11 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
         effect: "allow"
       }))
     });
+  }
+
+  private async assertDealBelongsToOrganization(organizationId: string, dealId: string) {
+    const deal = await this.prisma.deal.findFirst({ where: { id: dealId, organizationId }, select: { id: true } });
+    if (!deal) throw notFound("Deal not found");
   }
 
   private async recordAudit(input: { organizationId: string; actorMembershipId?: string | null; entityType: string; entityId: string; dealId?: string | null; eventType: string; before?: unknown; after?: unknown }) {
@@ -722,12 +773,16 @@ function fromDbVisibility(visibility: string): VisibilityDto {
 
 function toDbCapability(capability: string) {
   if (capability === "viewDeal") return "deal.view";
+  if (capability === "viewMessages") return "message.view";
+  if (capability === "viewDocuments") return "document.view";
   if (capability === "uploadDocuments") return "document.upload";
   return capability;
 }
 
 function fromDbCapability(capability: string) {
   if (capability === "deal.view") return "viewDeal";
+  if (capability === "message.view") return "viewMessages";
+  if (capability === "document.view") return "viewDocuments";
   if (capability === "document.upload") return "uploadDocuments";
   return capability;
 }

@@ -1,4 +1,4 @@
-import type { MessageDto, RoutingReviewItemDto } from "@ctw/contracts";
+import type { DealDto, MessageDto, RoutingReviewItemDto } from "@ctw/contracts";
 import type { normalizeResendInbound, normalizeTwilioInbound } from "@ctw/integrations";
 import { getWorkflowProvider } from "../workflow-provider.js";
 
@@ -8,13 +8,12 @@ type NormalizedInbound = NormalizedEmail | NormalizedSms;
 
 type FiledInboundMessage = { message: MessageDto; reviewItem: RoutingReviewItemDto | null };
 
-const defaultOrganizationId = "org_northgate";
-
-function scoreInboundRoute(normalized: NormalizedInbound): { confidence: number; suggestedDealId: string | null } {
+function scoreInboundRoute(normalized: NormalizedInbound, candidates: Pick<DealDto, "id" | "title">[]): { confidence: number; suggestedDealId: string | null } {
   const subject = normalized.channelType === "email" ? normalized.subject?.toLowerCase() ?? "" : "";
   const body = normalized.bodyText.toLowerCase();
-  if (subject.includes("401 bryant") || body.includes("401 bryant")) return { confidence: 0.41, suggestedDealId: "deal_bryant" };
-  if (normalized.sender.includes("@")) return { confidence: 0.92, suggestedDealId: "deal_sutter" };
+  const haystack = `${subject} ${body}`;
+  const matchedDeal = candidates.find((deal) => dealTitleSignals(deal.title).some((signal) => haystack.includes(signal)));
+  if (matchedDeal) return { confidence: 0.41, suggestedDealId: matchedDeal.id };
   return { confidence: 0.4, suggestedDealId: null };
 }
 
@@ -28,14 +27,18 @@ export async function fileInboundSms(normalized: NormalizedSms): Promise<FiledIn
 
 async function fileInboundMessage(normalized: NormalizedInbound): Promise<FiledInboundMessage> {
   const workflow = getWorkflowProvider();
-  const route = scoreInboundRoute(normalized);
 
   if (workflow.mode === "prisma" && workflow.prisma) {
-    const settings = (await workflow.prisma.getOrganizationSettings(defaultOrganizationId)) as { routingConfidenceThreshold: number };
+    const channel = await workflow.prisma.findOrganizationByChannelAddress(normalized.channelType, normalized.recipient);
+    if (!channel) throw Object.assign(new Error("Inbound channel not found"), { statusCode: 404 });
+    const candidates = (await workflow.prisma.listDeals(channel.organizationId)) as Pick<DealDto, "id" | "title">[];
+    const route = scoreInboundRoute(normalized, candidates);
+    const settings = (await workflow.prisma.getOrganizationSettings(channel.organizationId)) as { routingConfidenceThreshold: number };
     const routedDealId = route.confidence >= settings.routingConfidenceThreshold ? route.suggestedDealId : null;
     const message = (await workflow.prisma.createInboundMessage({
-      organizationId: defaultOrganizationId,
+      organizationId: channel.organizationId,
       dealId: routedDealId,
+      channelId: channel.channelId,
       channelType: normalized.channelType,
       providerMessageId: normalized.providerMessageId,
       subject: normalized.channelType === "email" ? normalized.subject : null,
@@ -50,7 +53,7 @@ async function fileInboundMessage(normalized: NormalizedInbound): Promise<FiledI
     if (routedDealId) return { message, reviewItem: null };
 
     const reviewItem = (await workflow.prisma.createRoutingReviewItem({
-      organizationId: defaultOrganizationId,
+      organizationId: channel.organizationId,
       messageId: message.id,
       suggestedDealId: route.suggestedDealId,
       confidence: route.confidence
@@ -58,7 +61,14 @@ async function fileInboundMessage(normalized: NormalizedInbound): Promise<FiledI
     return { message, reviewItem };
   }
 
+  const route = scoreInboundRoute(normalized, getWorkflowProvider().memory.deals);
   return fileInboundMessageInMemory(normalized, route);
+}
+
+function dealTitleSignals(title: string): string[] {
+  const normalized = title.toLowerCase();
+  const primary = normalized.split("-")[0]?.trim();
+  return [primary, normalized].filter((signal): signal is string => Boolean(signal && signal.length >= 4));
 }
 
 function fileInboundMessageInMemory(normalized: NormalizedInbound, route: { confidence: number; suggestedDealId: string | null }): FiledInboundMessage {

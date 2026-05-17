@@ -52,7 +52,7 @@ Current known demo seams to remove:
 
 1. [x] Agent docs, reality guardrails, and local data lifecycle.
 2. [x] Real Better Auth sessions and role-aware login.
-3. [ ] Durable Prisma workflow services.
+3. [x] Durable Prisma workflow services.
 4. [ ] Real ingestion, storage, providers, and worker runtime.
 5. [ ] Real CRUD surfaces and kanban component.
 6. [ ] Production-grade e2e, deployment, and docs.
@@ -531,6 +531,8 @@ git commit -m "feat: persist task and va workflows"
 ---
 
 ## Milestone 2 Review
+
+**Status:** Done after three reviewer passes.
 
 Request one subagent review before continuing.
 

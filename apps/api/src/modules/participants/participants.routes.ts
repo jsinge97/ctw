@@ -7,5 +7,5 @@ import { addParticipant, listParticipants, updateParticipant } from "./participa
 export async function registerParticipantsRoutes(app: FastifyInstance) {
   app.get<{ Params: { dealId: string } }>("/v1/deals/:dealId/participants", async (request) => listParticipants(request.params.dealId, getRequiredSession(request)));
   app.post<{ Params: { dealId: string } }>("/v1/deals/:dealId/participants", async (request) => addParticipant(request.params.dealId, parseBody(addParticipantRequestSchema, request.body), getRequiredSession(request)));
-  app.patch<{ Params: { participantId: string } }>("/v1/deals/:dealId/participants/:participantId", async (request) => updateParticipant(request.params.participantId, parseBody(updateParticipantRequestSchema, request.body), getRequiredSession(request)));
+  app.patch<{ Params: { dealId: string; participantId: string } }>("/v1/deals/:dealId/participants/:participantId", async (request) => updateParticipant(request.params.dealId, request.params.participantId, parseBody(updateParticipantRequestSchema, request.body), getRequiredSession(request)));
 }
