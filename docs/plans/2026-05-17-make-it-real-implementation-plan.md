@@ -25,16 +25,16 @@ Read these before starting, and re-read the relevant sections at the start of ea
 - `docs/design-system.md`
 - `docs/deployment.md`
 - `docs/plans/2026-05-17-ctw-2-implementation-plan.md`
+- `docs/plans/2026-05-17-make-it-real-implementation-plan.md`
 
-Current known demo seams to remove:
+Implementation notes after completion:
 
-- Web login injects `am-token` in `apps/web/src/lib/api/runtime.ts`.
-- API sessions are resolved from hardcoded tokens in `apps/api/src/modules/session/session.service.ts`.
-- Most API services use `getWorkflowProvider().memory`, which points at `apps/api/src/modules/demo-store.ts`.
-- Prisma schema and repository boundaries exist, but most workflow commands are not durable.
-- Kanban drag/drop is local HTML drag/drop, not `janhesters/shadcn-kanban-board`.
-- Provider integrations return deterministic fake IDs unless wired through environment-backed clients.
-- E2E tests use injected Fastify and browser smoke checks, but not a fully seeded Postgres lifecycle.
+- Durable app mode uses Prisma, pg-boss, Better Auth-compatible session cookies, Resend/Twilio provider boundaries, and S3-compatible storage.
+- Demo bearer tokens, memory workflow, fake providers, and memory storage are blocked in production by runtime guardrails.
+- Browser Playwright is configured to migrate and seed Postgres before the app starts.
+- Production deployment is split across API, worker, web static hosting, Postgres, and object storage.
+- `apps/api/src/modules/demo-store.ts` remains only for explicit non-production memory/demo mode.
+- Temporary password login remains disabled in production until a real Better Auth credential/provider flow is configured.
 
 ## Execution Rules
 
@@ -54,8 +54,8 @@ Current known demo seams to remove:
 2. [x] Real Better Auth sessions and role-aware login.
 3. [x] Durable Prisma workflow services.
 4. [x] Real ingestion, storage, providers, and worker runtime.
-5. [ ] Real CRUD surfaces and kanban component.
-6. [ ] Production-grade e2e, deployment, and docs.
+5. [x] Real CRUD surfaces and kanban component.
+6. [x] Production-grade e2e, deployment, and docs.
 
 ---
 

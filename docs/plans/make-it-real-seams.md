@@ -9,27 +9,20 @@ This file tracks temporary demo seams that must disappear before production mode
 - `CTW_RUNTIME_MODE=production` must use `CTW_PROVIDER_MODE=live`.
 - `CTW_RUNTIME_MODE=production` must set `CTW_ALLOW_DEMO_TOKENS=false`.
 
-## Remaining Demo Seams
+## Completed Seams
 
-- Web runtime injects `am-token` in `apps/web/src/lib/api/runtime.ts`.
-  - Removed by Task 5.
-- API session service still supports hardcoded demo bearer tokens and demo cookie login only when runtime/database mode is non-production demo mode.
-  - Removed entirely after durable e2e flows stop depending on demo mode.
-- API login creates app-owned `auth_sessions` rows with the Better Auth cookie name; it does not yet delegate to Better Auth's credential endpoint.
-  - Full Better Auth credential provider wiring is required before production login is enabled.
-- API workflow services mostly read `getWorkflowProvider().memory`; access now throws when `CTW_DB_MODE=prisma`.
-  - Replaced by Prisma repository calls in Tasks 6-9.
-- Full `docker compose up api worker web` uses demo memory mode until Tasks 6-9 remove the import-time memory bindings.
-  - Postgres can still be migrated and seeded independently for durable repository work.
-- `apps/api/src/modules/demo-store.ts` seeds in-memory deal state.
-  - Replaced by durable seed/reset flow in Task 3 and Prisma services in Tasks 6-9.
-- Provider functions in `packages/integrations` return deterministic fake IDs only when `CTW_PROVIDER_MODE=fake`; live mode currently throws instead of faking sends.
-  - Replaced by real provider adapter boundaries in Task 10.
-- Storage is not yet used for durable uploaded/attached document objects.
-  - Replaced by durable S3-compatible storage in Task 11.
-- Worker jobs currently perform deterministic placeholder transforms.
-  - Replaced by Prisma-updating durable worker jobs in Task 12.
-- Kanban uses local HTML drag/drop.
-  - Replaced by `janhesters/shadcn-kanban-board` in Task 15.
-- E2E tests do not yet reset and seed Postgres for every browser flow.
-  - Replaced by seeded Postgres e2e in Task 16.
+- Web login no longer injects `am-token`; it signs in through `/v1/session/login` and uses cookie credentials.
+- Workflow services are wired through Prisma repositories when `CTW_DB_MODE=prisma`.
+- `docker compose up api worker web` now uses Prisma, pg-boss, MinIO-backed storage, fake providers, and no demo bearer tokens.
+- Provider functions call Resend and Twilio in live mode and return deterministic IDs only in fake mode.
+- Document upload and filing write through the storage boundary.
+- Worker jobs update durable workflow state.
+- Kanban uses the local `components/ui/kanban.tsx` adaptation of `janhesters/shadcn-kanban-board`.
+- Browser E2E starts the app with seeded Postgres in `playwright.config.ts`.
+
+## Remaining Intentional Non-Production Seams
+
+- API session service still supports hardcoded demo bearer tokens only when runtime mode is non-production and `CTW_ALLOW_DEMO_TOKENS=true`.
+- API login creates app-owned `auth_sessions` rows with the Better Auth cookie name; production credential login remains disabled until a real Better Auth credential/provider flow is configured.
+- `apps/api/src/modules/demo-store.ts` remains for explicit non-production memory/demo mode only.
+- Fake providers and memory storage remain available for local tests and demos, but production readiness rejects them.

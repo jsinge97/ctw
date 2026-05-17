@@ -27,6 +27,7 @@ pnpm --filter @ctw/api test
 pnpm --filter @ctw/web test
 pnpm --filter @ctw/web e2e
 pnpm --filter @ctw/worker test
+pnpm --filter @ctw/worker health
 pnpm prisma:generate
 pnpm db:generate
 pnpm db:migrate
@@ -46,7 +47,14 @@ docker compose up -d postgres minio
 pnpm db:migrate
 pnpm db:seed
 pnpm --filter @ctw/api dev
+pnpm --filter @ctw/worker dev
 pnpm --filter @ctw/web dev
+```
+
+Docker compose now runs the durable stack by default:
+
+```bash
+docker compose up api worker web
 ```
 
 Regeneration rules:
