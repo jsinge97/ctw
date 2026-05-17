@@ -6,8 +6,10 @@ const validEnv = {
   APP_BASE_URL: "http://localhost:5173",
   BETTER_AUTH_SECRET: "super-secret",
   RESEND_API_KEY: "re_test",
+  RESEND_FROM_EMAIL: "deals@northgate.cre",
   TWILIO_ACCOUNT_SID: "AC_test",
   TWILIO_AUTH_TOKEN: "twilio-token",
+  TWILIO_FROM_NUMBER: "+14155550188",
   STORAGE_ENDPOINT: "http://localhost:9000",
   STORAGE_BUCKET: "ctw"
 };

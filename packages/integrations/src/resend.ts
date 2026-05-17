@@ -10,5 +10,5 @@ export const resendInboundSchema = z.object({
 
 export function normalizeResendInbound(payload: unknown) {
   const parsed = resendInboundSchema.parse(payload);
-  return { provider: "resend" as const, channelType: "email" as const, sender: parsed.from, recipient: parsed.to, subject: parsed.subject ?? null, bodyText: parsed.text, providerMessageId: parsed.messageId ?? null };
+  return { provider: "resend" as const, channelType: "email" as const, sender: parsed.from, recipient: parsed.to, subject: parsed.subject ?? null, bodyText: parsed.text, providerMessageId: parsed.messageId ?? null, rawProviderPayload: payload };
 }

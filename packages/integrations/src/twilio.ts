@@ -9,5 +9,5 @@ export const twilioInboundSchema = z.object({
 
 export function normalizeTwilioInbound(payload: unknown) {
   const parsed = twilioInboundSchema.parse(payload);
-  return { provider: "twilio" as const, channelType: "sms" as const, sender: parsed.From, recipient: parsed.To, bodyText: parsed.Body, providerMessageId: parsed.MessageSid ?? null };
+  return { provider: "twilio" as const, channelType: "sms" as const, sender: parsed.From, recipient: parsed.To, bodyText: parsed.Body, providerMessageId: parsed.MessageSid ?? null, rawProviderPayload: payload };
 }

@@ -547,6 +547,8 @@ Review focus:
 
 ## Task 10: Real Provider Adapters
 
+**Status:** Done.
+
 **Purpose:** Replace deterministic fake provider functions with environment-backed provider clients behind testable adapters.
 
 **Files:**

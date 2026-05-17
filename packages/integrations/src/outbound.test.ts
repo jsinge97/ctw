@@ -22,11 +22,11 @@ function setLiveProviderEnv() {
 describe("outbound provider guardrails", () => {
   it("does not fake Resend sends when provider mode is live", async () => {
     setLiveProviderEnv();
-    await expect(sendOutboundEmail({ to: ["broker@halcyon.com"], subject: "LOI", text: "Draft" })).rejects.toThrow(/Live Resend outbound provider/);
+    await expect(sendOutboundEmail({ to: ["broker@halcyon.com"], subject: "LOI", text: "Draft" })).rejects.toThrow(/RESEND_API_KEY is required/);
   });
 
   it("does not fake Twilio sends when provider mode is live", async () => {
     setLiveProviderEnv();
-    await expect(sendOutboundSms({ to: "+14155550188", text: "Draft" })).rejects.toThrow(/Live Twilio outbound provider/);
+    await expect(sendOutboundSms({ to: "+14155550188", text: "Draft" })).rejects.toThrow(/TWILIO_ACCOUNT_SID is required/);
   });
 });

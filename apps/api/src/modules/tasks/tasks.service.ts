@@ -1,9 +1,18 @@
 import type { CreateTaskRequest, CurrentSession, TaskDecisionRequest, TaskDto } from "@ctw/contracts";
-import { sendOutboundEmail } from "@ctw/integrations";
+import { createProviderBundle, type EmailProvider } from "@ctw/integrations";
 import { getRuntimeAuditService } from "../audit/audit.service.js";
 import { getWorkflowProvider } from "../workflow-provider.js";
 
 const defaultOrganizationId = "org_northgate";
+let emailProviderOverride: EmailProvider | undefined;
+
+export function setEmailProviderForTests(provider: EmailProvider | undefined) {
+  emailProviderOverride = provider;
+}
+
+function emailProvider(): EmailProvider {
+  return emailProviderOverride ?? createProviderBundle().email;
+}
 
 export async function listTasks(dealId: string, session?: CurrentSession): Promise<TaskDto[]> {
   const workflow = getWorkflowProvider();
@@ -76,7 +85,7 @@ async function decideTaskWithPrisma(
       let providerMessageId: string | null = null;
       let messageStatus: "sent" | "failed" = "sent";
       try {
-        const sendResult = await sendOutboundEmail({ to: recipients, subject: title, text: bodyText });
+        const sendResult = await emailProvider().sendOutbound({ to: recipients, subject: title, text: bodyText });
         providerMessageId = sendResult.providerMessageId;
       } catch {
         messageStatus = "failed";
@@ -129,7 +138,7 @@ async function decideTaskInMemory(taskId: string, session: CurrentSession, decis
       let providerMessageId: string | null = null;
       let messageStatus: "sent" | "failed" = "sent";
       try {
-        const sendResult = await sendOutboundEmail({ to: recipients, subject: task.title, text: bodyText });
+        const sendResult = await emailProvider().sendOutbound({ to: recipients, subject: task.title, text: bodyText });
         providerMessageId = sendResult.providerMessageId;
       } catch {
         messageStatus = "failed";
