@@ -1,6 +1,9 @@
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "../components/ui/button.js";
 
 export function LoginRoute() {
+  const navigate = useNavigate();
+
   return (
     <main className="login-screen">
       <section className="login-panel">
@@ -11,7 +14,13 @@ export function LoginRoute() {
             <span>Deal operations</span>
           </div>
         </div>
-        <form className="login-form">
+        <form
+          className="login-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void navigate({ to: "/deals" });
+          }}
+        >
           <label>
             Email
             <input type="email" defaultValue="am@northgate.cre" />
@@ -20,7 +29,7 @@ export function LoginRoute() {
             Password
             <input type="password" defaultValue="password" />
           </label>
-          <Button type="button" variant="primary">Sign in</Button>
+          <Button type="submit" variant="primary">Sign in</Button>
         </form>
       </section>
     </main>

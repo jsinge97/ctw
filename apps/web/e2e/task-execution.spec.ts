@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createFakeEmailProvider } from "@ctw/testkit";
 import { createInjectedApiClient } from "./api-client.js";
 
 describe("task execution smoke flow", () => {
   it("approves the current system action and records an outbound message", async () => {
-    const provider = createFakeEmailProvider();
-    await provider.send({ to: ["broker@halcyon.com"], subject: "Fixture", text: "Fixture" });
     const { api, close } = await createInjectedApiClient();
 
     try {
@@ -17,9 +14,8 @@ describe("task execution smoke flow", () => {
       const afterMessages = await api.getDealsdealIdMessages({ dealId: "deal_sutter" });
       const newMessages = afterMessages.filter((message) => !beforeMessages.some((before) => before.id === message.id));
 
-      expect(provider.sent).toHaveLength(1);
       expect(approved.status).toBe("completed");
-      expect(newMessages.some((message) => message.direction === "outbound" && message.messageStatus === "sent")).toBe(true);
+      expect(newMessages.some((message) => message.direction === "outbound" && message.messageStatus === "sent" && message.providerMessageId?.startsWith("email_"))).toBe(true);
     } finally {
       await close();
     }

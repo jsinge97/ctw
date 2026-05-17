@@ -8,7 +8,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config ../../vitest.config.ts",
     "lint": "eslint src",
-    "e2e": "vitest run --config vitest.e2e.config.ts"
+    "e2e": "pnpm run e2e:api && pnpm run e2e:browser",
+    "e2e:api": "vitest run --config vitest.e2e.config.ts",
+    "e2e:browser": "pnpm --dir ../.. build && pnpm --dir ../.. exec playwright test --config playwright.config.ts"
   },
   "dependencies": {
     "@ctw/api-client": "workspace:*",

@@ -5,6 +5,7 @@ Recommended first deployment target: Railway.
 ## Services
 
 - Postgres: primary database and pg-boss job storage.
+- S3-compatible object storage: document originals and extracted artifacts.
 - API: `pnpm --filter @ctw/api start`.
 - Worker: `pnpm --filter @ctw/worker start`.
 - Web: build with `pnpm --filter @ctw/web build`; serve static output from `apps/web/dist`.
@@ -36,8 +37,9 @@ Use the repository `Dockerfile` for API and worker services. Set the Railway ser
 ## Release Steps
 
 1. Provision Postgres.
-2. Run `pnpm prisma:generate`.
-3. Run `pnpm db:migrate`.
-4. Deploy API and worker with the same `DATABASE_URL`.
-5. Deploy web with `APP_BASE_URL` pointing at the API/web origin.
-6. Configure Resend and Twilio webhook URLs.
+2. Provision object storage and create the `STORAGE_BUCKET`.
+3. Run `pnpm prisma:generate`.
+4. Run `pnpm db:migrate`.
+5. Deploy API and worker with the same `DATABASE_URL`, `STORAGE_ENDPOINT`, and `STORAGE_BUCKET`.
+6. Deploy web with `APP_BASE_URL` pointing at the API/web origin.
+7. Configure Resend and Twilio webhook URLs.
