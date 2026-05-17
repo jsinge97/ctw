@@ -1,12 +1,14 @@
 import { canTransitionDealStage } from "@ctw/domain";
 import type { CreateDealRequest, CurrentSession, DealDto, PatchDealRequest } from "@ctw/contracts";
-import { activityEvents, deals, nextId, participants } from "../demo-store.js";
+import { getWorkflowProvider } from "../workflow-provider.js";
+
+const workflow = getWorkflowProvider().memory;
 
 export function listDeals(session?: CurrentSession): DealDto[] {
-  const activeDeals = deals.filter((deal) => deal.status !== "archived");
+  const activeDeals = workflow.deals.filter((deal) => deal.status !== "archived");
   if (!session || ["admin", "am", "va"].includes(session.membership.role)) return activeDeals;
   const visibleDealIds = new Set(
-    participants
+    workflow.participants
       .filter((participant) => participant.membershipId === session.membership.id && participant.status === "active" && participant.capabilities.some((capability) => capability.toLowerCase().replace(/\s+/g, "") === "viewdeal"))
       .map((participant) => participant.dealId)
   );
@@ -14,14 +16,14 @@ export function listDeals(session?: CurrentSession): DealDto[] {
 }
 
 export function getDeal(dealId: string): DealDto {
-  const deal = deals.find((item) => item.id === dealId);
+  const deal = workflow.deals.find((item) => item.id === dealId);
   if (!deal) throw Object.assign(new Error("Deal not found"), { statusCode: 404 });
   return deal;
 }
 
 export function createDeal(input: CreateDealRequest): DealDto {
   const deal: DealDto = {
-    id: nextId("deal", deals.length),
+    id: workflow.nextId("deal", workflow.deals.length),
     organizationId: "org_demo",
     title: input.title,
     primaryCompanyName: input.primaryCompanyName ?? null,
@@ -34,8 +36,8 @@ export function createDeal(input: CreateDealRequest): DealDto {
     pendingApprovals: 0,
     capabilities: ["viewDeal", "moveDealStage"]
   };
-  deals.push(deal);
-  activityEvents.unshift({ id: nextId("act", activityEvents.length), dealId: deal.id, actor: "Maria Reyes", action: "created", summary: `Created deal ${deal.title}`, type: "Deal", createdAt: new Date().toISOString() });
+  workflow.deals.push(deal);
+  workflow.activityEvents.unshift({ id: workflow.nextId("act", workflow.activityEvents.length), dealId: deal.id, actor: "Maria Reyes", action: "created", summary: `Created deal ${deal.title}`, type: "Deal", createdAt: new Date().toISOString() });
   return deal;
 }
 
@@ -50,7 +52,7 @@ export function moveDealStage(dealId: string, stage: DealDto["stage"]): DealDto 
   if (!canTransitionDealStage(deal.stage, stage)) throw Object.assign(new Error("Invalid stage transition"), { statusCode: 409 });
   deal.stage = stage;
   deal.lastActivityAt = new Date().toISOString();
-  activityEvents.unshift({ id: nextId("act", activityEvents.length), dealId: deal.id, actor: "Maria Reyes", action: "moved stage", summary: `${deal.title} moved to ${stage}`, type: "Stage", createdAt: new Date().toISOString() });
+  workflow.activityEvents.unshift({ id: workflow.nextId("act", workflow.activityEvents.length), dealId: deal.id, actor: "Maria Reyes", action: "moved stage", summary: `${deal.title} moved to ${stage}`, type: "Stage", createdAt: new Date().toISOString() });
   return deal;
 }
 

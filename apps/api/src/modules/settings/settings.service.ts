@@ -1,11 +1,13 @@
 import type { UpdateOrganizationSettingsRequest } from "@ctw/contracts";
-import { organizationSettings } from "../demo-store.js";
+import { getWorkflowProvider } from "../workflow-provider.js";
+
+const workflow = getWorkflowProvider().memory;
 
 export function getOrganizationSettings() {
-  return organizationSettings;
+  return workflow.organizationSettings;
 }
 
 export function updateOrganizationSettings(input: UpdateOrganizationSettingsRequest) {
-  Object.assign(organizationSettings, input);
-  return organizationSettings;
+  Object.assign(workflow.organizationSettings, input);
+  return workflow.organizationSettings;
 }

@@ -1,15 +1,17 @@
 import type { ResolveRoutingReviewRequest, RoutingReviewItemDto } from "@ctw/contracts";
 import { createDeal } from "../deals/deals.service.js";
-import { activityEvents, messages, nextId, routingReviewItems } from "../demo-store.js";
+import { getWorkflowProvider } from "../workflow-provider.js";
+
+const workflow = getWorkflowProvider().memory;
 
 export function listRoutingReviewItems(): RoutingReviewItemDto[] {
-  return routingReviewItems.filter((item) => item.status === "open");
+  return workflow.routingReviewItems.filter((item) => item.status === "open");
 }
 
 export function resolveRoutingReviewItem(itemId: string, input: ResolveRoutingReviewRequest): RoutingReviewItemDto {
-  const item = routingReviewItems.find((review) => review.id === itemId);
+  const item = workflow.routingReviewItems.find((review) => review.id === itemId);
   if (!item) throw Object.assign(new Error("Routing review item not found"), { statusCode: 404 });
-  const message = messages.find((candidate) => candidate.id === item.messageId);
+  const message = workflow.messages.find((candidate) => candidate.id === item.messageId);
   if (input.resolution === "create_deal") {
     const deal = createDeal({ title: input.newDealTitle });
     item.suggestedDealId = deal.id;
@@ -33,6 +35,6 @@ export function resolveRoutingReviewItem(itemId: string, input: ResolveRoutingRe
     message.dealId = item.resolvedDealId;
     message.routingStatus = input.resolution === "unrelated" ? "unrelated" : "routed";
   }
-  activityEvents.unshift({ id: nextId("act", activityEvents.length), dealId: item.resolvedDealId, actor: "Maria Reyes", action: "resolved routing", summary: `${item.subject ?? "Message"} marked ${item.resolution}`, type: "Routing", createdAt: item.resolvedAt });
+  workflow.activityEvents.unshift({ id: workflow.nextId("act", workflow.activityEvents.length), dealId: item.resolvedDealId, actor: "Maria Reyes", action: "resolved routing", summary: `${item.subject ?? "Message"} marked ${item.resolution}`, type: "Routing", createdAt: item.resolvedAt });
   return item;
 }

@@ -1,18 +1,21 @@
 import type { AddParticipantRequest, ParticipantDto, UpdateParticipantRequest } from "@ctw/contracts";
-import { nextId, participants } from "../demo-store.js";
+import { getWorkflowProvider } from "../workflow-provider.js";
+
+const workflow = getWorkflowProvider().memory;
 
 export function listParticipants(dealId: string): ParticipantDto[] {
-  return participants.filter((participant) => participant.dealId === dealId && participant.status !== "removed");
+  return workflow.participants.filter((participant) => participant.dealId === dealId && participant.status !== "removed");
 }
 
 export function addParticipant(dealId: string, input: AddParticipantRequest): ParticipantDto {
-  const participant: ParticipantDto = { id: nextId("part", participants.length), dealId, subjectType: "contact", subjectId: nextId("contact", participants.length), membershipId: null, contactId: nextId("contact", participants.length), name: input.name, company: input.company ?? null, role: input.role, visibility: "shared", capabilities: input.capabilities ?? [], status: "active" };
-  participants.push(participant);
+  const contactId = workflow.nextId("contact", workflow.participants.length);
+  const participant: ParticipantDto = { id: workflow.nextId("part", workflow.participants.length), dealId, subjectType: "contact", subjectId: contactId, membershipId: null, contactId, name: input.name, company: input.company ?? null, role: input.role, visibility: "shared", capabilities: input.capabilities ?? [], status: "active" };
+  workflow.participants.push(participant);
   return participant;
 }
 
 export function updateParticipant(participantId: string, input: UpdateParticipantRequest): ParticipantDto {
-  const participant = participants.find((item) => item.id === participantId);
+  const participant = workflow.participants.find((item) => item.id === participantId);
   if (!participant) throw Object.assign(new Error("Participant not found"), { statusCode: 404 });
   Object.assign(participant, input);
   return participant;

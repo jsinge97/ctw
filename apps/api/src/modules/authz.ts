@@ -1,8 +1,10 @@
 import type { FastifyRequest } from "fastify";
 import { assertCan, roleDefaults, type Capability, type Role } from "@ctw/permissions";
 import type { CurrentSession } from "@ctw/contracts";
-import { participants } from "./demo-store.js";
 import { resolveSessionFromToken } from "./session/session.service.js";
+import { getWorkflowProvider } from "./workflow-provider.js";
+
+const workflow = getWorkflowProvider().memory;
 
 const requestSessions = new WeakMap<FastifyRequest, CurrentSession>();
 
@@ -46,10 +48,10 @@ function dealIdFromPath(path: string): string | null {
 function participantAllows(session: CurrentSession, capability: Capability, dealId: string | null): boolean {
   if (!["broker", "client"].includes(session.membership.role)) return false;
   if (!dealId && capability === "viewKanban") {
-    return participants.some((item) => item.membershipId === session.membership.id && item.status === "active" && item.capabilities.some((grant) => grant.toLowerCase().replace(/\s+/g, "") === "viewdeal"));
+    return workflow.participants.some((item) => item.membershipId === session.membership.id && item.status === "active" && item.capabilities.some((grant) => grant.toLowerCase().replace(/\s+/g, "") === "viewdeal"));
   }
   if (!dealId) return false;
-  const participant = participants.find((item) => item.dealId === dealId && item.status === "active" && item.membershipId === session.membership.id);
+  const participant = workflow.participants.find((item) => item.dealId === dealId && item.status === "active" && item.membershipId === session.membership.id);
   if (!participant) return false;
   const normalized = participant.capabilities.map((item) => item.toLowerCase().replace(/\s+/g, ""));
   const capabilityName = capability.toLowerCase();

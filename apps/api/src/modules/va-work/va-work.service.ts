@@ -1,13 +1,15 @@
 import type { CurrentSession, SendBackVaWorkRequest, VaWorkDecisionRequest, VaWorkItemDto } from "@ctw/contracts";
-import { activityEvents, nextId, tasks, vaWorkItems } from "../demo-store.js";
+import { getWorkflowProvider } from "../workflow-provider.js";
+
+const workflow = getWorkflowProvider().memory;
 
 export function listVaWork(session?: CurrentSession): VaWorkItemDto[] {
-  if (!session || ["admin", "am"].includes(session.membership.role)) return vaWorkItems;
-  return vaWorkItems.filter((item) => item.assignedTo === null || item.assignedTo === session.membership.id);
+  if (!session || ["admin", "am"].includes(session.membership.role)) return workflow.vaWorkItems;
+  return workflow.vaWorkItems.filter((item) => item.assignedTo === null || item.assignedTo === session.membership.id);
 }
 
 function getVaWorkItem(itemId: string): VaWorkItemDto {
-  const item = vaWorkItems.find((work) => work.id === itemId);
+  const item = workflow.vaWorkItems.find((work) => work.id === itemId);
   if (!item) throw Object.assign(new Error("VA item not found"), { statusCode: 404 });
   return item;
 }
@@ -20,7 +22,7 @@ function assertVaCanWorkItem(item: VaWorkItemDto, session: CurrentSession, actio
 function transitionVaWork(item: VaWorkItemDto, status: VaWorkItemDto["status"], notes?: string | null) {
   item.status = status;
   item.notes = notes ?? item.notes;
-  const task = tasks.find((candidate) => candidate.id === item.taskId);
+  const task = workflow.tasks.find((candidate) => candidate.id === item.taskId);
   if (task) {
     if (status === "in_progress") task.status = "in_progress";
     if (status === "submitted") task.status = "waiting_approval";
@@ -29,7 +31,7 @@ function transitionVaWork(item: VaWorkItemDto, status: VaWorkItemDto["status"], 
     if (status === "sent_back") task.status = "deferred";
   }
   item.history.push({ status, actor: "VA", notes: notes ?? null, createdAt: new Date().toISOString() });
-  activityEvents.unshift({ id: nextId("act", activityEvents.length), dealId: item.dealId, actor: "VA", action: status, summary: `${item.title} moved to ${status}`, type: "VA", createdAt: new Date().toISOString() });
+  workflow.activityEvents.unshift({ id: workflow.nextId("act", workflow.activityEvents.length), dealId: item.dealId, actor: "VA", action: status, summary: `${item.title} moved to ${status}`, type: "VA", createdAt: new Date().toISOString() });
   return item;
 }
 
