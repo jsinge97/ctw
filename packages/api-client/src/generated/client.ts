@@ -57,6 +57,7 @@ export type GeneratedOperationMap = {
   "GET /v1/routing-review-items": { response: RoutingReviewItemDto[] };
   "POST /v1/routing-review-items/{itemId}/resolve": { params: { itemId: string }; request: ResolveRoutingReviewRequest; response: RoutingReviewItemDto };
   "GET /v1/va-work-items": { response: VaWorkItemDto[] };
+  "POST /v1/va-work-items/{itemId}/start": { params: { itemId: string }; request: VaWorkDecisionRequest; response: VaWorkItemDto };
   "POST /v1/va-work-items/{itemId}/accept": { params: { itemId: string }; request: VaWorkDecisionRequest; response: VaWorkItemDto };
   "POST /v1/va-work-items/{itemId}/submit": { params: { itemId: string }; request: VaWorkDecisionRequest; response: VaWorkItemDto };
   "POST /v1/va-work-items/{itemId}/send-back": { params: { itemId: string }; request: SendBackVaWorkRequest; response: VaWorkItemDto };
@@ -283,6 +284,15 @@ export class GeneratedApiClient {
 
   getVaWorkItems(): Promise<GeneratedOperationMap["GET /v1/va-work-items"]["response"]> {
     return this.request(generatedRoutes["va_work_items"]);
+  }
+
+  postVaWorkItemsitemIdStart(params: GeneratedOperationMap["POST /v1/va-work-items/{itemId}/start"]["params"], body: GeneratedOperationMap["POST /v1/va-work-items/{itemId}/start"]["request"]): Promise<GeneratedOperationMap["POST /v1/va-work-items/{itemId}/start"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    init.body = JSON.stringify(body);
+    return this.request(this.fillPath(generatedRoutes["va_work_itemsitemId_start"], params), init);
   }
 
   postVaWorkItemsitemIdAccept(params: GeneratedOperationMap["POST /v1/va-work-items/{itemId}/accept"]["params"], body: GeneratedOperationMap["POST /v1/va-work-items/{itemId}/accept"]["request"]): Promise<GeneratedOperationMap["POST /v1/va-work-items/{itemId}/accept"]["response"]> {

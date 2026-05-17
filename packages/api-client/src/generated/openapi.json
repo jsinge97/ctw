@@ -1691,6 +1691,28 @@
                           "internal"
                         ]
                       },
+                      "messageStatus": {
+                        "type": "string",
+                        "enum": [
+                          "received",
+                          "draft",
+                          "pending_approval",
+                          "sent",
+                          "failed",
+                          "hidden",
+                          "redacted"
+                        ]
+                      },
+                      "providerMessageId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "subject": {
                         "anyOf": [
                           {
@@ -1726,6 +1748,14 @@
                             "type": "null"
                           }
                         ]
+                      },
+                      "routingStatus": {
+                        "type": "string",
+                        "enum": [
+                          "routed",
+                          "review_required",
+                          "unrelated"
+                        ]
                       }
                     },
                     "required": [
@@ -1733,12 +1763,15 @@
                       "dealId",
                       "channelType",
                       "direction",
+                      "messageStatus",
+                      "providerMessageId",
                       "subject",
                       "preview",
                       "bodyText",
                       "occurredAt",
                       "visibility",
-                      "routingConfidence"
+                      "routingConfidence",
+                      "routingStatus"
                     ],
                     "additionalProperties": false
                   }
@@ -1850,6 +1883,28 @@
                         "internal"
                       ]
                     },
+                    "messageStatus": {
+                      "type": "string",
+                      "enum": [
+                        "received",
+                        "draft",
+                        "pending_approval",
+                        "sent",
+                        "failed",
+                        "hidden",
+                        "redacted"
+                      ]
+                    },
+                    "providerMessageId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "subject": {
                       "anyOf": [
                         {
@@ -1885,6 +1940,14 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "routingStatus": {
+                      "type": "string",
+                      "enum": [
+                        "routed",
+                        "review_required",
+                        "unrelated"
+                      ]
                     }
                   },
                   "required": [
@@ -1892,12 +1955,15 @@
                     "dealId",
                     "channelType",
                     "direction",
+                    "messageStatus",
+                    "providerMessageId",
                     "subject",
                     "preview",
                     "bodyText",
                     "occurredAt",
                     "visibility",
-                    "routingConfidence"
+                    "routingConfidence",
+                    "routingStatus"
                   ],
                   "additionalProperties": false
                 }
@@ -3366,27 +3432,57 @@
             "application/json": {
               "schema": {
                 "$schema": "https://json-schema.org/draft/2020-12/schema",
-                "type": "object",
-                "properties": {
-                  "resolution": {
-                    "type": "string",
-                    "enum": [
-                      "assign",
-                      "unrelated",
-                      "create_deal"
-                    ]
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "resolution": {
+                        "type": "string",
+                        "const": "assign"
+                      },
+                      "dealId": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "resolution",
+                      "dealId"
+                    ],
+                    "additionalProperties": false
                   },
-                  "dealId": {
-                    "type": "string"
+                  {
+                    "type": "object",
+                    "properties": {
+                      "resolution": {
+                        "type": "string",
+                        "const": "unrelated"
+                      }
+                    },
+                    "required": [
+                      "resolution"
+                    ],
+                    "additionalProperties": false
                   },
-                  "newDealTitle": {
-                    "type": "string"
+                  {
+                    "type": "object",
+                    "properties": {
+                      "resolution": {
+                        "type": "string",
+                        "const": "create_deal"
+                      },
+                      "newDealTitle": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "resolution",
+                      "newDealTitle"
+                    ],
+                    "additionalProperties": false
                   }
-                },
-                "required": [
-                  "resolution"
-                ],
-                "additionalProperties": false
+                ]
               }
             }
           }
@@ -3671,6 +3767,195 @@
                     ],
                     "additionalProperties": false
                   }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/va-work-items/{itemId}/start": {
+      "post": {
+        "summary": "Start VA work",
+        "tags": [
+          "va-work"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "notes": {
+                    "type": "string"
+                  },
+                  "submittedPayload": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "taskId": {
+                      "type": "string"
+                    },
+                    "dealId": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "dealTitle": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "queued",
+                        "in_progress",
+                        "blocked",
+                        "submitted",
+                        "accepted",
+                        "rejected",
+                        "canceled",
+                        "sent_back"
+                      ]
+                    },
+                    "instructions": {
+                      "type": "string"
+                    },
+                    "assignedTo": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "submittedPayload": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "notes": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "sentBackReason": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          },
+                          "actor": {
+                            "type": "string"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "actor",
+                          "notes",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "taskId",
+                    "dealId",
+                    "title",
+                    "dealTitle",
+                    "status",
+                    "instructions",
+                    "assignedTo",
+                    "submittedPayload",
+                    "notes",
+                    "sentBackReason",
+                    "history"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
@@ -4472,6 +4757,16 @@
                       "id": {
                         "type": "string"
                       },
+                      "dealId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "actor": {
                         "type": "string"
                       },
@@ -4490,6 +4785,7 @@
                     },
                     "required": [
                       "id",
+                      "dealId",
                       "actor",
                       "action",
                       "summary",

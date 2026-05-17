@@ -1,5 +1,5 @@
 import type { SendBackVaWorkRequest, VaWorkDecisionRequest, VaWorkItemDto } from "@ctw/contracts";
-import { activityEvents, nextId, vaWorkItems } from "../demo-store.js";
+import { activityEvents, nextId, tasks, vaWorkItems } from "../demo-store.js";
 
 export function listVaWork(): VaWorkItemDto[] {
   return vaWorkItems;
@@ -14,8 +14,16 @@ function getVaWorkItem(itemId: string): VaWorkItemDto {
 function transitionVaWork(item: VaWorkItemDto, status: VaWorkItemDto["status"], notes?: string | null) {
   item.status = status;
   item.notes = notes ?? item.notes;
+  const task = tasks.find((candidate) => candidate.id === item.taskId);
+  if (task) {
+    if (status === "in_progress") task.status = "in_progress";
+    if (status === "submitted") task.status = "waiting_approval";
+    if (status === "accepted") task.status = "completed";
+    if (status === "canceled") task.status = "canceled";
+    if (status === "sent_back") task.status = "deferred";
+  }
   item.history.push({ status, actor: "VA", notes: notes ?? null, createdAt: new Date().toISOString() });
-  activityEvents.unshift({ id: nextId("act", activityEvents.length), actor: "VA", action: status, summary: `${item.title} moved to ${status}`, type: "VA", createdAt: new Date().toISOString() });
+  activityEvents.unshift({ id: nextId("act", activityEvents.length), dealId: item.dealId, actor: "VA", action: status, summary: `${item.title} moved to ${status}`, type: "VA", createdAt: new Date().toISOString() });
   return item;
 }
 

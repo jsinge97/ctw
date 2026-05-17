@@ -8,7 +8,11 @@ export function listMessages(dealId: string): MessageDto[] {
 export function updateMessage(messageId: string, input: UpdateMessageRequest): MessageDto {
   const message = messages.find((item) => item.id === messageId);
   if (!message) throw Object.assign(new Error("Message not found"), { statusCode: 404 });
-  if (input.redacted) message.bodyText = "[redacted]";
+  if (input.redacted) {
+    message.bodyText = "[redacted]";
+    message.messageStatus = "redacted";
+  }
+  if (input.hidden) message.messageStatus = "hidden";
   Object.assign(message, input);
   return message;
 }

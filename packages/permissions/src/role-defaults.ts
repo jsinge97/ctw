@@ -22,7 +22,7 @@ export const roleDefaults: Record<Role, Capability[]> = {
     "viewActivity",
     "manageParticipants"
   ],
-  va: ["viewVaQueue"],
+  va: ["viewVaQueue", "completeAssignedTask"],
   broker: [],
   client: []
 };

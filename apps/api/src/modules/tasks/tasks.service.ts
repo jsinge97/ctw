@@ -24,13 +24,23 @@ export async function decideTask(taskId: string, decision: "approve" | "reject" 
     task.status = task.route === "system" ? "completed" : "approved";
     if (task.route === "system") {
       const bodyText = String(task.payload["draft"] ?? "Approved draft sent.");
-      const sendResult = await sendOutboundEmail({ to: [], subject: task.title, text: bodyText });
-      const message = { id: nextId("msg", messages.length), dealId: task.dealId, channelType: "email" as const, direction: "outbound" as const, subject: task.title, preview: "Sent approved System draft.", bodyText, occurredAt: new Date().toISOString(), visibility: "shared" as const, routingConfidence: null };
+      const payloadRecipients = task.payload["recipients"];
+      const recipients = Array.isArray(payloadRecipients) && payloadRecipients.every((value) => typeof value === "string") ? payloadRecipients : ["broker@halcyon.com"];
+      let providerMessageId: string | null = null;
+      let messageStatus: "sent" | "failed" = "sent";
+      try {
+        const sendResult = await sendOutboundEmail({ to: recipients, subject: task.title, text: bodyText });
+        providerMessageId = sendResult.providerMessageId;
+      } catch {
+        messageStatus = "failed";
+        task.status = "waiting_approval";
+      }
+      const message = { id: nextId("msg", messages.length), dealId: task.dealId, channelType: "email" as const, direction: "outbound" as const, messageStatus, providerMessageId, subject: task.title, preview: messageStatus === "sent" ? "Sent approved System draft." : "Failed to send approved System draft.", bodyText, occurredAt: new Date().toISOString(), visibility: "shared" as const, routingConfidence: null, routingStatus: "routed" as const };
       messages.push(message);
-      activityEvents.unshift({ id: nextId("act", activityEvents.length), actor: "System", action: "sent", summary: `Sent approved draft for ${task.title}`, type: "Approval", createdAt: message.occurredAt });
+      activityEvents.unshift({ id: nextId("act", activityEvents.length), dealId: task.dealId, actor: "System", action: messageStatus, summary: `${messageStatus === "sent" ? "Sent" : "Failed to send"} approved draft for ${task.title}`, type: "Approval", createdAt: message.occurredAt });
       await auditService.recordApprovalEvent({ organizationId: orgId, dealId: task.dealId, taskId: task.id, messageId: message.id, approvalType: "outbound_send", decision: "approved", decisionByMembershipId: "mem_am", ...(input.reason ? { decisionReason: input.reason } : {}) });
-      await auditService.recordTaskOutcome({ organizationId: orgId, dealId: task.dealId, taskId: task.id, outcome: "completed", createdByMembershipId: "mem_am" });
-      await auditService.recordAuditEvent({ organizationId: orgId, dealId: task.dealId, actorType: "system", eventType: "outbound_send.sent", entityType: "message", entityId: message.id, before: null, after: { ...message, providerMessageId: sendResult.providerMessageId } });
+      if (messageStatus === "sent") await auditService.recordTaskOutcome({ organizationId: orgId, dealId: task.dealId, taskId: task.id, outcome: "completed", createdByMembershipId: "mem_am" });
+      await auditService.recordAuditEvent({ organizationId: orgId, dealId: task.dealId, actorType: "system", eventType: `outbound_send.${messageStatus}`, entityType: "message", entityId: message.id, before: null, after: message, metadata: { recipients } });
     } else {
       await auditService.recordApprovalEvent({ organizationId: orgId, dealId: task.dealId, taskId: task.id, approvalType: "next_action", decision: "approved", decisionByMembershipId: "mem_am", ...(input.reason ? { decisionReason: input.reason } : {}) });
       await auditService.recordTaskOutcome({ organizationId: orgId, dealId: task.dealId, taskId: task.id, outcome: "accepted", createdByMembershipId: "mem_am" });

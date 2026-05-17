@@ -11,13 +11,13 @@ export function resolveRoutingReviewItem(itemId: string, input: ResolveRoutingRe
   if (!item) throw Object.assign(new Error("Routing review item not found"), { statusCode: 404 });
   const message = messages.find((candidate) => candidate.id === item.messageId);
   if (input.resolution === "create_deal") {
-    const deal = createDeal({ title: input.newDealTitle ?? item.subject ?? "New deal" });
+    const deal = createDeal({ title: input.newDealTitle });
     item.suggestedDealId = deal.id;
     item.suggestedDealTitle = deal.title;
     item.resolvedDealId = deal.id;
     item.resolution = "created_new_deal";
   }
-  if (input.resolution === "assign" && input.dealId) {
+  if (input.resolution === "assign") {
     item.suggestedDealId = input.dealId;
     item.resolvedDealId = input.dealId;
     item.resolution = "assigned_to_deal";
@@ -29,7 +29,10 @@ export function resolveRoutingReviewItem(itemId: string, input: ResolveRoutingRe
   }
   item.status = "resolved";
   item.resolvedAt = new Date().toISOString();
-  if (message) message.dealId = item.resolvedDealId;
-  activityEvents.unshift({ id: nextId("act", activityEvents.length), actor: "Maria Reyes", action: "resolved routing", summary: `${item.subject ?? "Message"} marked ${item.resolution}`, type: "Routing", createdAt: item.resolvedAt });
+  if (message) {
+    message.dealId = item.resolvedDealId;
+    message.routingStatus = input.resolution === "unrelated" ? "unrelated" : "routed";
+  }
+  activityEvents.unshift({ id: nextId("act", activityEvents.length), dealId: item.resolvedDealId, actor: "Maria Reyes", action: "resolved routing", summary: `${item.subject ?? "Message"} marked ${item.resolution}`, type: "Routing", createdAt: item.resolvedAt });
   return item;
 }

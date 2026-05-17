@@ -1,6 +1,10 @@
 import type { FastifyRequest } from "fastify";
 import { assertCan, roleDefaults, type Capability, type Role } from "@ctw/permissions";
+import type { CurrentSession } from "@ctw/contracts";
+import { participants } from "./demo-store.js";
 import { resolveSessionFromToken } from "./session/session.service.js";
+
+const requestSessions = new WeakMap<FastifyRequest, CurrentSession>();
 
 export function tokenFromRequest(request: FastifyRequest): string | undefined {
   return request.headers.authorization?.replace("Bearer ", "");
@@ -21,17 +25,32 @@ function requiredCapability(method: string, path: string): Capability | null {
   if (/^\/v1\/deals\/[^/]+\/messages/.test(path)) return method === "GET" ? "viewMessages" : "routeWork";
   if (/^\/v1\/deals\/[^/]+\/documents/.test(path)) return method === "GET" ? "viewDocuments" : "uploadDocuments";
   if (/^\/v1\/deals\/[^/]+\/tasks/.test(path)) return method === "GET" ? "viewDeal" : "createTask";
+  if (/^\/v1\/deals\/[^/]+\/activity$/.test(path)) return "viewActivity";
   if (/^\/v1\/tasks\/[^/]+\/approve$/.test(path)) return "approveProposedAction";
   if (/^\/v1\/tasks\/[^/]+\/(reject|defer|route)$/.test(path)) return "editTask";
   if (path === "/v1/routing-review-items") return "viewRoutingReview";
   if (/^\/v1\/routing-review-items\/[^/]+\/resolve$/.test(path)) return "routeWork";
   if (path === "/v1/va-work-items") return "viewVaQueue";
-  if (/^\/v1\/va-work-items\/[^/]+/.test(path)) return "completeAssignedTask";
-  if (path === "/v1/activity") return "viewActivity";
+  if (/^\/v1\/va-work-items\/[^/]+\/(start|submit|send-back)$/.test(path)) return "completeAssignedTask";
+  if (/^\/v1\/va-work-items\/[^/]+\/(accept|cancel)$/.test(path)) return "approveProposedAction";
   if (path === "/v1/settings/organization") return method === "GET" ? "viewSettingsOrganization" : "manageOrganizationSettings";
   if (path === "/v1/users") return method === "GET" ? "viewSettingsUsers" : "managePermissions";
   if (/^\/v1\/users\/[^/]+$/.test(path)) return "managePermissions";
   return null;
+}
+
+function dealIdFromPath(path: string): string | null {
+  return path.match(/^\/v1\/deals\/([^/]+)/)?.[1] ?? null;
+}
+
+function participantAllows(session: CurrentSession, capability: Capability, dealId: string | null): boolean {
+  if (!dealId) return false;
+  if (!["broker", "client"].includes(session.membership.role)) return false;
+  const participant = participants.find((item) => item.dealId === dealId && item.status === "active" && item.role === session.membership.role);
+  if (!participant) return false;
+  const normalized = participant.capabilities.map((item) => item.toLowerCase().replace(/\s+/g, ""));
+  const capabilityName = capability.toLowerCase();
+  return normalized.includes(capabilityName) || (capability === "viewKanban" && normalized.includes("viewdeal"));
 }
 
 export function requireAuthenticated(request: FastifyRequest) {
@@ -45,21 +64,24 @@ export function requireAuthenticated(request: FastifyRequest) {
   }
   const capability = requiredCapability(request.method, path);
   try {
-    if (capability) requireCapabilityForSession(session, capability);
+    if (capability) requireCapabilityForSession(session, capability, dealIdFromPath(path));
   } catch {
     throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
   }
+  requestSessions.set(request, session);
   return session;
 }
 
-function requireCapabilityForSession(session: ReturnType<typeof resolveSessionFromToken>, capability: Capability) {
+function requireCapabilityForSession(session: ReturnType<typeof resolveSessionFromToken>, capability: Capability, dealId: string | null = null) {
+  if (participantAllows(session, capability, dealId)) return;
   const role = session.membership.role as Role;
+  const scope = dealId ? { scopeType: "deal" as const, scopeId: dealId } : { scopeType: "organization" as const, scopeId: session.activeOrganization.id };
   assertCan(
     { membershipId: session.membership.id, role },
     capability,
-    { scopeType: "organization", scopeId: session.activeOrganization.id },
+    scope,
     roleDefaults[role].includes(capability)
-      ? [{ capability, effect: "allow", scopeType: "organization", scopeId: session.activeOrganization.id, subjectType: "membership", subjectId: session.membership.id }]
+      ? [{ capability, effect: "allow", scopeType: scope.scopeType, scopeId: scope.scopeId, subjectType: "membership", subjectId: session.membership.id }]
       : []
   );
 }
@@ -68,4 +90,10 @@ export function requireCapability(request: FastifyRequest, capability: Capabilit
   const session = requireAuthenticated(request);
   if (!session) return;
   requireCapabilityForSession(session, capability);
+}
+
+export function getRequiredSession(request: FastifyRequest): CurrentSession {
+  const session = requestSessions.get(request) ?? requireAuthenticated(request);
+  if (!session) throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
+  return session;
 }

@@ -13,8 +13,9 @@ export const participants: ParticipantDto[] = [
 ];
 
 export const messages: MessageDto[] = [
-  { id: "msg_loi", dealId: "deal_sutter", channelType: "email", direction: "inbound", subject: "LOI - Sutter Tower Floor 14", preview: "Attached our LOI per our call.", bodyText: "Attached our LOI per our call. Looking forward to feedback by Friday.", occurredAt: "2026-05-17T14:00:00.000Z", visibility: "shared", routingConfidence: 0.97 },
-  { id: "msg_note", dealId: "deal_sutter", channelType: "note", direction: "internal", subject: "Internal note", preview: "Push back on TI allowance.", bodyText: "Halcyon's TI ask is below market. Push back to $85/sf.", occurredAt: "2026-05-17T15:00:00.000Z", visibility: "internal", routingConfidence: null }
+  { id: "msg_loi", dealId: "deal_sutter", channelType: "email", direction: "inbound", messageStatus: "received", providerMessageId: "resend_loi", subject: "LOI - Sutter Tower Floor 14", preview: "Attached our LOI per our call.", bodyText: "Attached our LOI per our call. Looking forward to feedback by Friday.", occurredAt: "2026-05-17T14:00:00.000Z", visibility: "shared", routingConfidence: 0.97, routingStatus: "routed" },
+  { id: "msg_note", dealId: "deal_sutter", channelType: "note", direction: "internal", messageStatus: "received", providerMessageId: null, subject: "Internal note", preview: "Push back on TI allowance.", bodyText: "Halcyon's TI ask is below market. Push back to $85/sf.", occurredAt: "2026-05-17T15:00:00.000Z", visibility: "internal", routingConfidence: null, routingStatus: "routed" },
+  { id: "msg_unknown", dealId: null, channelType: "email", direction: "inbound", messageStatus: "received", providerMessageId: "resend_unknown", subject: "401 Bryant - interested party", preview: "Saw the listing and can tour Friday.", bodyText: "Saw the listing and can tour Friday.", occurredAt: "2026-05-17T15:32:00.000Z", visibility: "internal", routingConfidence: 0.41, routingStatus: "review_required" }
 ];
 
 export const documents: DocumentDto[] = [
@@ -36,8 +37,8 @@ export const vaWorkItems: VaWorkItemDto[] = [
 ];
 
 export const activityEvents: ActivityEventDto[] = [
-  { id: "act_1", actor: "System", action: "filed", summary: "Email from Devon filed to Sutter Tower", type: "Routing", createdAt: "2026-05-17T14:00:00.000Z" },
-  { id: "act_2", actor: "Maria Reyes", action: "approved", summary: "Approved tour confirmation", type: "Approval", createdAt: "2026-05-16T14:00:00.000Z" }
+  { id: "act_1", dealId: "deal_sutter", actor: "System", action: "filed", summary: "Email from Devon filed to Sutter Tower", type: "Routing", createdAt: "2026-05-17T14:00:00.000Z" },
+  { id: "act_2", dealId: "deal_sutter", actor: "Maria Reyes", action: "approved", summary: "Approved tour confirmation", type: "Approval", createdAt: "2026-05-16T14:00:00.000Z" }
 ];
 
 export const users: UserDto[] = [

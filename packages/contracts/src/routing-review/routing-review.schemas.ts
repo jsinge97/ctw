@@ -16,6 +16,10 @@ export const routingReviewItemSchema = z.object({
   resolvedDealId: z.string().nullable(),
   resolvedAt: z.string().nullable()
 });
-export const resolveRoutingReviewRequestSchema = z.object({ resolution: z.enum(["assign", "unrelated", "create_deal"]), dealId: z.string().optional(), newDealTitle: z.string().optional() });
+export const resolveRoutingReviewRequestSchema = z.discriminatedUnion("resolution", [
+  z.object({ resolution: z.literal("assign"), dealId: z.string().min(1) }),
+  z.object({ resolution: z.literal("unrelated") }),
+  z.object({ resolution: z.literal("create_deal"), newDealTitle: z.string().min(1) })
+]);
 export type RoutingReviewItemDto = z.infer<typeof routingReviewItemSchema>;
 export type ResolveRoutingReviewRequest = z.infer<typeof resolveRoutingReviewRequestSchema>;

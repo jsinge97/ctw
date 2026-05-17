@@ -22,6 +22,7 @@ export const generatedRoutes = {
   "routing_review_items": "/v1/routing-review-items",
   "routing_review_itemsitemId_resolve": "/v1/routing-review-items/{itemId}/resolve",
   "va_work_items": "/v1/va-work-items",
+  "va_work_itemsitemId_start": "/v1/va-work-items/{itemId}/start",
   "va_work_itemsitemId_accept": "/v1/va-work-items/{itemId}/accept",
   "va_work_itemsitemId_submit": "/v1/va-work-items/{itemId}/submit",
   "va_work_itemsitemId_send_back": "/v1/va-work-items/{itemId}/send-back",

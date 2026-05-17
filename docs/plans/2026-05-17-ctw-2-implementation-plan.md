@@ -74,6 +74,7 @@ Implementation must follow these product decisions:
 - [ ] Phase 2 reviewer pass 2.
 - [x] Completed Task 10 source-of-truth frontend docs.
 - [x] Completed Task 11 web app foundation.
+- [x] Completed Phase 2 review pass 2 fixes: deal-scoped activity auth, participant-aware deal visibility, VA execute capability, stricter routing resolution schema, real low-confidence message seed, routing status updates, outbound send status/provider tracking, and VA task state synchronization.
 
 ---
 
