@@ -25,8 +25,9 @@ export const dealKeys = {
   workspace: (dealId: string) => [...dealKeys.all, "workspace", dealId] as const
 };
 
-export function useDealCards() {
+export function useDealCards(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: dealKeys.cards(),
     queryFn: listDealCards
   });

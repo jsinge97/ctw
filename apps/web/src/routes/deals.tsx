@@ -1,14 +1,14 @@
 import type { DealDto } from "@ctw/contracts";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertCircle, GripVertical, Plus } from "lucide-react";
-import { useState } from "react";
+import { AlertCircle, GripVertical, Plus, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "../components/app-shell.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
 import { KanbanBoard, KanbanBoardProvider, KanbanCard, KanbanColumn, KanbanColumnHeader, KanbanColumnList, KanbanColumnTitle } from "../components/ui/kanban.js";
 import { Skeleton } from "../components/ui/skeleton.js";
 import { useCurrentSession } from "../hooks/use-current-session.js";
-import { useDealCards, useMoveDealStage } from "../hooks/use-deals.js";
+import { useCreateDeal, useDealCards, useMoveDealStage } from "../hooks/use-deals.js";
 import type { DealCardModel } from "../lib/api/adapters/deals.js";
 
 const stages: Array<{ id: DealDto["stage"]; label: string }> = [
@@ -22,8 +22,16 @@ const stages: Array<{ id: DealDto["stage"]; label: string }> = [
 ];
 
 export function DealsRoute() {
+  const navigate = useNavigate();
   const session = useCurrentSession();
-  const deals = useDealCards();
+  const deals = useDealCards(Boolean(session.data));
+  const [showCreateDeal, setShowCreateDeal] = useState(false);
+  const [filters, setFilters] = useUrlFilters();
+  const filteredDeals = useMemo(() => filterDeals(deals.data ?? [], filters), [deals.data, filters]);
+
+  useEffect(() => {
+    if (session.isError) void navigate({ to: "/login" });
+  }, [navigate, session.isError]);
 
   return (
     <AppShell session={session.data}>
@@ -33,7 +41,7 @@ export function DealsRoute() {
           <p>Stage work, one next action, and review pressure in one scan.</p>
         </div>
         {session.data?.capabilities.includes("editDealFields") ? (
-          <Button variant="primary">
+          <Button variant="primary" onClick={() => setShowCreateDeal(true)}>
             <Plus size={16} aria-hidden />
             New deal
           </Button>
@@ -41,16 +49,125 @@ export function DealsRoute() {
       </section>
 
       <section className="filter-bar" aria-label="Deal filters">
-        <button className="filter-chip filter-chip-active">All owners</button>
-        <button className="filter-chip">Stale</button>
-        <button className="filter-chip">Pending approval</button>
-        <button className="filter-chip">Participant company</button>
+        <label className="filter-search">
+          <Search size={14} aria-hidden />
+          <input value={filters.q} onChange={(event) => setFilters({ q: event.target.value })} placeholder="Search deals" />
+        </label>
+        <button className={filters.owner === "mine" ? "filter-chip filter-chip-active" : "filter-chip"} onClick={() => setFilters({ owner: filters.owner === "mine" ? "" : "mine" })}>My deals</button>
+        <button className={filters.stale ? "filter-chip filter-chip-active" : "filter-chip"} onClick={() => setFilters({ stale: filters.stale ? "" : "1" })}>Stale</button>
+        <button className={filters.pendingApproval ? "filter-chip filter-chip-active" : "filter-chip"} onClick={() => setFilters({ pendingApproval: filters.pendingApproval ? "" : "1" })}>Pending approval</button>
+        <label className="filter-search filter-search-sm">
+          <input value={filters.company} onChange={(event) => setFilters({ company: event.target.value })} placeholder="Participant company" />
+        </label>
+        {hasAnyFilter(filters) ? (
+          <Button size="sm" variant="ghost" onClick={() => setFilters({ q: "", owner: "", stale: "", pendingApproval: "", company: "" })}>
+            <X size={14} aria-hidden />
+            Clear
+          </Button>
+        ) : null}
       </section>
 
-      {deals.isPending ? <KanbanSkeleton /> : null}
+      {session.isPending || deals.isPending ? <KanbanSkeleton /> : null}
       {deals.isError ? <div className="error-panel">Could not load deals.</div> : null}
-      {deals.data ? <DealKanban deals={deals.data} /> : null}
+      {deals.data ? <DealKanban deals={filteredDeals} /> : null}
+      {showCreateDeal ? <CreateDealDialog onClose={() => setShowCreateDeal(false)} /> : null}
     </AppShell>
+  );
+}
+
+type DealFilters = { company: string; owner: string; pendingApproval: string; q: string; stale: string };
+
+function useUrlFilters() {
+  const read = (): DealFilters => {
+    const params = new URLSearchParams(typeof window === "undefined" ? "" : window.location.search);
+    return {
+      company: params.get("company") ?? "",
+      owner: params.get("owner") ?? "",
+      pendingApproval: params.get("pendingApproval") ?? "",
+      q: params.get("q") ?? "",
+      stale: params.get("stale") ?? ""
+    };
+  };
+  const [filters, setFilterState] = useState<DealFilters>(read);
+  function setFilters(patch: Partial<DealFilters>) {
+    const next = { ...filters, ...patch };
+    const url = new URL(window.location.href);
+    Object.entries(next).forEach(([key, value]) => {
+      if (value) url.searchParams.set(key, value);
+      else url.searchParams.delete(key);
+    });
+    window.history.replaceState({}, "", url);
+    setFilterState(next);
+  }
+  return [filters, setFilters] as const;
+}
+
+function filterDeals(deals: DealCardModel[], filters: DealFilters) {
+  const q = filters.q.trim().toLowerCase();
+  const company = filters.company.trim().toLowerCase();
+  return deals.filter((deal) => {
+    if (q && ![deal.title, deal.company, deal.nextAction].some((value) => value.toLowerCase().includes(q))) return false;
+    if (company && !deal.company.toLowerCase().includes(company)) return false;
+    if (filters.stale && !deal.stale) return false;
+    if (filters.pendingApproval && deal.pendingApprovals === 0) return false;
+    if (filters.owner === "mine" && deal.ownerInitials !== "MR") return false;
+    return true;
+  });
+}
+
+function hasAnyFilter(filters: DealFilters) {
+  return Object.values(filters).some(Boolean);
+}
+
+function CreateDealDialog({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
+  const createDeal = useCreateDeal();
+  const [title, setTitle] = useState("");
+  const [company, setCompany] = useState("");
+
+  return (
+    <div className="dialog-backdrop" role="presentation">
+      <form
+        aria-modal="true"
+        className="dialog form-dialog"
+        role="dialog"
+        aria-labelledby="create-deal-title"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!title.trim()) return;
+          createDeal.mutate(
+            { title: title.trim(), ...(company.trim() ? { primaryCompanyName: company.trim() } : {}) },
+            {
+              onSuccess: (deal) => {
+                onClose();
+                void navigate({ to: "/deals/$dealId", params: { dealId: deal.id } });
+              }
+            }
+          );
+        }}
+      >
+        <div className="dialog-icon">
+          <Plus size={18} aria-hidden />
+        </div>
+        <div className="detail-editor detail-editor-plain">
+          <h2 id="create-deal-title">New deal</h2>
+          <label>
+            Deal title
+            <input value={title} onChange={(event) => setTitle(event.target.value)} autoFocus />
+          </label>
+          <label>
+            Primary company
+            <input value={company} onChange={(event) => setCompany(event.target.value)} />
+          </label>
+        </div>
+        <div className="action-row">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" isLoading={createDeal.isPending} loadingLabel="Creating">
+            Create deal
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
 

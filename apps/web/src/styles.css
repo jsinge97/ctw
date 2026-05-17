@@ -289,10 +289,44 @@ label {
 
 .filter-bar {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   border-block: 1px solid #dbe3ea;
   background: #fff;
   padding: 10px 20px;
+}
+
+.filter-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  width: min(260px, 100%);
+  border: 1px solid #dbe3ea;
+  border-radius: 999px;
+  background: #fff;
+  color: #64748b;
+  padding: 0 10px;
+}
+
+.filter-search-sm {
+  width: 210px;
+}
+
+.filter-search:hover,
+.filter-search:focus-within {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgb(15 118 110 / 0.08);
+}
+
+.filter-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #0f172a;
 }
 
 .filter-chip {
@@ -1091,9 +1125,19 @@ label {
   box-shadow: 0 24px 70px rgb(15 23 42 / 0.22);
 }
 
+.form-dialog {
+  grid-template-columns: 34px minmax(0, 1fr);
+}
+
 .dialog .action-row {
   grid-column: 2;
   justify-content: flex-end;
+}
+
+.detail-editor-plain {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .dialog h2 {
