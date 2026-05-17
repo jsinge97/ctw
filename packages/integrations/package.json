@@ -12,10 +12,12 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config ../../vitest.config.ts",
+    "resend:smoke": "tsx src/resend-smoke.ts",
     "lint": "eslint src"
   },
   "dependencies": {
     "@ctw/config": "workspace:*",
-    "@ctw/domain": "workspace:*"
+    "@ctw/domain": "workspace:*",
+    "resend": "^6.6.1"
   }
 }

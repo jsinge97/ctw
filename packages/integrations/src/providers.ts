@@ -1,4 +1,6 @@
 import { assertProductionRuntimeSafety } from "@ctw/config";
+import { Resend } from "resend";
+import type { CreateEmailOptions, CreateEmailResponse } from "resend";
 import type { OutboundEmail } from "./outbound-email.js";
 import type { OutboundSms } from "./outbound-sms.js";
 import { normalizeResendInbound } from "./resend.js";
@@ -13,6 +15,14 @@ export type ProviderSendResult = {
 export type EmailProvider = {
   sendOutbound: (message: OutboundEmail) => Promise<ProviderSendResult>;
 };
+
+export type ResendClient = {
+  emails: {
+    send: (payload: CreateEmailOptions) => Promise<CreateEmailResponse>;
+  };
+};
+
+export type ResendClientFactory = (apiKey: string) => ResendClient;
 
 export type SmsProvider = {
   sendOutbound: (message: OutboundSms) => Promise<ProviderSendResult>;
@@ -63,19 +73,15 @@ export function createFakeSmsProvider(): SmsProvider {
   };
 }
 
-export function createResendProvider(source: NodeJS.ProcessEnv = process.env, fetchImpl: typeof fetch = fetch): EmailProvider {
+export function createResendProvider(source: NodeJS.ProcessEnv = process.env, clientFactory: ResendClientFactory = (apiKey) => new Resend(apiKey)): EmailProvider {
   const apiKey = required(source.RESEND_API_KEY, "RESEND_API_KEY");
   const from = required(source.RESEND_FROM_EMAIL, "RESEND_FROM_EMAIL");
+  const client = clientFactory(apiKey);
   return {
     async sendOutbound(message) {
-      const response = await fetchImpl("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-        body: JSON.stringify({ from, to: message.to, subject: message.subject, text: message.text })
-      });
-      const raw = await parseProviderResponse(response);
-      if (!response.ok) throw new Error(`Resend send failed: ${response.status}`);
-      return { provider: "resend", providerMessageId: providerIdFrom(raw), rawProviderResponse: raw };
+      const response = await client.emails.send(toResendEmailPayload(message, from));
+      if (response.error) throw new Error(`Resend send failed: ${response.error.message}`);
+      return { provider: "resend", providerMessageId: providerIdFrom(response), rawProviderResponse: response };
     }
   };
 }
@@ -114,8 +120,20 @@ async function parseProviderResponse(response: Response): Promise<unknown> {
 
 function providerIdFrom(raw: unknown): string | null {
   if (!raw || typeof raw !== "object") return null;
-  const value = "id" in raw ? raw.id : "sid" in raw ? raw.sid : null;
-  return typeof value === "string" ? value : null;
+  const directValue = "id" in raw ? raw.id : "sid" in raw ? raw.sid : null;
+  if (typeof directValue === "string") return directValue;
+  const data = "data" in raw ? raw.data : null;
+  if (!data || typeof data !== "object") return null;
+  const nestedValue = "id" in data ? data.id : null;
+  return typeof nestedValue === "string" ? nestedValue : null;
+}
+
+function toResendEmailPayload(message: OutboundEmail, from: string): CreateEmailOptions {
+  const base = { from, to: message.to, subject: message.subject };
+  if (message.html !== undefined && message.text !== undefined) return { ...base, html: message.html, text: message.text };
+  if (message.html !== undefined) return { ...base, html: message.html };
+  if (message.text !== undefined) return { ...base, text: message.text };
+  throw new Error("Outbound email requires text or html content");
 }
 
 function required(value: string | undefined, name: string): string {

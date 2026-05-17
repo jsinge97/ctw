@@ -232,6 +232,9 @@ importers:
       '@ctw/domain':
         specifier: workspace:*
         version: link:../domain
+      resend:
+        specifier: ^6.6.1
+        version: 6.12.3
 
   packages/jobs: {}
 

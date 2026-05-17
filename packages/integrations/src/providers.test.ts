@@ -37,11 +37,18 @@ describe("provider bundle", () => {
   });
 
   it("sends Resend mail through the live adapter", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: "resend_msg_1" }), { status: 200 }));
-    const provider = createResendProvider(baseEnv({ RESEND_API_KEY: "re_live", RESEND_FROM_EMAIL: "deals@northgate.cre" }), fetchMock as typeof fetch);
+    const sendMock = vi.fn(async () => ({ data: { id: "resend_msg_1" }, error: null, headers: {} }));
+    const provider = createResendProvider(baseEnv({ RESEND_API_KEY: "re_live", RESEND_FROM_EMAIL: "deals@northgate.cre" }), () => ({ emails: { send: sendMock } }));
 
-    await expect(provider.sendOutbound({ to: ["broker@halcyon.com"], subject: "LOI", text: "Draft" })).resolves.toMatchObject({ providerMessageId: "resend_msg_1" });
-    expect(fetchMock).toHaveBeenCalledWith("https://api.resend.com/emails", expect.objectContaining({ method: "POST" }));
+    await expect(provider.sendOutbound({ to: ["broker@halcyon.com"], subject: "LOI", html: "<p>Draft</p>", text: "Draft" })).resolves.toMatchObject({ providerMessageId: "resend_msg_1" });
+    expect(sendMock).toHaveBeenCalledWith({ from: "deals@northgate.cre", to: ["broker@halcyon.com"], subject: "LOI", html: "<p>Draft</p>", text: "Draft" });
+  });
+
+  it("surfaces Resend SDK errors", async () => {
+    const sendMock = vi.fn(async () => ({ data: null, error: { message: "invalid sender", name: "invalid_from_address" as const, statusCode: 422 }, headers: {} }));
+    const provider = createResendProvider(baseEnv({ RESEND_API_KEY: "re_live", RESEND_FROM_EMAIL: "deals@northgate.cre" }), () => ({ emails: { send: sendMock } }));
+
+    await expect(provider.sendOutbound({ to: ["broker@halcyon.com"], subject: "LOI", text: "Draft" })).rejects.toThrow(/invalid sender/);
   });
 
   it("sends Twilio SMS through the live adapter", async () => {

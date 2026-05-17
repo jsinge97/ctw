@@ -24,6 +24,7 @@ Read these before coding, and re-read the relevant sections before each task:
 - Do not revert user changes.
 - Do not edit generated OpenAPI/client files by hand.
 - Regenerate generated files with the commands in `CLAUDE.md`.
+- For Resend testing, set `RESEND_API_KEY` in the shell and run `pnpm resend:smoke`; never commit the real key.
 
 ## Product Rules
 

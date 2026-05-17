@@ -29,6 +29,7 @@ pnpm --filter @ctw/web e2e
 pnpm --filter @ctw/mcp test
 pnpm --filter @ctw/mcp dev
 pnpm --filter @ctw/mcp start
+pnpm resend:smoke
 pnpm --filter @ctw/worker test
 pnpm --filter @ctw/worker health
 pnpm prisma:generate
@@ -68,6 +69,12 @@ CTW_MCP_API_BASE_URL=http://127.0.0.1:3000 CTW_MCP_API_TOKEN=am-token pnpm --fil
 ```
 
 The MCP endpoint is `http://127.0.0.1:3010/mcp`.
+
+Resend smoke test:
+
+```bash
+RESEND_API_KEY=re_xxxxxxxxx RESEND_FROM_EMAIL=onboarding@resend.dev RESEND_TEST_TO=you@example.com pnpm resend:smoke
+```
 
 Regeneration rules:
 
