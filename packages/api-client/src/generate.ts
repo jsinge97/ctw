@@ -78,7 +78,7 @@ function requestType(method: Method, path: string): string | null {
   const key = operationKey(method, path);
   if (key === "POST /v1/session/accept-invitation") return "{ token: string }";
   if (key === "POST /v1/session/login") return "LoginRequest";
-  if (key === "POST /v1/session/logout") return "{}";
+  if (key === "POST /v1/session/logout") return "Record<string, never>";
   if (key === "POST /v1/deals") return "CreateDealRequest";
   if (key === "PATCH /v1/deals/{dealId}") return "PatchDealRequest";
   if (key === "POST /v1/deals/{dealId}/move-stage") return "MoveDealStageRequest";

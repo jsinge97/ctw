@@ -38,7 +38,7 @@ export type GeneratedOperationMap = {
   "GET /v1/session/current": { response: CurrentSession };
   "POST /v1/session/accept-invitation": { request: { token: string }; response: CurrentSession };
   "POST /v1/session/login": { request: LoginRequest; response: CurrentSession };
-  "POST /v1/session/logout": { request: {}; response: { ok: true } };
+  "POST /v1/session/logout": { request: Record<string, never>; response: { ok: true } };
   "GET /v1/deals": { response: DealDto[] };
   "POST /v1/deals": { request: CreateDealRequest; response: DealDto };
   "GET /v1/deals/{dealId}": { params: { dealId: string }; response: DealDto };
