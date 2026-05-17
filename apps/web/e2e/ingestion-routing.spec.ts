@@ -11,10 +11,13 @@ describe("ingestion routing smoke flow", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ from: "newlead", to: "deals@northgate.cre", subject: "401 Bryant", text: "Saw the listing and can tour Friday.", messageId: "resend_e2e" })
       });
+      const webhookBody = await webhookResponse.json() as { messageId: string; reviewItemId: string | null };
       const reviewItems = await api.getRoutingReviewItems();
-      const lowConfidenceItem = reviewItems.find((item) => item.messageId === "msg_unknown");
+      const lowConfidenceItem = reviewItems.find((item) => item.id === webhookBody.reviewItemId);
 
       expect(webhookResponse.status).toBe(200);
+      expect(webhookBody.messageId).toMatch(/^msg_/);
+      expect(webhookBody.reviewItemId).toMatch(/^rr_/);
       expect(lowConfidenceItem?.confidence).toBeLessThan(0.8);
       expect(lowConfidenceItem?.status).toBe("open");
       expect(lowConfidenceItem?.suggestedDealId).toBe("deal_bryant");
