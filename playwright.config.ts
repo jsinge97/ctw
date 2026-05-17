@@ -20,7 +20,7 @@ export default defineConfig({
     {
       command: "pnpm db:migrate && pnpm --filter @ctw/testkit db:seed && pnpm --filter @ctw/api start",
       url: "http://127.0.0.1:3000/healthz",
-      reuseExistingServer: false,
+      reuseExistingServer: true,
       timeout: 60_000,
       env: {
         ...process.env,
@@ -38,7 +38,7 @@ export default defineConfig({
     {
       command: "pnpm --filter @ctw/web dev",
       url: "http://127.0.0.1:5173",
-      reuseExistingServer: false,
+      reuseExistingServer: true,
       timeout: 30_000
     }
   ]
