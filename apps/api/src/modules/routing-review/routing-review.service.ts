@@ -8,12 +8,12 @@ export function listRoutingReviewItems(): RoutingReviewItemDto[] {
   return workflow.routingReviewItems.filter((item) => item.status === "open");
 }
 
-export function resolveRoutingReviewItem(itemId: string, input: ResolveRoutingReviewRequest): RoutingReviewItemDto {
+export async function resolveRoutingReviewItem(itemId: string, input: ResolveRoutingReviewRequest): Promise<RoutingReviewItemDto> {
   const item = workflow.routingReviewItems.find((review) => review.id === itemId);
   if (!item) throw Object.assign(new Error("Routing review item not found"), { statusCode: 404 });
   const message = workflow.messages.find((candidate) => candidate.id === item.messageId);
   if (input.resolution === "create_deal") {
-    const deal = createDeal({ title: input.newDealTitle });
+    const deal = await createDeal({ title: input.newDealTitle });
     item.suggestedDealId = deal.id;
     item.suggestedDealTitle = deal.title;
     item.resolvedDealId = deal.id;

@@ -394,6 +394,8 @@ git commit -m "feat: complete prisma workflow repository"
 
 ## Task 7: Durable Deals, Participants, Users, Settings APIs
 
+**Status:** Done.
+
 **Purpose:** Move core CRUD APIs from memory arrays to Prisma repositories.
 
 **Files:**

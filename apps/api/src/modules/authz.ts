@@ -1,10 +1,9 @@
 import type { FastifyRequest } from "fastify";
 import { assertCan, roleDefaults, type Capability, type Role } from "@ctw/permissions";
 import type { CurrentSession } from "@ctw/contracts";
+import { getPrismaClient } from "@ctw/db";
 import { resolveSessionFromHeaders } from "./session/session.service.js";
 import { getWorkflowProvider } from "./workflow-provider.js";
-
-const workflow = getWorkflowProvider().memory;
 
 const requestSessions = new WeakMap<FastifyRequest, CurrentSession>();
 
@@ -45,17 +44,48 @@ function dealIdFromPath(path: string): string | null {
   return path.match(/^\/v1\/deals\/([^/]+)/)?.[1] ?? null;
 }
 
-function participantAllows(session: CurrentSession, capability: Capability, dealId: string | null): boolean {
+async function participantAllows(session: CurrentSession, capability: Capability, dealId: string | null): Promise<boolean> {
   if (!["broker", "client"].includes(session.membership.role)) return false;
+  const workflow = getWorkflowProvider();
+  if (workflow.mode === "prisma") return prismaParticipantAllows(session, capability, dealId);
+  const memory = workflow.memory;
   if (!dealId && capability === "viewKanban") {
-    return workflow.participants.some((item) => item.membershipId === session.membership.id && item.status === "active" && item.capabilities.some((grant) => grant.toLowerCase().replace(/\s+/g, "") === "viewdeal"));
+    return memory.participants.some((item) => item.membershipId === session.membership.id && item.status === "active" && item.capabilities.some((grant) => grant.toLowerCase().replace(/\s+/g, "") === "viewdeal"));
   }
   if (!dealId) return false;
-  const participant = workflow.participants.find((item) => item.dealId === dealId && item.status === "active" && item.membershipId === session.membership.id);
+  const participant = memory.participants.find((item) => item.dealId === dealId && item.status === "active" && item.membershipId === session.membership.id);
   if (!participant) return false;
   const normalized = participant.capabilities.map((item) => item.toLowerCase().replace(/\s+/g, ""));
   const capabilityName = capability.toLowerCase();
   return normalized.includes(capabilityName) || (capability === "viewKanban" && normalized.includes("viewdeal"));
+}
+
+async function prismaParticipantAllows(session: CurrentSession, capability: Capability, dealId: string | null): Promise<boolean> {
+  const prisma = getPrismaClient();
+  if (!dealId && capability === "viewKanban") {
+    const count = await prisma.dealParticipant.count({
+      where: { organizationId: session.activeOrganization.id, subjectType: "membership", subjectId: session.membership.id, status: "active" }
+    });
+    return count > 0;
+  }
+  if (!dealId) return false;
+  const participant = await prisma.dealParticipant.findFirst({
+    where: { organizationId: session.activeOrganization.id, dealId, subjectType: "membership", subjectId: session.membership.id, status: "active" }
+  });
+  if (!participant) return false;
+  const grants = await prisma.permissionGrant.findMany({
+    where: {
+      organizationId: session.activeOrganization.id,
+      scopeType: "deal",
+      scopeId: dealId,
+      effect: "allow",
+      revokedAt: null,
+      OR: [{ subjectId: session.membership.id }, { subjectId: participant.id }]
+    }
+  });
+  const normalized = grants.map((grant) => grant.capability.toLowerCase().replace(/[.\s]+/g, ""));
+  const capabilityName = capability.toLowerCase();
+  return normalized.includes(capabilityName) || (capability === "viewKanban" && normalized.includes("dealview"));
 }
 
 export async function requireAuthenticated(request: FastifyRequest) {
@@ -69,7 +99,7 @@ export async function requireAuthenticated(request: FastifyRequest) {
   }
   const capability = requiredCapability(request.method, path);
   try {
-    if (capability) requireCapabilityForSession(session, capability, dealIdFromPath(path));
+    if (capability) await requireCapabilityForSession(session, capability, dealIdFromPath(path));
   } catch {
     throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
   }
@@ -77,8 +107,8 @@ export async function requireAuthenticated(request: FastifyRequest) {
   return session;
 }
 
-function requireCapabilityForSession(session: CurrentSession, capability: Capability, dealId: string | null = null) {
-  if (participantAllows(session, capability, dealId)) return;
+async function requireCapabilityForSession(session: CurrentSession, capability: Capability, dealId: string | null = null) {
+  if (await participantAllows(session, capability, dealId)) return;
   const role = session.membership.role as Role;
   const scope = dealId ? { scopeType: "deal" as const, scopeId: dealId } : { scopeType: "organization" as const, scopeId: session.activeOrganization.id };
   assertCan(
@@ -94,7 +124,7 @@ function requireCapabilityForSession(session: CurrentSession, capability: Capabi
 export async function requireCapability(request: FastifyRequest, capability: Capability) {
   const session = await requireAuthenticated(request);
   if (!session) return;
-  requireCapabilityForSession(session, capability);
+  await requireCapabilityForSession(session, capability);
 }
 
 export function getRequiredSession(request: FastifyRequest): CurrentSession {
