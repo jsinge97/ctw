@@ -66,16 +66,18 @@ export function MessagesTab({
               <>
                 <div className="action-row">
                   <Button
+                    isLoading={isUpdating}
+                    loadingLabel="Updating"
                     onClick={() => onUpdateMessage(selectedMessage.id, { visibility: selectedMessage.visibility === "shared" ? "internal" : "shared" })}
                   >
                     <ShieldCheck size={16} aria-hidden />
                     {selectedMessage.visibility === "shared" ? "Mark internal" : "Share"}
                   </Button>
-                  <Button variant="danger" onClick={() => onUpdateMessage(selectedMessage.id, { hidden: true })}>
+                  <Button variant="danger" isLoading={isUpdating} loadingLabel="Hiding" onClick={() => onUpdateMessage(selectedMessage.id, { hidden: true })}>
                     <EyeOff size={16} aria-hidden />
                     Hide
                   </Button>
-                  <Button variant="danger" onClick={() => onUpdateMessage(selectedMessage.id, { redacted: true })}>
+                  <Button variant="danger" isLoading={isUpdating} loadingLabel="Redacting" onClick={() => onUpdateMessage(selectedMessage.id, { redacted: true })}>
                     <Lock size={16} aria-hidden />
                     Redact
                   </Button>
@@ -93,7 +95,7 @@ export function MessagesTab({
                     Reassign to deal ID
                     <input value={destinationDealId} onChange={(event) => setDestinationDealId(event.target.value)} placeholder="deal_sutter" />
                   </label>
-                  <Button type="submit">
+                  <Button type="submit" isLoading={isUpdating} loadingLabel="Reassigning">
                     <FolderSymlink size={16} aria-hidden />
                     Reassign
                   </Button>

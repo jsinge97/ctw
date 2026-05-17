@@ -18,12 +18,14 @@ export function groupParticipantsByRole(participants: ParticipantDto[]) {
 export function ParticipantsTab({
   canManage,
   hasError,
+  isMutating,
   onAddParticipant,
   onUpdateParticipant,
   participants
 }: {
   canManage: boolean;
   hasError: boolean;
+  isMutating: boolean;
   onAddParticipant: (body: AddParticipantRequest) => void;
   onUpdateParticipant: (participantId: string, body: UpdateParticipantRequest) => void;
   participants: ParticipantDto[];
@@ -55,7 +57,7 @@ export function ParticipantsTab({
             <select value={role} onChange={(event) => setRole(event.target.value as ParticipantDto["role"])}>
               {roles.map((item) => <option key={item} value={item}>{item.replace("_", " ")}</option>)}
             </select>
-            <Button type="submit">
+            <Button type="submit" isLoading={isMutating} loadingLabel="Adding">
               <UserPlus size={16} aria-hidden />
               Add
             </Button>
@@ -104,6 +106,7 @@ export function ParticipantsTab({
         {selectedParticipant && canManage ? (
           <ParticipantEditor
             key={selectedParticipant.id}
+            isMutating={isMutating}
             participant={selectedParticipant}
             onRemove={() => {
               setRemovedParticipant(selectedParticipant);
@@ -126,10 +129,12 @@ export function ParticipantsTab({
 }
 
 function ParticipantEditor({
+  isMutating,
   onRemove,
   onSave,
   participant
 }: {
+  isMutating: boolean;
   onRemove: () => void;
   onSave: (body: { visibility?: ParticipantDto["visibility"]; capabilities?: string[] }) => void;
   participant: ParticipantDto;
@@ -170,8 +175,8 @@ function ParticipantEditor({
         ))}
       </fieldset>
       <div className="action-row">
-        <Button type="submit">Save participant</Button>
-        <Button type="button" variant="danger" onClick={onRemove}>Remove</Button>
+        <Button type="submit" isLoading={isMutating} loadingLabel="Saving">Save participant</Button>
+        <Button type="button" variant="danger" isLoading={isMutating} loadingLabel="Removing" onClick={onRemove}>Remove</Button>
       </div>
     </form>
   );

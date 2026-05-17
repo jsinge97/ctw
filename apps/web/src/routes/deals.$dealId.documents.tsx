@@ -16,6 +16,7 @@ export function DealDocumentsRoute() {
           documents={workspace.documents}
           canManage={hasEffectiveCapability(session, workspace.deal.capabilities, "uploadDocuments")}
           hasError={createDocument.isError || updateDocument.isError || archiveDocument.isError || uploadDocument.isError}
+          isMutating={createDocument.isPending || updateDocument.isPending || archiveDocument.isPending || uploadDocument.isPending}
           onArchiveDocument={(documentId) => archiveDocument.mutate(documentId)}
           onCreateDocument={(body) => createDocument.mutate(body)}
           onUpdateDocument={(documentId, body) => updateDocument.mutate({ documentId, body })}

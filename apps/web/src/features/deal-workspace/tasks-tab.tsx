@@ -22,6 +22,8 @@ export function TasksTab({
   canCreate,
   canEdit,
   hasError,
+  isCreating,
+  isDeciding,
   onCreateTask,
   onDecideTask,
   tasks
@@ -31,6 +33,8 @@ export function TasksTab({
   canCreate: boolean;
   canEdit: boolean;
   hasError: boolean;
+  isCreating: boolean;
+  isDeciding: boolean;
   onCreateTask: (body: CreateTaskRequest) => void;
   onDecideTask: (taskId: string, decision: TaskDecisionKind, body: TaskDecisionRequest) => void;
   tasks: TaskDto[];
@@ -70,7 +74,7 @@ export function TasksTab({
             <select value={route} onChange={(event) => setRoute(event.target.value as TaskDto["route"])}>
               {taskRoutes.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
-            <Button type="submit">
+            <Button type="submit" isLoading={isCreating} loadingLabel="Adding">
               <Plus size={16} aria-hidden />
               Add
             </Button>
@@ -109,6 +113,7 @@ export function TasksTab({
             canApprove={canApprove}
             canComplete={canComplete}
             canEdit={canEdit}
+            isDeciding={isDeciding}
             task={selectedTask}
             onDecide={(decision, body) => onDecideTask(selectedTask.id, decision, body)}
           />
@@ -125,12 +130,14 @@ function TaskDecisionPanel({
   canApprove,
   canComplete,
   canEdit,
+  isDeciding,
   onDecide,
   task
 }: {
   canApprove: boolean;
   canComplete: boolean;
   canEdit: boolean;
+  isDeciding: boolean;
   onDecide: (decision: "approve" | "reject" | "defer" | "route" | "complete", body: { reason?: string; route?: TaskDto["route"]; editedTitle?: string }) => void;
   task: TaskDto;
 }) {
@@ -169,28 +176,28 @@ function TaskDecisionPanel({
       {canApprove || canComplete || canEdit ? (
         <div className="action-row">
           {task.route === "self" && canComplete ? (
-            <Button type="button" variant="primary" onClick={() => onDecide("complete", { editedTitle, reason })}>
+            <Button type="button" variant="primary" isLoading={isDeciding} loadingLabel="Completing" onClick={() => onDecide("complete", { editedTitle, reason })}>
               <Check size={16} aria-hidden />
               Complete
             </Button>
           ) : null}
           {task.route !== "self" && canApprove ? (
-            <Button type="button" variant="primary" onClick={() => onDecide("approve", { editedTitle, reason })}>
+            <Button type="button" variant="primary" isLoading={isDeciding} loadingLabel="Approving" onClick={() => onDecide("approve", { editedTitle, reason })}>
               <Check size={16} aria-hidden />
               Approve
             </Button>
           ) : null}
           {canEdit ? (
             <>
-              <Button type="button" onClick={() => onDecide("defer", { editedTitle, reason })}>
+              <Button type="button" isLoading={isDeciding} loadingLabel="Deferring" onClick={() => onDecide("defer", { editedTitle, reason })}>
                 <RotateCcw size={16} aria-hidden />
                 Defer
               </Button>
-              <Button type="button" onClick={() => onDecide("route", { editedTitle, reason, route })}>
+              <Button type="button" isLoading={isDeciding} loadingLabel="Routing" onClick={() => onDecide("route", { editedTitle, reason, route })}>
                 <GitBranch size={16} aria-hidden />
                 Route
               </Button>
-              <Button type="button" variant="danger" onClick={() => onDecide("reject", { editedTitle, reason })}>
+              <Button type="button" variant="danger" isLoading={isDeciding} loadingLabel="Rejecting" onClick={() => onDecide("reject", { editedTitle, reason })}>
                 <X size={16} aria-hidden />
                 Reject
               </Button>

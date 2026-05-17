@@ -18,6 +18,7 @@ export function DocumentsTab({
   canManage,
   documents,
   hasError,
+  isMutating,
   onArchiveDocument,
   onCreateDocument,
   onUpdateDocument,
@@ -26,6 +27,7 @@ export function DocumentsTab({
   canManage: boolean;
   documents: DocumentDto[];
   hasError: boolean;
+  isMutating: boolean;
   onArchiveDocument: (documentId: string) => void;
   onCreateDocument: (body: UpdateDocumentRequest) => void;
   onUpdateDocument: (documentId: string, body: UpdateDocumentRequest) => void;
@@ -113,13 +115,14 @@ export function DocumentsTab({
               Tags
               <input value={draftTags} onChange={(event) => setDraftTags(event.target.value)} placeholder="lease, signed" />
             </label>
-            <Button type="submit">Add metadata</Button>
+            <Button type="submit" isLoading={isMutating} loadingLabel="Adding">Add metadata</Button>
           </form>
         ) : null}
 
         {selectedDocument && canManage ? (
           <DocumentEditor
             document={selectedDocument}
+            isMutating={isMutating}
             onArchive={() => onArchiveDocument(selectedDocument.id)}
             onSave={(body) => onUpdateDocument(selectedDocument.id, body)}
           />
@@ -137,7 +140,7 @@ export function DocumentsTab({
   );
 }
 
-function DocumentEditor({ document, onArchive, onSave }: { document: DocumentDto; onArchive: () => void; onSave: (body: { title?: string; documentType?: DocumentDto["documentType"]; visibility?: DocumentDto["visibility"]; folder?: string | null; tags?: string[] }) => void }) {
+function DocumentEditor({ document, isMutating, onArchive, onSave }: { document: DocumentDto; isMutating: boolean; onArchive: () => void; onSave: (body: { title?: string; documentType?: DocumentDto["documentType"]; visibility?: DocumentDto["visibility"]; folder?: string | null; tags?: string[] }) => void }) {
   const [title, setTitle] = useState(document.title);
   const [folder, setFolder] = useState(document.folder ?? "");
   const [tags, setTags] = useState(document.tags.join(", "));
@@ -179,8 +182,8 @@ function DocumentEditor({ document, onArchive, onSave }: { document: DocumentDto
         <input value={tags} onChange={(event) => setTags(event.target.value)} />
       </label>
       <div className="action-row">
-        <Button type="submit">Save document</Button>
-        <Button type="button" variant="danger" onClick={onArchive}>
+        <Button type="submit" isLoading={isMutating} loadingLabel="Saving">Save document</Button>
+        <Button type="button" variant="danger" isLoading={isMutating} loadingLabel="Archiving" onClick={onArchive}>
           <Archive size={16} aria-hidden />
           Archive
         </Button>

@@ -17,6 +17,8 @@ export function DealTasksRoute() {
           canCreate={hasEffectiveCapability(session, workspace.deal.capabilities, "createTask")}
           canEdit={hasEffectiveCapability(session, workspace.deal.capabilities, "editTask")}
           hasError={createTask.isError || decideTask.isError}
+          isCreating={createTask.isPending}
+          isDeciding={decideTask.isPending}
           onCreateTask={(body) => createTask.mutate(body)}
           onDecideTask={(taskId, decision, body) => decideTask.mutate({ taskId, decision, body })}
         />

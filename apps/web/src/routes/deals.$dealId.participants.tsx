@@ -14,6 +14,7 @@ export function DealParticipantsRoute() {
           participants={workspace.participants}
           canManage={hasEffectiveCapability(session, workspace.deal.capabilities, "manageParticipants")}
           hasError={addParticipant.isError || updateParticipant.isError}
+          isMutating={addParticipant.isPending || updateParticipant.isPending}
           onAddParticipant={(body) => addParticipant.mutate(body)}
           onUpdateParticipant={(participantId, body) => updateParticipant.mutate({ participantId, body })}
         />
