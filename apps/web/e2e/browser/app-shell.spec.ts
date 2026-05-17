@@ -49,3 +49,22 @@ test("internal review surfaces render in the browser", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "VA queue" })).toBeVisible();
   await expect(page.getByText("Pull estoppel cert").first()).toBeVisible();
 });
+
+test("shell search, notifications, and hover feedback are interactive", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/deals$/);
+
+  await page.getByLabel("Search deals, contacts, documents").fill("Sutter");
+  await expect(page.getByRole("link", { name: /Sutter Tower/ })).toBeVisible();
+
+  await page.getByRole("button", { name: "Notifications" }).click();
+  await expect(page.getByText(/routing review|va work/).first()).toBeVisible();
+  await page.getByRole("button", { name: "Notifications" }).click();
+
+  const signOutButton = page.getByRole("button", { name: "Sign out" });
+  const before = await signOutButton.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await signOutButton.hover();
+  const after = await signOutButton.evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(after).not.toBe(before);
+});
