@@ -53,8 +53,24 @@ export class S3CompatibleStorage implements ObjectStorage {
     return object;
   }
 
-  async get(): Promise<StoredObject | undefined> {
-    throw new Error("S3-compatible storage reads are intentionally not exposed through the app API");
+  async get(key: string): Promise<StoredObject | undefined> {
+    const url = `${this.endpoint.replace(/\/$/, "")}/${this.bucket}/${encodeS3Key(key)}`;
+    const response = await this.fetchImpl(url, {
+      method: "GET",
+      headers: signedGetHeaders({
+        accessKeyId: this.accessKeyId,
+        region: this.region,
+        secretAccessKey: this.secretAccessKey,
+        url
+      })
+    });
+    if (response.status === 404) return undefined;
+    if (!response.ok) throw new Error(`S3-compatible storage get failed: ${response.status}`);
+    return {
+      key,
+      contentType: response.headers.get("content-type") ?? "application/octet-stream",
+      bytes: new Uint8Array(await response.arrayBuffer())
+    };
   }
 }
 
@@ -114,6 +130,37 @@ function signedPutHeaders({
   return {
     authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
     "content-type": contentType,
+    host: parsed.host,
+    "x-amz-content-sha256": payloadHash,
+    "x-amz-date": amzDate
+  };
+}
+
+function signedGetHeaders({
+  accessKeyId,
+  region,
+  secretAccessKey,
+  url
+}: {
+  accessKeyId: string;
+  region: string;
+  secretAccessKey: string;
+  url: string;
+}) {
+  const parsed = new URL(url);
+  const now = new Date();
+  const amzDate = toAmzDate(now);
+  const dateStamp = amzDate.slice(0, 8);
+  const payloadHash = sha256Hex("");
+  const canonicalHeaders = [`host:${parsed.host}`, `x-amz-content-sha256:${payloadHash}`, `x-amz-date:${amzDate}`].join("\n") + "\n";
+  const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
+  const canonicalRequest = ["GET", parsed.pathname, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
+  const credentialScope = `${dateStamp}/${region}/s3/aws4_request`;
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, sha256Hex(canonicalRequest)].join("\n");
+  const signature = hmacHex(signingKey(secretAccessKey, dateStamp, region), stringToSign);
+
+  return {
+    authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`,
     host: parsed.host,
     "x-amz-content-sha256": payloadHash,
     "x-amz-date": amzDate

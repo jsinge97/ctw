@@ -28,7 +28,9 @@ function setProductionEnv(overrides: NodeJS.ProcessEnv = {}) {
     CTW_PROVIDER_MODE: "live",
     CTW_STORAGE_MODE: "s3",
     CTW_AUTH_MODE: "durable",
+    CTW_AI_MODE: "live",
     CTW_ALLOW_DEMO_TOKENS: "false",
+    OPENAI_API_KEY: "sk_live_123",
     ...overrides
   };
 }

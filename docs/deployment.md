@@ -28,6 +28,8 @@ All services:
 - `CTW_JOBS_MODE=pgboss`
 - `CTW_PROVIDER_MODE=live`
 - `CTW_STORAGE_MODE=s3`
+- `CTW_AUTH_MODE=durable`
+- `CTW_AI_MODE=live`
 - `CTW_ALLOW_DEMO_TOKENS=false`
 - `APP_BASE_URL`
 - `BETTER_AUTH_SECRET`
@@ -47,6 +49,8 @@ API and worker provider/storage services:
 - `STORAGE_ACCESS_KEY_ID`
 - `STORAGE_SECRET_ACCESS_KEY`
 - `STORAGE_REGION`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`, optional; defaults to `gpt-5.5`
 
 Web service:
 

@@ -13,7 +13,8 @@ const validEnv = {
   STORAGE_ENDPOINT: "http://localhost:9000",
   STORAGE_BUCKET: "ctw",
   STORAGE_ACCESS_KEY_ID: "live-access-key",
-  STORAGE_SECRET_ACCESS_KEY: "live-secret-key"
+  STORAGE_SECRET_ACCESS_KEY: "live-secret-key",
+  OPENAI_API_KEY: "sk_live_123"
 };
 
 describe("loadEnv", () => {
@@ -43,9 +44,11 @@ describe("loadEnv", () => {
         CTW_RUNTIME_MODE: "production",
         CTW_DB_MODE: "memory",
         CTW_JOBS_MODE: "memory",
-        CTW_PROVIDER_MODE: "fake",
-        CTW_STORAGE_MODE: "memory",
-        CTW_ALLOW_DEMO_TOKENS: "true"
+      CTW_PROVIDER_MODE: "fake",
+      CTW_STORAGE_MODE: "memory",
+      CTW_AUTH_MODE: "demo",
+      CTW_AI_MODE: "fake",
+      CTW_ALLOW_DEMO_TOKENS: "true"
       })
     ).toThrow(/CTW_DB_MODE must be prisma/);
   });
@@ -59,6 +62,8 @@ describe("loadEnv", () => {
         CTW_JOBS_MODE: "pgboss",
         CTW_PROVIDER_MODE: "live",
         CTW_STORAGE_MODE: "s3",
+        CTW_AUTH_MODE: "durable",
+        CTW_AI_MODE: "live",
         CTW_ALLOW_DEMO_TOKENS: "false"
       })
     ).toMatchObject({ CTW_RUNTIME_MODE: "production", CTW_DB_MODE: "prisma" });

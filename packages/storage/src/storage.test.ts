@@ -8,6 +8,8 @@ function env(overrides: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
     CTW_JOBS_MODE: "memory",
     CTW_PROVIDER_MODE: "fake",
     CTW_STORAGE_MODE: "memory",
+    CTW_AUTH_MODE: "demo",
+    CTW_AI_MODE: "fake",
     CTW_ALLOW_DEMO_TOKENS: "true",
     ...overrides
   };
@@ -39,6 +41,21 @@ describe("storage", () => {
       expect.objectContaining({
         headers: expect.objectContaining({ authorization: expect.stringContaining("AWS4-HMAC-SHA256") }),
         method: "PUT"
+      })
+    );
+  });
+
+  it("gets from S3-compatible storage with signed path-style requests", async () => {
+    const bytes = new TextEncoder().encode("hello");
+    const fetchMock = vi.fn(async () => new Response(bytes, { status: 200, headers: { "content-type": "text/plain" } }));
+    const storage = new S3CompatibleStorage("http://localhost:9000", "ctw", "access", "secret", "us-east-1", fetchMock as typeof fetch);
+
+    await expect(storage.get("org/deal/doc.txt")).resolves.toMatchObject({ key: "org/deal/doc.txt", contentType: "text/plain", bytes });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:9000/ctw/org/deal/doc.txt",
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: expect.stringContaining("AWS4-HMAC-SHA256") }),
+        method: "GET"
       })
     );
   });

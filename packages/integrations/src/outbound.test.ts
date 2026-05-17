@@ -16,7 +16,10 @@ function setLiveProviderEnv() {
     CTW_JOBS_MODE: "pgboss",
     CTW_PROVIDER_MODE: "live",
     CTW_STORAGE_MODE: "s3",
+    CTW_AUTH_MODE: "durable",
+    CTW_AI_MODE: "live",
     CTW_ALLOW_DEMO_TOKENS: "false",
+    OPENAI_API_KEY: "sk_live_123",
     RESEND_API_KEY: "",
     TWILIO_ACCOUNT_SID: "",
     TWILIO_AUTH_TOKEN: ""

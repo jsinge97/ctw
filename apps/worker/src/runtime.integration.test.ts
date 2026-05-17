@@ -29,6 +29,8 @@ describe("worker runtime", () => {
         CTW_JOBS_MODE: "memory",
         CTW_PROVIDER_MODE: "fake",
         CTW_STORAGE_MODE: "memory",
+        CTW_AUTH_MODE: "demo",
+        CTW_AI_MODE: "fake",
         CTW_ALLOW_DEMO_TOKENS: "true"
       })
     ).resolves.toMatchObject({ ok: false, queueConnection: "failed" });

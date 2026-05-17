@@ -30,12 +30,12 @@ This tranche finishes the next set of product-hardening work: production auth, O
 
 ## Milestone 2: OCR And Document Intelligence
 
-- [ ] Add OpenAI configuration for document intelligence.
-- [ ] Use the Responses API with structured outputs for extraction/classification.
-- [ ] Keep fake/local behavior deterministic when `CTW_AI_MODE=fake`.
-- [ ] Route uploaded document versions into async OCR/classification jobs.
-- [ ] Persist extracted text, OCR status, document type, and classification status.
-- [ ] Surface failures as reviewable states instead of silent success.
+- [x] Add OpenAI configuration for document intelligence.
+- [x] Use the Responses API with structured outputs for extraction/classification.
+- [x] Keep fake/local behavior deterministic when `CTW_AI_MODE=fake`.
+- [x] Route uploaded document versions into async OCR/classification jobs.
+- [x] Persist extracted text, OCR status, document type, and classification status.
+- [x] Surface failures as reviewable states instead of silent success.
 
 ## Milestone 3: MCP Depth
 

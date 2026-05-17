@@ -1,5 +1,7 @@
 import type { CurrentSession, DocumentDto, UpdateDocumentRequest } from "@ctw/contracts";
 import { createHash } from "node:crypto";
+import { enqueueJob, jobNames } from "@ctw/jobs";
+import { getPrismaClient } from "@ctw/db";
 import { createStorage } from "@ctw/storage";
 import { getWorkflowProvider } from "../workflow-provider.js";
 
@@ -27,7 +29,7 @@ export async function listDocuments(dealId: string, session?: CurrentSession): P
 export async function createDocument(dealId: string, input: UpdateDocumentRequest, session?: CurrentSession): Promise<DocumentDto> {
   const workflow = getWorkflowProvider();
   if (workflow.mode === "prisma" && workflow.prisma) {
-    return workflow.prisma.createDocument({
+    const document = await workflow.prisma.createDocument({
       organizationId: session?.activeOrganization.id ?? "org_northgate",
       dealId,
       title: input.title ?? "Untitled document",
@@ -36,7 +38,9 @@ export async function createDocument(dealId: string, input: UpdateDocumentReques
       folder: input.folder ?? null,
       tags: input.tags ?? [],
       uploadedByMembershipId: session?.membership.id ?? null
-    }) as Promise<DocumentDto>;
+    }) as DocumentDto;
+    await enqueueJob(jobNames.classifyDocument, { organizationId: session?.activeOrganization.id ?? "org_northgate", documentId: document.id });
+    return document;
   }
   const document: DocumentDto = { id: workflow.memory.nextId("doc", workflow.memory.documents.length), dealId, title: input.title ?? "Untitled document", documentType: "unknown", classificationStatus: "pending", latestVersion: "v1", visibility: input.visibility ?? "internal", folder: input.folder ?? null, tags: input.tags ?? [] };
   workflow.memory.documents.push(document);
@@ -63,7 +67,7 @@ export async function createStoredDocumentForSource(options: { organizationId: s
   await createStorage().put({ key: storageKey, contentType: options.input.contentType, bytes: options.input.bytes });
 
   if (workflow.mode === "prisma" && workflow.prisma) {
-    return workflow.prisma.createDocument({
+    const document = await workflow.prisma.createDocument({
       organizationId: options.organizationId,
       dealId: options.dealId,
       sourceMessageId: options.sourceMessageId ?? null,
@@ -80,7 +84,13 @@ export async function createStoredDocumentForSource(options: { organizationId: s
         fileSizeBytes: options.input.bytes.byteLength,
         checksum
       }
-    }) as Promise<DocumentDto>;
+    }) as DocumentDto;
+    const version = await getPrismaClient().documentVersion.findFirst({
+      where: { organizationId: options.organizationId, documentId: document.id },
+      orderBy: { versionNumber: "desc" }
+    });
+    if (version) await enqueueJob(jobNames.extractDocumentText, { organizationId: options.organizationId, documentVersionId: version.id });
+    return document;
   }
 
   const document: DocumentDto = { id: workflow.memory.nextId("doc", workflow.memory.documents.length), dealId: options.dealId, title: options.input.title ?? options.input.filename, documentType: "unknown", classificationStatus: "pending", latestVersion: "v1", visibility: options.input.visibility ?? "internal", folder: options.input.folder ?? null, tags: options.input.tags ?? [] };
