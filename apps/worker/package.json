@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
+    "health": "node dist/health.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config ../../vitest.config.ts",
     "lint": "eslint src"
   },
   "dependencies": {
+    "@ctw/config": "workspace:*",
     "@ctw/db": "workspace:*",
     "@ctw/domain": "workspace:*",
     "@ctw/integrations": "workspace:*",

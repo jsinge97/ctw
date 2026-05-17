@@ -1,7 +1,6 @@
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import { createRequestId } from "@ctw/observability";
-import { openApiDocument } from "./openapi.js";
 import { registerActivityRoutes } from "./modules/activity/activity.routes.js";
 import { registerDealsRoutes } from "./modules/deals/deals.routes.js";
 import { registerDocumentsRoutes } from "./modules/documents/documents.routes.js";
@@ -16,6 +15,7 @@ import { registerVaWorkRoutes } from "./modules/va-work/va-work.routes.js";
 import { registerResendWebhookRoutes } from "./modules/webhooks/resend.routes.js";
 import { registerTwilioWebhookRoutes } from "./modules/webhooks/twilio.routes.js";
 import { requireAuthenticated } from "./modules/authz.js";
+import { registerHealthRoutes } from "./health.routes.js";
 
 export async function buildServer() {
   const app = Fastify({ logger: false });
@@ -28,8 +28,7 @@ export async function buildServer() {
     await requireAuthenticated(request);
   });
 
-  app.get("/healthz", async () => ({ ok: true }));
-  app.get("/openapi.json", async () => openApiDocument);
+  await registerHealthRoutes(app);
   await registerSessionRoutes(app);
   await registerDealsRoutes(app);
   await registerParticipantsRoutes(app);

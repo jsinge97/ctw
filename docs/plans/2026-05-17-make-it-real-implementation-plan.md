@@ -914,6 +914,8 @@ git commit -m "test: run e2e against seeded postgres"
 
 ## Task 17: Production Deployment Hardening
 
+**Status:** Done.
+
 **Purpose:** Make Railway/docker deployment match the durable app.
 
 **Files:**

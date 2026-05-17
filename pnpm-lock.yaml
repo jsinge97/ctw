@@ -150,6 +150,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@ctw/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@ctw/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -225,13 +228,20 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
-  packages/storage: {}
+  packages/storage:
+    dependencies:
+      '@ctw/config':
+        specifier: workspace:*
+        version: link:../config
 
   packages/testkit:
     dependencies:
       '@ctw/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@ctw/db':
+        specifier: workspace:*
+        version: link:../db
       '@ctw/domain':
         specifier: workspace:*
         version: link:../domain
