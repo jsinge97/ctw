@@ -14,25 +14,46 @@ export async function listDeals(session?: CurrentSession): Promise<DealDto[]> {
   const memory = workflow.memory;
   const activeDeals = memory.deals.filter((deal) => deal.status !== "archived");
   if (!session || ["admin", "am"].includes(session.membership.role)) return activeDeals;
-  if (session.membership.role === "va") return activeDeals.map(stripDealMutationCapabilities);
+  if (session.membership.role === "va") return activeDeals.map((deal) => withDealCapabilities(deal, []));
   const visibleDealIds = new Set(
     memory.participants
       .filter((participant) => participant.membershipId === session.membership.id && participant.status === "active" && participant.capabilities.some((capability) => capability.toLowerCase().replace(/\s+/g, "") === "viewdeal"))
       .map((participant) => participant.dealId)
   );
-  return activeDeals.filter((deal) => visibleDealIds.has(deal.id)).map(stripDealMutationCapabilities);
+  return activeDeals.filter((deal) => visibleDealIds.has(deal.id)).map((deal) => withDealCapabilities(deal, participantCapabilitiesForDeal(memory.participants, session.membership.id, deal.id)));
 }
 
 export async function getDeal(dealId: string, session?: CurrentSession): Promise<DealDto> {
   const workflow = provider();
-  if (workflow.mode === "prisma" && workflow.prisma) return workflow.prisma.getDeal(session?.activeOrganization.id ?? "org_northgate", dealId, session?.membership.role) as Promise<DealDto>;
+  if (workflow.mode === "prisma" && workflow.prisma) return workflow.prisma.getDeal(session?.activeOrganization.id ?? "org_northgate", dealId, session?.membership.id, session?.membership.role) as Promise<DealDto>;
   const deal = workflow.memory.deals.find((item) => item.id === dealId);
   if (!deal) throw Object.assign(new Error("Deal not found"), { statusCode: 404 });
-  return session && !["admin", "am"].includes(session.membership.role) ? stripDealMutationCapabilities(deal) : deal;
+  return session && !["admin", "am"].includes(session.membership.role) ? withDealCapabilities(deal, participantCapabilitiesForDeal(workflow.memory.participants, session.membership.id, deal.id)) : deal;
 }
 
-function stripDealMutationCapabilities(deal: DealDto): DealDto {
-  return { ...deal, capabilities: deal.capabilities.filter((capability) => capability === "viewDeal") };
+function withDealCapabilities(deal: DealDto, capabilities: string[]): DealDto {
+  return { ...deal, capabilities };
+}
+
+function participantCapabilitiesForDeal(participants: Array<{ dealId: string; membershipId: string | null; status: string; capabilities: string[] }>, membershipId: string, dealId: string) {
+  return Array.from(
+    new Set(
+      participants
+        .filter((participant) => participant.dealId === dealId && participant.membershipId === membershipId && participant.status === "active")
+        .flatMap((participant) => participant.capabilities.map(normalizeCapabilityLabel))
+        .filter(Boolean)
+    )
+  );
+}
+
+function normalizeCapabilityLabel(capability: string) {
+  const normalized = capability.toLowerCase().replace(/\s+/g, "");
+  if (normalized === "viewdeal") return "viewDeal";
+  if (normalized === "viewmessages") return "viewMessages";
+  if (normalized === "viewdocuments") return "viewDocuments";
+  if (normalized === "uploaddocuments") return "uploadDocuments";
+  if (normalized === "movestage" || normalized === "movedealstage") return "moveDealStage";
+  return "";
 }
 
 export async function createDeal(input: CreateDealRequest, session?: CurrentSession): Promise<DealDto> {

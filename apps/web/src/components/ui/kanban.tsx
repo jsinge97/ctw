@@ -7,6 +7,7 @@ import { cn } from "../../lib/cn.js";
 // keeps that contract while mapping class names to this app's non-Tailwind CSS.
 type KanbanMonitor = {
   activeId: string | null;
+  announce: (message: string) => void;
   setActiveId: (id: string | null) => void;
 };
 
@@ -20,8 +21,19 @@ export type KanbanCardData = {
 
 export function KanbanBoardProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const value = useMemo(() => ({ activeId, setActiveId }), [activeId]);
-  return <KanbanContext.Provider value={value}>{children}</KanbanContext.Provider>;
+  const [announcement, setAnnouncement] = useState("");
+  const value = useMemo(() => ({ activeId, announce: setAnnouncement, setActiveId }), [activeId]);
+  return (
+    <KanbanContext.Provider value={value}>
+      <div className="kanban-sr-instructions" id="kanban-drag-instructions">
+        To pick up a draggable item, drag it to a column. Drop it to move, or leave the board to cancel.
+      </div>
+      <div aria-live="assertive" aria-atomic="true" className="kanban-live-region" role="status">
+        {announcement}
+      </div>
+      {children}
+    </KanbanContext.Provider>
+  );
 }
 
 export function KanbanBoard({ className, ...props }: ComponentProps<"section">) {
@@ -43,6 +55,7 @@ export function KanbanColumn({
   onDropOverColumn?: (data: KanbanCardData, columnId: string) => void;
 }) {
   const [isDropTarget, setIsDropTarget] = useState(false);
+  const context = useContext(KanbanContext);
   return (
     <article
       className={cn("kanban-column", isDropTarget && canDrop && "kanban-column-drop", isDropTarget && !canDrop && "kanban-column-invalid", className)}
@@ -58,6 +71,7 @@ export function KanbanColumn({
         setIsDropTarget(false);
         const data = parseKanbanCardData(event.dataTransfer.getData(cardTransferType));
         if (!data || !canDrop) return;
+        context?.announce(`Draggable item ${data.id} was dropped over ${columnId}.`);
         onDropOverColumn?.(data, columnId);
       }}
       {...props}
@@ -109,6 +123,8 @@ export function KanbanCard({
   const dragging = context?.activeId === data.id;
   return (
     <button
+      aria-describedby="kanban-drag-instructions"
+      aria-roledescription="draggable"
       className={cn("deal-card", dragging && "deal-card-dragging", className)}
       draggable={!disabled}
       onDragEnd={(event) => {
@@ -119,6 +135,7 @@ export function KanbanCard({
       onDragStart={(event) => {
         if (disabled) return;
         context?.setActiveId(data.id);
+        context?.announce(`Picked up draggable item ${data.id}.`);
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData(cardTransferType, JSON.stringify(data));
         onKanbanDragStart?.();

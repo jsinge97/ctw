@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { TasksTab } from "../features/deal-workspace/tasks-tab.js";
-import { DealWorkspaceShell } from "../features/deal-workspace/workspace-shell.js";
+import { DealWorkspaceShell, hasEffectiveCapability } from "../features/deal-workspace/workspace-shell.js";
 import { useCreateTask, useDecideTask } from "../hooks/use-deals.js";
 
 export function DealTasksRoute() {
@@ -12,10 +12,10 @@ export function DealTasksRoute() {
       {(workspace, session) => (
         <TasksTab
           tasks={workspace.tasks}
-          canApprove={Boolean(session?.capabilities.includes("approveProposedAction"))}
-          canComplete={Boolean(session?.capabilities.includes("completeAssignedTask"))}
-          canCreate={Boolean(session?.capabilities.includes("createTask"))}
-          canEdit={Boolean(session?.capabilities.includes("editTask"))}
+          canApprove={hasEffectiveCapability(session, workspace.deal.capabilities, "approveProposedAction")}
+          canComplete={hasEffectiveCapability(session, workspace.deal.capabilities, "completeAssignedTask")}
+          canCreate={hasEffectiveCapability(session, workspace.deal.capabilities, "createTask")}
+          canEdit={hasEffectiveCapability(session, workspace.deal.capabilities, "editTask")}
           hasError={createTask.isError || decideTask.isError}
           onCreateTask={(body) => createTask.mutate(body)}
           onDecideTask={(taskId, decision, body) => decideTask.mutate({ taskId, decision, body })}

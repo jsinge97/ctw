@@ -38,5 +38,6 @@ describe("deal workspace tab helpers", () => {
     expect(canViewWorkspaceTab("messages", session)).toBe(false);
     expect(canViewWorkspaceTab("documents", session)).toBe(false);
     expect(canViewWorkspaceTab("activity", session)).toBe(false);
+    expect(canViewWorkspaceTab("documents", session, ["viewDocuments", "uploadDocuments"])).toBe(true);
   });
 });

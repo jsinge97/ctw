@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { DocumentsTab } from "../features/deal-workspace/documents-tab.js";
-import { DealWorkspaceShell } from "../features/deal-workspace/workspace-shell.js";
+import { DealWorkspaceShell, hasEffectiveCapability } from "../features/deal-workspace/workspace-shell.js";
 import { useArchiveDocument, useCreateDocument, useUpdateDocument, useUploadDocument } from "../hooks/use-deals.js";
 
 export function DealDocumentsRoute() {
@@ -14,7 +14,7 @@ export function DealDocumentsRoute() {
       {(workspace, session) => (
         <DocumentsTab
           documents={workspace.documents}
-          canManage={Boolean(session?.capabilities.includes("uploadDocuments"))}
+          canManage={hasEffectiveCapability(session, workspace.deal.capabilities, "uploadDocuments")}
           hasError={createDocument.isError || updateDocument.isError || archiveDocument.isError || uploadDocument.isError}
           onArchiveDocument={(documentId) => archiveDocument.mutate(documentId)}
           onCreateDocument={(body) => createDocument.mutate(body)}

@@ -15,7 +15,7 @@ type DocumentVersionInput = { storageKey: string; filename: string; mimeType: st
 
 export type WorkflowRepository = {
   listDeals: (organizationId: string, membershipId?: string, role?: string) => Promise<unknown[]>;
-  getDeal: (organizationId: string, dealId: string, role?: string) => Promise<unknown>;
+  getDeal: (organizationId: string, dealId: string, membershipId?: string, role?: string) => Promise<unknown>;
   createDeal: (input: { organizationId: string; title: string; primaryCompanyName?: string | null; ownerMembershipId: string }) => Promise<unknown>;
   patchDeal: (input: { organizationId: string; dealId: string; title?: string; primaryCompanyName?: string | null; staleFlag?: boolean }) => Promise<unknown>;
   moveDealStage: (input: { organizationId: string; dealId: string; stage: DealStage; membershipId: string }) => Promise<unknown>;
@@ -64,16 +64,16 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       include: { primaryCompany: true, tasks: true },
       orderBy: [{ priorityRank: "asc" }, { lastActivityAt: "desc" }]
     });
-    return deals.map((deal) => mapDeal(deal, role));
+    return Promise.all(deals.map((deal) => this.mapDealForViewer(deal, membershipId, role)));
   }
 
-  async getDeal(organizationId: string, dealId: string, role?: string) {
+  async getDeal(organizationId: string, dealId: string, membershipId?: string, role?: string) {
     const deal = await this.prisma.deal.findFirst({
       where: { id: dealId, organizationId },
       include: { primaryCompany: true, tasks: true }
     });
     if (!deal) throw notFound("Deal not found");
-    return mapDeal(deal, role);
+    return this.mapDealForViewer(deal, membershipId, role);
   }
 
   async createDeal(input: { organizationId: string; title: string; primaryCompanyName?: string | null; ownerMembershipId: string }) {
@@ -648,6 +648,25 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return participants.map((participant) => participant.dealId).filter((dealId) => visibleDealIds.has(dealId));
   }
 
+  private async mapDealForViewer(deal: DealRow, membershipId?: string, role?: string) {
+    if (!membershipId || ["admin", "am"].includes(role ?? "")) return mapDeal(deal, role);
+    const participants = await this.prisma.dealParticipant.findMany({
+      where: { organizationId: deal.organizationId, dealId: deal.id, subjectType: "membership", subjectId: membershipId, status: "active" },
+      select: { id: true }
+    });
+    const grants = await this.prisma.permissionGrant.findMany({
+      where: {
+        organizationId: deal.organizationId,
+        scopeType: "deal",
+        scopeId: deal.id,
+        effect: "allow",
+        revokedAt: null,
+        OR: [{ subjectId: membershipId }, { subjectId: { in: participants.map((participant) => participant.id) } }]
+      }
+    });
+    return mapDeal(deal, role, Array.from(new Set(grants.map((grant) => fromDbCapability(grant.capability)))));
+  }
+
   private async mapParticipant(participant: Prisma.DealParticipantGetPayload<object>) {
     const [membership, contact, grants] = await Promise.all([
       participant.subjectType === "membership" ? this.prisma.organizationMembership.findUnique({ where: { id: participant.subjectId }, include: { user: true } }) : null,
@@ -747,9 +766,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
   }
 }
 
-function mapDeal(deal: DealRow, role?: string) {
+function mapDeal(deal: DealRow, role?: string, grantedCapabilities?: string[]) {
   const currentTask = deal.tasks.find((task) => task.isCurrentNextAction);
-  const capabilities = ["admin", "am"].includes(role ?? "") ? ["viewDeal", "moveDealStage", "approveOutboundSend"] : ["viewDeal"];
+  const capabilities = ["admin", "am"].includes(role ?? "") ? ["viewDeal", "viewMessages", "viewDocuments", "uploadDocuments", "moveDealStage", "createTask", "editTask", "completeAssignedTask", "approveProposedAction", "approveOutboundSend", "routeWork", "viewActivity", "manageParticipants"] : (grantedCapabilities ?? ["viewDeal"]);
   return {
     id: deal.id,
     organizationId: deal.organizationId,

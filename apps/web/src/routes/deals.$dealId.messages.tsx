@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { MessagesTab } from "../features/deal-workspace/messages-tab.js";
-import { DealWorkspaceShell } from "../features/deal-workspace/workspace-shell.js";
+import { DealWorkspaceShell, hasEffectiveCapability } from "../features/deal-workspace/workspace-shell.js";
 import { useUpdateMessage } from "../hooks/use-deals.js";
 
 export function DealMessagesRoute() {
@@ -11,7 +11,7 @@ export function DealMessagesRoute() {
       {(workspace, session) => (
         <MessagesTab
           messages={workspace.messages}
-          canManage={Boolean(session?.capabilities.includes("routeWork"))}
+          canManage={hasEffectiveCapability(session, workspace.deal.capabilities, "routeWork")}
           isUpdating={updateMessage.isPending}
           onUpdateMessage={(messageId, body) => updateMessage.mutate({ messageId, body })}
         />

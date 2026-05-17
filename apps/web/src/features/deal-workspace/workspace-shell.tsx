@@ -54,7 +54,7 @@ export function DealWorkspaceShell({
           </header>
 
           <nav className="workspace-tabs" aria-label="Deal workspace tabs">
-            {tabLinks.filter((tab) => canViewWorkspaceTab(tab.id, session.data)).map((tab) => (
+            {tabLinks.filter((tab) => canViewWorkspaceTab(tab.id, session.data, workspace.data.deal.capabilities)).map((tab) => (
               <Link className={tab.id === activeTab ? "workspace-tab workspace-tab-active" : "workspace-tab"} key={tab.id} to={tab.to} params={{ dealId }}>
                 {tab.label}
               </Link>
@@ -131,12 +131,16 @@ export function OverviewTab({ session, workspace }: { session: CurrentSession | 
   );
 }
 
-export function canViewWorkspaceTab(tab: DealWorkspaceTab, session: CurrentSession | undefined) {
-  if (tab === "overview" || tab === "participants") return Boolean(session?.capabilities.includes("viewDeal"));
-  if (tab === "messages") return Boolean(session?.capabilities.includes("viewMessages"));
-  if (tab === "documents") return Boolean(session?.capabilities.includes("viewDocuments"));
-  if (tab === "tasks") return Boolean(session?.capabilities.includes("viewDeal"));
-  if (tab === "activity") return Boolean(session?.capabilities.includes("viewActivity"));
+export function hasEffectiveCapability(session: CurrentSession | undefined, dealCapabilities: string[], capability: string) {
+  return Boolean((session?.capabilities as readonly string[] | undefined)?.includes(capability) || dealCapabilities.includes(capability));
+}
+
+export function canViewWorkspaceTab(tab: DealWorkspaceTab, session: CurrentSession | undefined, dealCapabilities: string[] = []) {
+  if (tab === "overview" || tab === "participants") return hasEffectiveCapability(session, dealCapabilities, "viewDeal");
+  if (tab === "messages") return hasEffectiveCapability(session, dealCapabilities, "viewMessages");
+  if (tab === "documents") return hasEffectiveCapability(session, dealCapabilities, "viewDocuments");
+  if (tab === "tasks") return hasEffectiveCapability(session, dealCapabilities, "viewDeal");
+  if (tab === "activity") return hasEffectiveCapability(session, dealCapabilities, "viewActivity");
   return false;
 }
 

@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router";
 import { ParticipantsTab } from "../features/deal-workspace/participants-tab.js";
-import { DealWorkspaceShell } from "../features/deal-workspace/workspace-shell.js";
+import { DealWorkspaceShell, hasEffectiveCapability } from "../features/deal-workspace/workspace-shell.js";
 import { useAddParticipant, useUpdateParticipant } from "../hooks/use-deals.js";
 
 export function DealParticipantsRoute() {
@@ -12,7 +12,7 @@ export function DealParticipantsRoute() {
       {(workspace, session) => (
         <ParticipantsTab
           participants={workspace.participants}
-          canManage={Boolean(session?.capabilities.includes("manageParticipants"))}
+          canManage={hasEffectiveCapability(session, workspace.deal.capabilities, "manageParticipants")}
           hasError={addParticipant.isError || updateParticipant.isError}
           onAddParticipant={(body) => addParticipant.mutate(body)}
           onUpdateParticipant={(participantId, body) => updateParticipant.mutate({ participantId, body })}
