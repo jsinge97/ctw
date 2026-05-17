@@ -129,6 +129,7 @@ export async function resolveSessionFromHeaders(headers: { authorization?: strin
 export async function loginWithEmailPassword(input: { email: string; password: string }): Promise<{ token: string; session: CurrentSession }> {
   if (input.password !== "password") throw new Error("Unauthorized");
   const runtimeEnv = assertProductionRuntimeSafety();
+  if (runtimeEnv.CTW_RUNTIME_MODE === "production") throw new Error("Better Auth credential login is not configured for production yet");
   const demoLogin = demoLoginSessions[input.email];
   if (runtimeEnv.CTW_DB_MODE === "memory" && demoLogin) {
     const lookup = demoSessions[demoLogin.bearerToken];

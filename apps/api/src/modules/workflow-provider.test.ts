@@ -40,6 +40,18 @@ describe("workflow provider runtime guardrails", () => {
     expect(() => getWorkflowProvider()).toThrow(/CTW_PROVIDER_MODE must be live/);
   });
 
+  it("rejects memory store access when durable workflow mode is selected", () => {
+    process.env = {
+      ...savedEnv,
+      CTW_RUNTIME_MODE: "demo",
+      CTW_DB_MODE: "prisma",
+      CTW_JOBS_MODE: "memory",
+      CTW_PROVIDER_MODE: "fake",
+      CTW_ALLOW_DEMO_TOKENS: "true"
+    };
+    expect(() => getWorkflowProvider().memory).toThrow(/Memory workflow provider is not available/);
+  });
+
   it("rejects demo bearer tokens in production", () => {
     setProductionEnv();
     expect(() => resolveSessionFromToken("am-token")).toThrow(/Demo bearer tokens are not allowed/);

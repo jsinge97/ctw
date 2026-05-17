@@ -15,6 +15,7 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@ctw/config": "workspace:*",
     "@ctw/domain": "workspace:*"
   }
 }

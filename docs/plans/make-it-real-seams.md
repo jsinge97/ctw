@@ -13,13 +13,15 @@ This file tracks temporary demo seams that must disappear before production mode
 
 - Web runtime injects `am-token` in `apps/web/src/lib/api/runtime.ts`.
   - Removed by Task 5.
-- API session service resolves hardcoded demo tokens in `apps/api/src/modules/session/session.service.ts`.
-  - Replaced by durable Better Auth sessions in Task 4.
-- API workflow services mostly read `getWorkflowProvider().memory`.
+- API session service still supports hardcoded demo bearer tokens and demo cookie login only when runtime/database mode is non-production demo mode.
+  - Removed entirely after durable e2e flows stop depending on demo mode.
+- API login creates app-owned `auth_sessions` rows with the Better Auth cookie name; it does not yet delegate to Better Auth's credential endpoint.
+  - Full Better Auth credential provider wiring is required before production login is enabled.
+- API workflow services mostly read `getWorkflowProvider().memory`; access now throws when `CTW_DB_MODE=prisma`.
   - Replaced by Prisma repository calls in Tasks 6-9.
 - `apps/api/src/modules/demo-store.ts` seeds in-memory deal state.
   - Replaced by durable seed/reset flow in Task 3 and Prisma services in Tasks 6-9.
-- Provider functions in `packages/integrations` return deterministic fake IDs.
+- Provider functions in `packages/integrations` return deterministic fake IDs only when `CTW_PROVIDER_MODE=fake`; live mode currently throws instead of faking sends.
   - Replaced by real provider adapter boundaries in Task 10.
 - Storage is not yet used for durable uploaded/attached document objects.
   - Replaced by durable S3-compatible storage in Task 11.

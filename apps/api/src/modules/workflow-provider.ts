@@ -15,24 +15,47 @@ import {
   vaWorkItems
 } from "./demo-store.js";
 
+type MemoryWorkflowStore = {
+  activityEvents: typeof activityEvents;
+  deals: typeof deals;
+  documents: typeof documents;
+  messages: typeof messages;
+  orgId: typeof orgId;
+  organizationSettings: typeof organizationSettings;
+  participants: typeof participants;
+  routingReviewItems: typeof routingReviewItems;
+  tasks: typeof tasks;
+  users: typeof users;
+  vaWorkItems: typeof vaWorkItems;
+  nextId: typeof nextId;
+};
+
 export type RuntimeWorkflowProvider = {
   mode: "memory" | "prisma";
   prisma: PrismaWorkflowRepository | null;
-  memory: {
-    activityEvents: typeof activityEvents;
-    deals: typeof deals;
-    documents: typeof documents;
-    messages: typeof messages;
-    orgId: typeof orgId;
-    organizationSettings: typeof organizationSettings;
-    participants: typeof participants;
-    routingReviewItems: typeof routingReviewItems;
-    tasks: typeof tasks;
-    users: typeof users;
-    vaWorkItems: typeof vaWorkItems;
-    nextId: typeof nextId;
-  };
+  memory: MemoryWorkflowStore;
 };
+
+function buildMemoryWorkflowStore(): MemoryWorkflowStore {
+  return {
+    activityEvents,
+    deals,
+    documents,
+    messages,
+    orgId,
+    organizationSettings,
+    participants,
+    routingReviewItems,
+    tasks,
+    users,
+    vaWorkItems,
+    nextId
+  };
+}
+
+function assertMemoryWorkflowAccessAllowed(mode: "memory" | "prisma") {
+  if (mode === "prisma") throw new Error("Memory workflow provider is not available when CTW_DB_MODE=prisma");
+}
 
 let provider: RuntimeWorkflowProvider | undefined;
 
@@ -43,19 +66,9 @@ export function getWorkflowProvider(): RuntimeWorkflowProvider {
   provider ??= {
     mode,
     prisma: mode === "prisma" ? new PrismaWorkflowRepository(getPrismaClient()) : null,
-    memory: {
-      activityEvents,
-      deals,
-      documents,
-      messages,
-      orgId,
-      organizationSettings,
-      participants,
-      routingReviewItems,
-      tasks,
-      users,
-      vaWorkItems,
-      nextId
+    get memory() {
+      assertMemoryWorkflowAccessAllowed(mode);
+      return buildMemoryWorkflowStore();
     }
   };
   return provider;

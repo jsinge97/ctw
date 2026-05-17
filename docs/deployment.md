@@ -57,6 +57,8 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
+The default local `DATABASE_URL` used by `pnpm db:*` is `postgresql://ctw:ctw@localhost:5432/ctw`, which matches `docker-compose.yml`.
+
 The seed creates the Northgate CRE organization, admin/AM/VA/broker/client users, Sutter and Bryant deals, scoped external permissions, Resend/Twilio channels, documents, messages, one current next action, one VA queue item, routing review, approvals, and audit history.
 
 Reset only the seeded Northgate dataset with:

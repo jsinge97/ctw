@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { sessionCookieHeader } from "@ctw/auth";
 import { buildServer } from "../../server.js";
-import { resetDurableSessionLookupForTests, resolveSessionFromToken, setDurableSessionLookupForTests } from "./session.service.js";
+import { loginWithEmailPassword, resetDurableSessionLookupForTests, resolveSessionFromToken, setDurableSessionLookupForTests } from "./session.service.js";
 
 const savedEnv = { ...process.env };
 
@@ -76,5 +76,18 @@ describe("session service", () => {
     };
 
     expect(() => resolveSessionFromToken("am-token")).toThrow(/Demo bearer tokens are not allowed/);
+  });
+
+  it("does not allow temporary password login in production mode", async () => {
+    process.env = {
+      ...savedEnv,
+      CTW_RUNTIME_MODE: "production",
+      CTW_DB_MODE: "prisma",
+      CTW_JOBS_MODE: "pgboss",
+      CTW_PROVIDER_MODE: "live",
+      CTW_ALLOW_DEMO_TOKENS: "false"
+    };
+
+    await expect(loginWithEmailPassword({ email: "am@northgate.cre", password: "password" })).rejects.toThrow(/Better Auth credential login is not configured/);
   });
 });
