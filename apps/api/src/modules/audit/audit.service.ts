@@ -1,36 +1,71 @@
 import { sanitizeAuditPayload } from "@ctw/domain";
-import { ApprovalEventsRepository, AuditRepository, TaskOutcomesRepository, type ApprovalEventRecord, type AuditRecord, type TaskOutcomeRecord } from "@ctw/db";
+import {
+  ApprovalEventsRepository,
+  AuditRepository,
+  PrismaApprovalEventsRepository,
+  PrismaAuditRepository,
+  PrismaTaskOutcomesRepository,
+  TaskOutcomesRepository,
+  getPrismaClient,
+  type ApprovalEventRecord,
+  type AuditRecord,
+  type TaskOutcomeRecord
+} from "@ctw/db";
+import { randomUUID } from "node:crypto";
 
 export type AuditService = ReturnType<typeof createAuditService>;
 
-export function createAuditService(repositories = {
+type AppendRepository<T> = {
+  append: (row: T) => T | Promise<T>;
+};
+
+type AuditRepositories = {
+  audit: AppendRepository<AuditRecord>;
+  approvals: AppendRepository<ApprovalEventRecord>;
+  outcomes: AppendRepository<TaskOutcomeRecord>;
+};
+
+export function createMemoryAuditRepositories() {
+  return {
   audit: new AuditRepository(),
   approvals: new ApprovalEventsRepository(),
   outcomes: new TaskOutcomesRepository()
-}) {
+  };
+}
+
+export function createPrismaAuditRepositories(): AuditRepositories {
+  const prisma = getPrismaClient();
+  return {
+    audit: new PrismaAuditRepository(prisma),
+    approvals: new PrismaApprovalEventsRepository(prisma),
+    outcomes: new PrismaTaskOutcomesRepository(prisma)
+  };
+}
+
+export function createAuditService(repositories: AuditRepositories = createPrismaAuditRepositories()) {
   return {
     repositories,
-    recordAuditEvent(event: Omit<AuditRecord, "id" | "createdAt">): AuditRecord {
+    async recordAuditEvent(event: Omit<AuditRecord, "id" | "createdAt">): Promise<AuditRecord> {
       return repositories.audit.append({
         ...event,
-        id: `audit_${repositories.audit.rows.size + 1}`,
+        id: `audit_${randomUUID()}`,
         before: sanitizeAuditPayload(event.before),
         after: sanitizeAuditPayload(event.after),
         metadata: sanitizeAuditPayload(event.metadata),
         createdAt: new Date().toISOString()
       });
     },
-    recordApprovalEvent(event: Omit<ApprovalEventRecord, "id" | "createdAt">): ApprovalEventRecord {
+    async recordApprovalEvent(event: Omit<ApprovalEventRecord, "id" | "createdAt">): Promise<ApprovalEventRecord> {
       return repositories.approvals.append({
         ...event,
-        id: `approval_${repositories.approvals.rows.size + 1}`,
+        id: `approval_${randomUUID()}`,
         createdAt: new Date().toISOString()
       });
     },
-    recordTaskOutcome(outcome: Omit<TaskOutcomeRecord, "id" | "createdAt">): TaskOutcomeRecord {
+    async recordTaskOutcome(outcome: Omit<TaskOutcomeRecord, "id" | "createdAt">): Promise<TaskOutcomeRecord> {
       return repositories.outcomes.append({
         ...outcome,
-        id: `outcome_${repositories.outcomes.rows.size + 1}`,
+        id: `outcome_${randomUUID()}`,
         createdAt: new Date().toISOString()
       });
     }

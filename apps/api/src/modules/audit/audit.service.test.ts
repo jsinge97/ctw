@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createAuditService } from "./audit.service.js";
+import { createAuditService, createMemoryAuditRepositories } from "./audit.service.js";
 
 describe("audit service", () => {
-  it("sanitizes full bodies before writing audit history", () => {
-    const service = createAuditService();
-    const event = service.recordAuditEvent({
+  it("sanitizes full bodies before writing audit history", async () => {
+    const service = createAuditService(createMemoryAuditRepositories());
+    const event = await service.recordAuditEvent({
       organizationId: "org_1",
       actorType: "system",
       eventType: "message.received",
