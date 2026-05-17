@@ -33,6 +33,9 @@ export const generatedRoutes = {
   "va_work_itemsitemId_cancel": "/v1/va-work-items/{itemId}/cancel",
   "dealsdealId_activity": "/v1/deals/{dealId}/activity",
   "settingsorganization": "/v1/settings/organization",
+  "settingsorganization_channels_channelId": "/v1/settings/organization/channels/{channelId}",
+  "settingsorganization_routing_preview_threshold": "/v1/settings/organization/routing-preview/{threshold}",
   "users": "/v1/users",
-  "usersuserId": "/v1/users/{userId}"
+  "usersuserId": "/v1/users/{userId}",
+  "usersuserId_resend_invitation": "/v1/users/{userId}/resend-invitation"
 } as const;

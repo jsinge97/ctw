@@ -1,19 +1,19 @@
 import { AppShell } from "../components/app-shell.js";
-import { OrganizationSettingsScreen } from "../features/settings/organization-settings-screen.js";
+import { UsersSettingsScreen } from "../features/settings/users-settings-screen.js";
 import { useCurrentSession } from "../hooks/use-current-session.js";
 
-export function SettingsRoute() {
+export function SettingsUsersRoute() {
   const session = useCurrentSession();
 
   return (
     <AppShell session={session.data}>
       <section className="page-header">
         <div>
-          <h1>Organization settings</h1>
-          <p>Channels, routing threshold, and organization profile.</p>
+          <h1>User settings</h1>
+          <p>Organization users, invitations, and role state.</p>
         </div>
       </section>
-      <OrganizationSettingsScreen session={session.data} />
+      <UsersSettingsScreen session={session.data} />
     </AppShell>
   );
 }

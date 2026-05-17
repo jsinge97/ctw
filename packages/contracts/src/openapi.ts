@@ -15,7 +15,9 @@ function normalizePath(path: string): string {
     .replaceAll(":participantId", "{participantId}")
     .replaceAll(":messageId", "{messageId}")
     .replaceAll(":documentId", "{documentId}")
-    .replaceAll(":userId", "{userId}");
+    .replaceAll(":userId", "{userId}")
+    .replaceAll(":channelId", "{channelId}")
+    .replaceAll(":threshold", "{threshold}");
 }
 
 function toJsonSchema(schema: z.ZodType | undefined): unknown {

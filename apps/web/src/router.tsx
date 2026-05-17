@@ -10,6 +10,7 @@ import { IndexRoute } from "./routes/index.js";
 import { LoginRoute } from "./routes/login.js";
 import { RoutingReviewRoute } from "./routes/routing-review.js";
 import { SettingsRoute } from "./routes/settings.js";
+import { SettingsUsersRoute } from "./routes/settings.users.js";
 import { VaRoute } from "./routes/va.js";
 
 const rootRoute = createRootRoute({
@@ -88,6 +89,12 @@ const settingsRoute = createRoute({
   component: SettingsRoute
 });
 
+const settingsUsersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings/users",
+  component: SettingsUsersRoute
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -100,7 +107,8 @@ const routeTree = rootRoute.addChildren([
   dealActivityRoute,
   routingReviewRoute,
   vaRoute,
-  settingsRoute
+  settingsRoute,
+  settingsUsersRoute
 ]);
 
 export const router = createRouter({ routeTree });

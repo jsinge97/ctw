@@ -67,6 +67,8 @@ function responseType(method: Method, path: string): string {
   if (path === "/v1/va-work-items") return "VaWorkItemDto[]";
   if (path.startsWith("/v1/va-work-items/")) return "VaWorkItemDto";
   if (path === "/v1/settings/organization") return "OrganizationSettingsDto";
+  if (path.startsWith("/v1/settings/organization/channels/")) return "OrganizationSettingsDto";
+  if (path.startsWith("/v1/settings/organization/routing-preview/")) return "RoutingThresholdPreviewDto";
   if (path === "/v1/users" && method === "get") return "UserDto[]";
   if (path.startsWith("/v1/users")) return "UserDto";
   return "unknown";
@@ -91,6 +93,7 @@ function requestType(method: Method, path: string): string | null {
   if (path.startsWith("/v1/va-work-items/") && path.endsWith("/send-back")) return "SendBackVaWorkRequest";
   if (path.startsWith("/v1/va-work-items/")) return "VaWorkDecisionRequest";
   if (key === "PATCH /v1/settings/organization") return "UpdateOrganizationSettingsRequest";
+  if (key === "PATCH /v1/settings/organization/channels/{channelId}") return "UpdateOrganizationChannelRequest";
   if (key === "POST /v1/users") return "InviteUserRequest";
   if (key === "PATCH /v1/users/{userId}") return "UpdateUserRequest";
   return null;
@@ -165,9 +168,11 @@ import type {
   PatchDealRequest,
   ResolveRoutingReviewRequest,
   RoutingReviewItemDto,
+  RoutingThresholdPreviewDto,
   SendBackVaWorkRequest,
   TaskDecisionRequest,
   TaskDto,
+  UpdateOrganizationChannelRequest,
   UpdateDocumentRequest,
   UpdateMessageRequest,
   UpdateOrganizationSettingsRequest,

@@ -1,4 +1,4 @@
-import { DocumentType, ParticipantRole, Prisma, TaskStatus, type PrismaClient } from "../generated/client/index.js";
+import { DocumentType, ParticipantRole, Prisma, TaskStatus, type EngagementMode, type PrismaClient } from "../generated/client/index.js";
 
 type DealStage = "prospect" | "loi" | "negotiation" | "diligence" | "close" | "closed_won" | "lost";
 type VisibilityDto = "internal" | "shared";
@@ -46,9 +46,12 @@ export type WorkflowRepository = {
   getOrganizationSettings: (organizationId: string) => Promise<unknown>;
   findOrganizationByChannelAddress: (channelType: "email" | "sms", address: string) => Promise<{ organizationId: string; channelId: string } | null>;
   updateOrganizationSettings: (input: { organizationId: string; name?: string; routingConfidenceThreshold?: number }) => Promise<unknown>;
+  updateOrganizationChannel: (input: { organizationId: string; channelId: string; mode?: string; status?: string }) => Promise<unknown>;
+  previewRoutingThreshold: (organizationId: string, threshold: number) => Promise<unknown>;
   listUsers: (organizationId: string) => Promise<unknown[]>;
   inviteUser: (input: { organizationId: string; email: string; name: string; role: "admin" | "am" | "va" | "broker" | "client" }) => Promise<unknown>;
   updateUser: (input: { organizationId: string; userId: string; role?: "admin" | "am" | "va" | "broker" | "client"; status?: "active" | "disabled" }) => Promise<unknown>;
+  resendUserInvitation: (input: { organizationId: string; userId: string }) => Promise<unknown>;
 };
 
 export class PrismaWorkflowRepository implements WorkflowRepository {
@@ -529,6 +532,25 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return mapOrganizationSettings(org);
   }
 
+  async updateOrganizationChannel(input: { organizationId: string; channelId: string; mode?: string; status?: string }) {
+    await this.prisma.channel.update({
+      where: { id: input.channelId, organizationId: input.organizationId },
+      data: {
+        ...(input.mode ? { defaultEngagementMode: input.mode as EngagementMode } : {}),
+        ...(input.status ? { status: input.status === "archived" ? "archived" : "active" } : {})
+      }
+    });
+    return this.getOrganizationSettings(input.organizationId);
+  }
+
+  async previewRoutingThreshold(organizationId: string, threshold: number) {
+    const [wouldEnterReview, wouldAutoRoute] = await Promise.all([
+      this.prisma.message.count({ where: { organizationId, routingStatus: "routed", routingConfidence: { not: null, lt: threshold } } }),
+      this.prisma.message.count({ where: { organizationId, routingStatus: "review_required", routingConfidence: { not: null, gte: threshold } } })
+    ]);
+    return { threshold, wouldEnterReview, wouldAutoRoute };
+  }
+
   async listUsers(organizationId: string) {
     const memberships = await this.prisma.organizationMembership.findMany({
       where: { organizationId },
@@ -567,6 +589,15 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       include: { user: true }
     });
     if (input.status) await this.prisma.user.update({ where: { id: input.userId }, data: { status: input.status } });
+    return { id: membership.user.id, name: membership.user.displayName, email: membership.user.email, role: membership.role, status: membership.status, lastLoginAt: membership.user.lastLoginAt?.toISOString() ?? null };
+  }
+
+  async resendUserInvitation(input: { organizationId: string; userId: string }) {
+    const membership = await this.prisma.organizationMembership.findUnique({
+      where: { organizationId_userId: { organizationId: input.organizationId, userId: input.userId } },
+      include: { user: true }
+    });
+    if (!membership) throw notFound("User not found");
     return { id: membership.user.id, name: membership.user.displayName, email: membership.user.email, role: membership.role, status: membership.status, lastLoginAt: membership.user.lastLoginAt?.toISOString() ?? null };
   }
 

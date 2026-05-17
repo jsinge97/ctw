@@ -16,9 +16,11 @@ import type {
   PatchDealRequest,
   ResolveRoutingReviewRequest,
   RoutingReviewItemDto,
+  RoutingThresholdPreviewDto,
   SendBackVaWorkRequest,
   TaskDecisionRequest,
   TaskDto,
+  UpdateOrganizationChannelRequest,
   UpdateDocumentRequest,
   UpdateMessageRequest,
   UpdateOrganizationSettingsRequest,
@@ -70,9 +72,12 @@ export type GeneratedOperationMap = {
   "GET /v1/deals/{dealId}/activity": { params: { dealId: string }; response: ActivityEventDto[] };
   "GET /v1/settings/organization": { response: OrganizationSettingsDto };
   "PATCH /v1/settings/organization": { request: UpdateOrganizationSettingsRequest; response: OrganizationSettingsDto };
+  "PATCH /v1/settings/organization/channels/{channelId}": { params: { channelId: string }; request: UpdateOrganizationChannelRequest; response: OrganizationSettingsDto };
+  "GET /v1/settings/organization/routing-preview/{threshold}": { params: { threshold: string }; response: RoutingThresholdPreviewDto };
   "GET /v1/users": { response: UserDto[] };
   "POST /v1/users": { request: InviteUserRequest; response: UserDto };
   "PATCH /v1/users/{userId}": { params: { userId: string }; request: UpdateUserRequest; response: UserDto };
+  "POST /v1/users/{userId}/resend-invitation": { params: { userId: string }; response: UserDto };
 };
 
 export type GeneratedApiClientOptions = {
@@ -413,6 +418,20 @@ export class GeneratedApiClient {
     return this.request(generatedRoutes["settingsorganization"], init);
   }
 
+  patchSettingsorganizationChannelsChannelId(params: GeneratedOperationMap["PATCH /v1/settings/organization/channels/{channelId}"]["params"], body: GeneratedOperationMap["PATCH /v1/settings/organization/channels/{channelId}"]["request"]): Promise<GeneratedOperationMap["PATCH /v1/settings/organization/channels/{channelId}"]["response"]> {
+    const init: RequestInit = {
+      method: "PATCH",
+      headers: { "content-type": "application/json" }
+    };
+    init.body = JSON.stringify(body);
+
+    return this.request(this.fillPath(generatedRoutes["settingsorganization_channels_channelId"], params), init);
+  }
+
+  getSettingsorganizationRoutingPreviewThreshold(params: GeneratedOperationMap["GET /v1/settings/organization/routing-preview/{threshold}"]["params"]): Promise<GeneratedOperationMap["GET /v1/settings/organization/routing-preview/{threshold}"]["response"]> {
+    return this.request(this.fillPath(generatedRoutes["settingsorganization_routing_preview_threshold"], params));
+  }
+
   getUsers(): Promise<GeneratedOperationMap["GET /v1/users"]["response"]> {
     return this.request(generatedRoutes["users"]);
   }
@@ -435,6 +454,15 @@ export class GeneratedApiClient {
     init.body = JSON.stringify(body);
 
     return this.request(this.fillPath(generatedRoutes["usersuserId"], params), init);
+  }
+
+  postUsersuserIdResendInvitation(params: GeneratedOperationMap["POST /v1/users/{userId}/resend-invitation"]["params"]): Promise<GeneratedOperationMap["POST /v1/users/{userId}/resend-invitation"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+
+    return this.request(this.fillPath(generatedRoutes["usersuserId_resend_invitation"], params), init);
   }
 }
 

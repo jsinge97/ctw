@@ -29,14 +29,17 @@ function requiredCapability(method: string, path: string): Capability | null {
   if (/^\/v1\/deals\/[^/]+\/activity$/.test(path)) return "viewActivity";
   if (/^\/v1\/tasks\/[^/]+\/approve$/.test(path)) return "approveProposedAction";
   if (/^\/v1\/tasks\/[^/]+\/(reject|defer|route)$/.test(path)) return "editTask";
+  if (/^\/v1\/tasks\/[^/]+\/complete$/.test(path)) return "completeAssignedTask";
   if (path === "/v1/routing-review-items") return "viewRoutingReview";
   if (/^\/v1\/routing-review-items\/[^/]+\/resolve$/.test(path)) return "routeWork";
   if (path === "/v1/va-work-items") return "viewVaQueue";
   if (/^\/v1\/va-work-items\/[^/]+\/(start|submit)$/.test(path)) return "completeAssignedTask";
   if (/^\/v1\/va-work-items\/[^/]+\/(accept|cancel|send-back)$/.test(path)) return "approveProposedAction";
   if (path === "/v1/settings/organization") return method === "GET" ? "viewSettingsOrganization" : "manageOrganizationSettings";
+  if (/^\/v1\/settings\/organization\/routing-preview\/[^/]+$/.test(path)) return "viewSettingsOrganization";
+  if (/^\/v1\/settings\/organization\/channels\/[^/]+$/.test(path)) return "manageOrganizationSettings";
   if (path === "/v1/users") return method === "GET" ? "viewSettingsUsers" : "managePermissions";
-  if (/^\/v1\/users\/[^/]+$/.test(path)) return "managePermissions";
+  if (/^\/v1\/users\/[^/]+(\/resend-invitation)?$/.test(path)) return "managePermissions";
   return null;
 }
 

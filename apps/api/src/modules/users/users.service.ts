@@ -28,3 +28,11 @@ export async function updateUser(userId: string, input: UpdateUserRequest, sessi
   Object.assign(user, input);
   return user;
 }
+
+export async function resendInvitation(userId: string, session?: CurrentSession): Promise<UserDto> {
+  const workflow = getWorkflowProvider();
+  if (workflow.mode === "prisma" && workflow.prisma) return workflow.prisma.resendUserInvitation({ organizationId: session?.activeOrganization.id ?? "org_northgate", userId }) as Promise<UserDto>;
+  const user = workflow.memory.users.find((item) => item.id === userId);
+  if (!user) throw Object.assign(new Error("User not found"), { statusCode: 404 });
+  return user;
+}

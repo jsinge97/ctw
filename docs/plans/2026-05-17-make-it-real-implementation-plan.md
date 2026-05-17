@@ -763,6 +763,8 @@ git commit -m "feat: add full deal workspace crud tabs"
 
 **Purpose:** Make admin/AM settings usable instead of static panels.
 
+**Status:** Done.
+
 **Files:**
 
 - Modify: `apps/web/src/router.tsx`
