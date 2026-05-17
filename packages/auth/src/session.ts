@@ -59,6 +59,14 @@ export function sessionCookieHeader(token: string): string {
   return `${BETTER_AUTH_SESSION_COOKIE}=${encodeURIComponent(token)}`;
 }
 
+export function sessionSetCookieHeader(token: string, maxAgeSeconds = 60 * 60 * 24 * 30): string {
+  return `${sessionCookieHeader(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}`;
+}
+
+export function sessionClearCookieHeader(): string {
+  return `${BETTER_AUTH_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+}
+
 export async function lookupBetterAuthSession(prisma: AuthSessionReader, token: string, now = new Date()): Promise<DurableSessionLookup | null> {
   const session = await prisma.authSession.findUnique({
     where: { token },

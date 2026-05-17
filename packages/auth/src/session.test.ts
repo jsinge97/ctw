@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { lookupBetterAuthSession, sessionCookieHeader, sessionTokenFromCookieHeader, type AuthSessionReader } from "./session.js";
+import { lookupBetterAuthSession, sessionClearCookieHeader, sessionCookieHeader, sessionSetCookieHeader, sessionTokenFromCookieHeader, type AuthSessionReader } from "./session.js";
 
 describe("Better Auth session helpers", () => {
   it("reads the Better Auth session token cookie", () => {
     expect(sessionTokenFromCookieHeader(`theme=dark; ${sessionCookieHeader("seed-session-am")}; other=value`)).toBe("seed-session-am");
+    expect(sessionSetCookieHeader("seed-session-am")).toContain("HttpOnly");
+    expect(sessionClearCookieHeader()).toContain("Max-Age=0");
   });
 
   it("resolves an active durable session into app session lookup data", async () => {

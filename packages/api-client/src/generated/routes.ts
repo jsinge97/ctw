@@ -4,6 +4,8 @@ export const generatedRoutes = {
   "openapi_json": "/openapi.json",
   "sessioncurrent": "/v1/session/current",
   "sessionaccept_invitation": "/v1/session/accept-invitation",
+  "sessionlogin": "/v1/session/login",
+  "sessionlogout": "/v1/session/logout",
   "deals": "/v1/deals",
   "dealsdealId": "/v1/deals/{dealId}",
   "dealsdealId_move_stage": "/v1/deals/{dealId}/move-stage",

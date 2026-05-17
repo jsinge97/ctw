@@ -8,6 +8,7 @@ import type {
   DealDto,
   DocumentDto,
   InviteUserRequest,
+  LoginRequest,
   MessageDto,
   MoveDealStageRequest,
   OrganizationSettingsDto,
@@ -34,6 +35,8 @@ export type GeneratedOperationMap = {
   "GET /openapi.json": { response: unknown };
   "GET /v1/session/current": { response: CurrentSession };
   "POST /v1/session/accept-invitation": { request: { token: string }; response: CurrentSession };
+  "POST /v1/session/login": { request: LoginRequest; response: CurrentSession };
+  "POST /v1/session/logout": { request: {}; response: { ok: true } };
   "GET /v1/deals": { response: DealDto[] };
   "POST /v1/deals": { request: CreateDealRequest; response: DealDto };
   "GET /v1/deals/{dealId}": { params: { dealId: string }; response: DealDto };
@@ -117,6 +120,24 @@ export class GeneratedApiClient {
     };
     init.body = JSON.stringify(body);
     return this.request(generatedRoutes["sessionaccept_invitation"], init);
+  }
+
+  postSessionlogin(body: GeneratedOperationMap["POST /v1/session/login"]["request"]): Promise<GeneratedOperationMap["POST /v1/session/login"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["sessionlogin"], init);
+  }
+
+  postSessionlogout(body: GeneratedOperationMap["POST /v1/session/logout"]["request"]): Promise<GeneratedOperationMap["POST /v1/session/logout"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["sessionlogout"], init);
   }
 
   getDeals(): Promise<GeneratedOperationMap["GET /v1/deals"]["response"]> {

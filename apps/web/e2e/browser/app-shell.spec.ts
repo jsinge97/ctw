@@ -17,6 +17,10 @@ test("login reaches the deal kanban and opens a workspace", async ({ page }) => 
 });
 
 test("internal review surfaces render in the browser", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/deals$/);
+
   await page.goto("/routing-review");
   await expect(page.getByRole("heading", { name: "Routing review" })).toBeVisible();
   await expect(page.getByText("41% confidence")).toBeVisible();

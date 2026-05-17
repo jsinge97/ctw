@@ -47,6 +47,18 @@ describe("session service", () => {
     expect(response.json()).toMatchObject({ user: { email: "am@northgate.cre" }, activeOrganization: { id: "org_northgate" }, membership: { id: "mem_am", role: "am" } });
   });
 
+  it("creates a demo-mode Better Auth cookie from login", async () => {
+    const app = await buildServer();
+    const login = await app.inject({ method: "POST", url: "/v1/session/login", payload: { email: "am@northgate.cre", password: "password" } });
+    const cookie = login.headers["set-cookie"]?.toString();
+    const current = await app.inject({ method: "GET", url: "/v1/session/current", headers: { cookie } });
+
+    expect(login.statusCode).toBe(200);
+    expect(cookie).toContain("better-auth.session_token=demo-session-am");
+    expect(current.statusCode).toBe(200);
+    expect(current.json()).toMatchObject({ membership: { role: "am" } });
+  });
+
   it("rejects missing session token", async () => {
     const app = await buildServer();
     const response = await app.inject({ method: "GET", url: "/v1/session/current" });

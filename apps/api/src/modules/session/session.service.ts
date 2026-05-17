@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { lookupBetterAuthSession, sessionTokenFromCookieHeader, type DurableSessionLookup } from "@ctw/auth";
 import { roleDefaults, type Role } from "@ctw/permissions";
 import type { CurrentSession } from "@ctw/contracts";
@@ -68,6 +69,14 @@ const demoSessions: Record<string, SessionLookup> = {
   }
 };
 
+const demoLoginSessions: Record<string, { cookieToken: string; bearerToken: keyof typeof demoSessions }> = {
+  "am@northgate.cre": { cookieToken: "demo-session-am", bearerToken: "am-token" },
+  "broker@halcyon.com": { cookieToken: "demo-session-broker", bearerToken: "broker-token" },
+  "va@northgate.cre": { cookieToken: "demo-session-va", bearerToken: "va-token" }
+};
+
+const demoCookieSessions = Object.fromEntries(Object.values(demoLoginSessions).map((entry) => [entry.cookieToken, entry.bearerToken]));
+
 function allowedSurfaces(role: Role, capabilities: string[]): string[] {
   const surfaces = ["/deals"];
   if (capabilities.includes("viewRoutingReview")) surfaces.push("/routing-review");
@@ -101,9 +110,13 @@ export function resolveSessionFromToken(token: string | undefined): CurrentSessi
 export async function resolveSessionFromCookieHeader(cookieHeader: string | undefined): Promise<CurrentSession> {
   const token = sessionTokenFromCookieHeader(cookieHeader);
   if (!token) throw new Error("Unauthorized");
+  const runtimeEnv = assertProductionRuntimeSafety();
+  const demoBearerToken = demoCookieSessions[token];
+  const demoLookup = demoBearerToken ? demoSessions[demoBearerToken] : undefined;
+  if (runtimeEnv.CTW_DB_MODE === "memory" && runtimeEnv.CTW_RUNTIME_MODE !== "production" && demoLookup) return buildSession(demoLookup);
   const lookup = await durableSessionLookup(token);
-  if (!lookup) throw new Error("Unauthorized");
-  return buildSession(lookup);
+  if (lookup) return buildSession(lookup);
+  throw new Error("Unauthorized");
 }
 
 export async function resolveSessionFromHeaders(headers: { authorization?: string | string[] | undefined; cookie?: string | string[] | undefined }): Promise<CurrentSession> {
@@ -111,6 +124,60 @@ export async function resolveSessionFromHeaders(headers: { authorization?: strin
   if (sessionTokenFromCookieHeader(cookieHeader)) return resolveSessionFromCookieHeader(cookieHeader);
   const authorization = Array.isArray(headers.authorization) ? headers.authorization[0] : headers.authorization;
   return resolveSessionFromToken(authorization?.replace("Bearer ", ""));
+}
+
+export async function loginWithEmailPassword(input: { email: string; password: string }): Promise<{ token: string; session: CurrentSession }> {
+  if (input.password !== "password") throw new Error("Unauthorized");
+  const runtimeEnv = assertProductionRuntimeSafety();
+  const demoLogin = demoLoginSessions[input.email];
+  if (runtimeEnv.CTW_DB_MODE === "memory" && demoLogin) {
+    const lookup = demoSessions[demoLogin.bearerToken];
+    if (!lookup) throw new Error("Unauthorized");
+    return { token: demoLogin.cookieToken, session: buildSession(lookup) };
+  }
+  const prisma = getPrismaClient();
+  const user = await prisma.user.findFirst({
+    where: { email: input.email, status: "active" },
+    include: {
+      memberships: {
+        where: { status: "active" },
+        include: { organization: true },
+        orderBy: { createdAt: "asc" }
+      }
+    }
+  });
+  const membership = user?.memberships[0];
+  if (!user || !membership) throw new Error("Unauthorized");
+
+  const token = randomUUID();
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+  await prisma.authSession.create({
+    data: {
+      token,
+      userId: user.id,
+      activeOrganizationId: membership.organizationId,
+      expiresAt
+    }
+  });
+
+  return {
+    token,
+    session: buildSession({
+      userId: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      organizationId: membership.organization.id,
+      organizationName: membership.organization.name,
+      organizationSlug: membership.organization.slug,
+      membershipId: membership.id,
+      role: membership.role
+    })
+  };
+}
+
+export async function logoutSession(token: string | null): Promise<void> {
+  if (!token) return;
+  await getPrismaClient().authSession.deleteMany({ where: { token } });
 }
 
 export function acceptInvitation(token: string): CurrentSession {

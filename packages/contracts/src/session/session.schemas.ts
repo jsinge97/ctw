@@ -20,4 +20,14 @@ export const acceptInvitationRequestSchema = z.object({
   token: z.string().min(1)
 });
 
+export const loginRequestSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1)
+});
+
+export const logoutResponseSchema = z.object({
+  ok: z.literal(true)
+});
+
 export type CurrentSession = z.infer<typeof currentSessionSchema>;
+export type LoginRequest = z.infer<typeof loginRequestSchema>;

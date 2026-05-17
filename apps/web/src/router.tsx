@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute, createRouter, Outlet, redirect } from "@tanstack/react-router";
+import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
 import { DealsRoute } from "./routes/deals.js";
 import { DealWorkspaceRoute } from "./routes/deals.$dealId.js";
 import { IndexRoute } from "./routes/index.js";
@@ -14,10 +14,7 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: IndexRoute,
-  beforeLoad: () => {
-    throw redirect({ to: "/deals" });
-  }
+  component: IndexRoute
 });
 
 const loginRoute = createRoute({

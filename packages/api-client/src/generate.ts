@@ -46,6 +46,8 @@ function responseType(method: Method, path: string): string {
   const key = operationKey(method, path);
   if (key === "GET /v1/session/current") return "CurrentSession";
   if (key === "POST /v1/session/accept-invitation") return "CurrentSession";
+  if (key === "POST /v1/session/login") return "CurrentSession";
+  if (key === "POST /v1/session/logout") return "{ ok: true }";
   if (key === "GET /healthz") return "{ ok: boolean }";
   if (key === "GET /openapi.json") return "unknown";
   if (path === "/v1/deals" && method === "get") return "DealDto[]";
@@ -73,6 +75,8 @@ function responseType(method: Method, path: string): string {
 function requestType(method: Method, path: string): string | null {
   const key = operationKey(method, path);
   if (key === "POST /v1/session/accept-invitation") return "{ token: string }";
+  if (key === "POST /v1/session/login") return "LoginRequest";
+  if (key === "POST /v1/session/logout") return "{}";
   if (key === "POST /v1/deals") return "CreateDealRequest";
   if (key === "PATCH /v1/deals/{dealId}") return "PatchDealRequest";
   if (key === "POST /v1/deals/{dealId}/move-stage") return "MoveDealStageRequest";
@@ -152,6 +156,7 @@ import type {
   DealDto,
   DocumentDto,
   InviteUserRequest,
+  LoginRequest,
   MessageDto,
   MoveDealStageRequest,
   OrganizationSettingsDto,

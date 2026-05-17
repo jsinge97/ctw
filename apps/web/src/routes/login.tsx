@@ -1,8 +1,8 @@
-import { useNavigate } from "@tanstack/react-router";
 import { Button } from "../components/ui/button.js";
+import { useLogin } from "../hooks/use-current-session.js";
 
 export function LoginRoute() {
-  const navigate = useNavigate();
+  const login = useLogin();
 
   return (
     <main className="login-screen">
@@ -18,18 +18,23 @@ export function LoginRoute() {
           className="login-form"
           onSubmit={(event) => {
             event.preventDefault();
-            void navigate({ to: "/deals" });
+            const form = new FormData(event.currentTarget);
+            login.mutate({
+              email: String(form.get("email")),
+              password: String(form.get("password"))
+            });
           }}
         >
           <label>
             Email
-            <input type="email" defaultValue="am@northgate.cre" />
+            <input type="email" name="email" defaultValue="am@northgate.cre" autoComplete="email" />
           </label>
           <label>
             Password
-            <input type="password" defaultValue="password" />
+            <input type="password" name="password" defaultValue="password" autoComplete="current-password" />
           </label>
-          <Button type="submit" variant="primary">Sign in</Button>
+          {login.isError ? <p className="form-error">Could not sign in with those credentials.</p> : null}
+          <Button type="submit" variant="primary" disabled={login.isPending}>{login.isPending ? "Signing in" : "Sign in"}</Button>
         </form>
       </section>
     </main>

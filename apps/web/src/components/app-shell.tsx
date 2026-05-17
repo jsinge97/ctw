@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, BriefcaseBusiness, Inbox, Search, Settings, UserRoundCheck } from "lucide-react";
+import { Bell, BriefcaseBusiness, Inbox, LogOut, Search, Settings, UserRoundCheck } from "lucide-react";
 import type { CurrentSession } from "@ctw/contracts";
+import { useLogout } from "../hooks/use-current-session.js";
 import { Badge } from "./ui/badge.js";
 
 type AppShellProps = {
@@ -17,6 +18,7 @@ const navItems = [
 
 export function AppShell({ session, children }: AppShellProps) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const logout = useLogout();
   const capabilities = session?.capabilities ?? [];
   const visibleItems = navItems.filter((item) => capabilities.includes(item.capability));
 
@@ -65,6 +67,9 @@ export function AppShell({ session, children }: AppShellProps) {
             <Badge tone="amber">3 messages to review</Badge>
             <button className="icon-button" aria-label="Notifications">
               <Bell size={16} />
+            </button>
+            <button className="icon-button" aria-label="Sign out" onClick={() => logout.mutate()}>
+              <LogOut size={16} />
             </button>
           </div>
         </header>

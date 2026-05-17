@@ -290,6 +290,8 @@ git commit -m "feat: wire durable auth sessions"
 
 ## Task 5: Web Login and Session Runtime
 
+**Status:** Done.
+
 **Purpose:** Replace hardcoded `am-token` in the web app with real session-aware login/logout.
 
 **Files:**

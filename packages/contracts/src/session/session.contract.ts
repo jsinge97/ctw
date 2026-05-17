@@ -1,5 +1,5 @@
 import { defineRoute, emptyObjectSchema } from "../common.js";
-import { acceptInvitationRequestSchema, currentSessionSchema } from "./session.schemas.js";
+import { acceptInvitationRequestSchema, currentSessionSchema, loginRequestSchema, logoutResponseSchema } from "./session.schemas.js";
 
 export const sessionContract = [
   defineRoute({
@@ -17,5 +17,23 @@ export const sessionContract = [
     body: acceptInvitationRequestSchema,
     query: emptyObjectSchema,
     response: currentSessionSchema
+  }),
+  defineRoute({
+    method: "POST",
+    path: "/v1/session/login",
+    summary: "Create session",
+    tags: ["session"],
+    body: loginRequestSchema,
+    query: emptyObjectSchema,
+    response: currentSessionSchema
+  }),
+  defineRoute({
+    method: "POST",
+    path: "/v1/session/logout",
+    summary: "Clear session",
+    tags: ["session"],
+    body: emptyObjectSchema,
+    query: emptyObjectSchema,
+    response: logoutResponseSchema
   })
 ];

@@ -13,7 +13,7 @@ export function tokenFromRequest(request: FastifyRequest): string | undefined {
 }
 
 export function isPublicPath(path: string): boolean {
-  return path === "/healthz" || path === "/openapi.json" || path === "/v1/session/accept-invitation" || path.startsWith("/v1/webhooks/");
+  return path === "/healthz" || path === "/openapi.json" || path === "/v1/session/accept-invitation" || path === "/v1/session/login" || path.startsWith("/v1/webhooks/");
 }
 
 function requiredCapability(method: string, path: string): Capability | null {

@@ -161,6 +161,11 @@ input {
   color: #334155;
 }
 
+.icon-button:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
 .page-header {
   display: flex;
   align-items: center;
@@ -484,6 +489,20 @@ input {
   border: 1px solid #dbe3ea;
   border-radius: 6px;
   padding: 0 10px;
+}
+
+.form-error {
+  margin: 0;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 10px;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .error-panel {
