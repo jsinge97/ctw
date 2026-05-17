@@ -6,7 +6,7 @@ This tranche finishes the next set of product-hardening work: production auth, O
 
 ## Source Of Truth
 
-- [ ] Re-read `AGENTS.md` and `CLAUDE.md` before implementation.
+- [x] Re-read `AGENTS.md` and `CLAUDE.md` before implementation.
 - [ ] Re-read the relevant source docs before each slice:
   - `docs/feature-plan.md`
   - `docs/crud-model.md`
@@ -16,17 +16,17 @@ This tranche finishes the next set of product-hardening work: production auth, O
   - `docs/frontend-architecture.md`
   - `docs/design-system.md`
   - `docs/deployment.md`
-- [ ] Use official OpenAI docs for OpenAI API integration decisions.
-- [ ] Commit after each completed slice.
+- [x] Use official OpenAI docs for OpenAI API integration decisions.
+- [x] Commit after each completed slice.
 
 ## Milestone 1: Production Auth
 
-- [ ] Replace the shared dev password path with durable password credentials.
-- [ ] Store salted password hashes, never plaintext passwords.
-- [ ] Keep demo login convenience available only outside production.
-- [ ] Make production runtime safety fail when credential auth is not durable.
-- [ ] Seed local durable demo users with development credentials.
-- [ ] Cover login success/failure and production guard behavior with tests.
+- [x] Replace the shared dev password path with durable password credentials.
+- [x] Store salted password hashes, never plaintext passwords.
+- [x] Keep demo login convenience available only outside production.
+- [x] Make production runtime safety fail when credential auth is not durable.
+- [x] Seed local durable demo users with development credentials.
+- [x] Cover login success/failure and production guard behavior with tests.
 
 ## Milestone 2: OCR And Document Intelligence
 
@@ -67,10 +67,9 @@ This tranche finishes the next set of product-hardening work: production auth, O
 
 ## Verification
 
-- [ ] `pnpm prisma:generate`
+- [x] `pnpm prisma:generate`
 - [ ] `pnpm openapi:generate`
 - [ ] `pnpm client:generate`
 - [ ] `pnpm typecheck`
 - [ ] `pnpm test`
 - [ ] Targeted browser smoke test on `http://127.0.0.1:5173/deals`
-

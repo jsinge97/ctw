@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { lookupBetterAuthSession, sessionTokenFromCookieHeader, type DurableSessionLookup } from "@ctw/auth";
+import { lookupBetterAuthSession, sessionTokenFromCookieHeader, verifyPassword, type DurableSessionLookup } from "@ctw/auth";
 import { roleDefaults, type Role } from "@ctw/permissions";
 import type { CurrentSession } from "@ctw/contracts";
 import { assertProductionRuntimeSafety } from "@ctw/config";
@@ -17,6 +17,7 @@ export type SessionLookup = DurableSessionLookup & {
 };
 
 let durableSessionLookup = (token: string) => lookupBetterAuthSession(getPrismaClient(), token);
+let durableCredentialLookup = lookupCredentialSession;
 
 export function setDurableSessionLookupForTests(lookup: typeof durableSessionLookup) {
   durableSessionLookup = lookup;
@@ -24,6 +25,14 @@ export function setDurableSessionLookupForTests(lookup: typeof durableSessionLoo
 
 export function resetDurableSessionLookupForTests() {
   durableSessionLookup = (token: string) => lookupBetterAuthSession(getPrismaClient(), token);
+}
+
+export function setDurableCredentialLookupForTests(lookup: typeof durableCredentialLookup) {
+  durableCredentialLookup = lookup;
+}
+
+export function resetDurableCredentialLookupForTests() {
+  durableCredentialLookup = lookupCredentialSession;
 }
 
 const demoSessions: Record<string, SessionLookup> = {
@@ -149,19 +158,26 @@ export async function resolveSessionFromHeaders(headers: { authorization?: strin
 }
 
 export async function loginWithEmailPassword(input: { email: string; password: string }): Promise<{ token: string; session: CurrentSession }> {
-  if (input.password !== "password") throw new Error("Unauthorized");
   const runtimeEnv = assertProductionRuntimeSafety();
-  if (runtimeEnv.CTW_RUNTIME_MODE === "production") throw new Error("Better Auth credential login is not configured for production yet");
   const demoLogin = demoLoginSessions[input.email];
   if (runtimeEnv.CTW_DB_MODE === "memory" && demoLogin) {
+    if (input.password !== "password") throw new Error("Unauthorized");
     const lookup = demoSessions[demoLogin.bearerToken];
     if (!lookup) throw new Error("Unauthorized");
     return { token: demoLogin.cookieToken, session: buildSession(lookup) };
   }
+
+  const credentialSession = await durableCredentialLookup(input);
+  if (!credentialSession) throw new Error("Unauthorized");
+  return credentialSession;
+}
+
+async function lookupCredentialSession(input: { email: string; password: string }): Promise<{ token: string; session: CurrentSession } | null> {
   const prisma = getPrismaClient();
   const user = await prisma.user.findFirst({
     where: { email: input.email, status: "active" },
     include: {
+      credential: true,
       memberships: {
         where: { status: "active" },
         include: { organization: true },
@@ -170,18 +186,22 @@ export async function loginWithEmailPassword(input: { email: string; password: s
     }
   });
   const membership = user?.memberships[0];
-  if (!user || !membership) throw new Error("Unauthorized");
+  if (!user || !membership || !user.credential) return null;
+  if (!verifyPassword(input.password, user.credential.passwordHash)) return null;
 
   const token = randomUUID();
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
-  await prisma.authSession.create({
-    data: {
-      token,
-      userId: user.id,
-      activeOrganizationId: membership.organizationId,
-      expiresAt
-    }
-  });
+  await prisma.$transaction([
+    prisma.authSession.create({
+      data: {
+        token,
+        userId: user.id,
+        activeOrganizationId: membership.organizationId,
+        expiresAt
+      }
+    }),
+    prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
+  ]);
 
   return {
     token,

@@ -10,6 +10,7 @@ export async function seedDatabase(prisma: PrismaClient = getPrismaClient()) {
   return prisma.$transaction(async (tx) => {
     const organizations = await tx.organization.createMany({ data: seed.organizations });
     const users = await tx.user.createMany({ data: seed.users });
+    const userCredentials = await tx.userCredential.createMany({ data: seed.userCredentials });
     const memberships = await tx.organizationMembership.createMany({ data: seed.memberships });
     const authSessions = await tx.authSession.createMany({ data: seed.authSessions });
     const companies = await tx.company.createMany({ data: seed.companies });
@@ -34,6 +35,7 @@ export async function seedDatabase(prisma: PrismaClient = getPrismaClient()) {
       counts: {
         organizations: organizations.count,
         users: users.count,
+        userCredentials: userCredentials.count,
         memberships: memberships.count,
         authSessions: authSessions.count,
         companies: companies.count,

@@ -27,6 +27,7 @@ function setProductionEnv(overrides: NodeJS.ProcessEnv = {}) {
     CTW_JOBS_MODE: "pgboss",
     CTW_PROVIDER_MODE: "live",
     CTW_STORAGE_MODE: "s3",
+    CTW_AUTH_MODE: "durable",
     CTW_ALLOW_DEMO_TOKENS: "false",
     ...overrides
   };

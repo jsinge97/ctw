@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { sessionCookieHeader } from "@ctw/auth";
 import { buildServer } from "../../server.js";
-import { loginWithEmailPassword, resetDurableSessionLookupForTests, resolveSessionFromToken, setDurableSessionLookupForTests } from "./session.service.js";
+import { loginWithEmailPassword, resetDurableCredentialLookupForTests, resetDurableSessionLookupForTests, resolveSessionFromToken, setDurableCredentialLookupForTests, setDurableSessionLookupForTests } from "./session.service.js";
 
 const savedEnv = { ...process.env };
 
 afterEach(() => {
   process.env = { ...savedEnv };
   resetDurableSessionLookupForTests();
+  resetDurableCredentialLookupForTests();
 });
 
 describe("session service", () => {
@@ -73,6 +74,7 @@ describe("session service", () => {
       CTW_JOBS_MODE: "pgboss",
       CTW_PROVIDER_MODE: "live",
       CTW_STORAGE_MODE: "s3",
+      CTW_AUTH_MODE: "durable",
       CTW_ALLOW_DEMO_TOKENS: "false",
       RESEND_API_KEY: "re_live_123",
       TWILIO_ACCOUNT_SID: "AClive123",
@@ -84,7 +86,7 @@ describe("session service", () => {
     expect(() => resolveSessionFromToken("am-token")).toThrow(/Demo bearer tokens are not allowed/);
   });
 
-  it("does not allow temporary password login in production mode", async () => {
+  it("fails production safety when auth is not durable", async () => {
     process.env = {
       ...savedEnv,
       CTW_RUNTIME_MODE: "production",
@@ -92,6 +94,7 @@ describe("session service", () => {
       CTW_JOBS_MODE: "pgboss",
       CTW_PROVIDER_MODE: "live",
       CTW_STORAGE_MODE: "s3",
+      CTW_AUTH_MODE: "demo",
       CTW_ALLOW_DEMO_TOKENS: "false",
       RESEND_API_KEY: "re_live_123",
       TWILIO_ACCOUNT_SID: "AClive123",
@@ -100,6 +103,41 @@ describe("session service", () => {
       STORAGE_SECRET_ACCESS_KEY: "live-secret-key"
     };
 
-    await expect(loginWithEmailPassword({ email: "am@northgate.cre", password: "password" })).rejects.toThrow(/Better Auth credential login is not configured/);
+    await expect(loginWithEmailPassword({ email: "am@northgate.cre", password: "password" })).rejects.toThrow(/CTW_AUTH_MODE must be durable/);
+  });
+
+  it("uses durable credential login in production mode", async () => {
+    process.env = {
+      ...savedEnv,
+      CTW_RUNTIME_MODE: "production",
+      CTW_DB_MODE: "prisma",
+      CTW_JOBS_MODE: "pgboss",
+      CTW_PROVIDER_MODE: "live",
+      CTW_STORAGE_MODE: "s3",
+      CTW_AUTH_MODE: "durable",
+      CTW_ALLOW_DEMO_TOKENS: "false",
+      RESEND_API_KEY: "re_live_123",
+      TWILIO_ACCOUNT_SID: "AClive123",
+      TWILIO_AUTH_TOKEN: "live-token",
+      STORAGE_ACCESS_KEY_ID: "live-access-key",
+      STORAGE_SECRET_ACCESS_KEY: "live-secret-key"
+    };
+    setDurableCredentialLookupForTests(async ({ email, password }) => {
+      if (email !== "am@northgate.cre" || password !== "secret-password") return null;
+      return {
+        token: "durable-session",
+        session: {
+          user: { id: "user_am", email, displayName: "Maria Reyes" },
+          activeOrganization: { id: "org_northgate", name: "Northgate CRE", slug: "northgate" },
+          membership: { id: "mem_am", role: "am" },
+          capabilities: [],
+          allowedSurfaces: ["/deals"],
+          homeRoute: "/deals"
+        }
+      };
+    });
+
+    await expect(loginWithEmailPassword({ email: "am@northgate.cre", password: "password" })).rejects.toThrow(/Unauthorized/);
+    await expect(loginWithEmailPassword({ email: "am@northgate.cre", password: "secret-password" })).resolves.toMatchObject({ token: "durable-session" });
   });
 });

@@ -16,6 +16,8 @@ describe("seed data contract", () => {
       })
     ]);
     expect(seed.users).toHaveLength(5);
+    expect(seed.userCredentials).toHaveLength(5);
+    expect(seed.userCredentials).toEqual(expect.arrayContaining([expect.objectContaining({ userId: seedIds.users.am, passwordHash: expect.stringMatching(/^scrypt-v1\$/) })]));
     expect(seed.memberships.map((membership) => membership.role).sort()).toEqual(["admin", "am", "broker", "client", "va"]);
     expect(seed.authSessions).toEqual(
       expect.arrayContaining([
@@ -108,6 +110,7 @@ describe("seed data contract", () => {
     expect(result.counts).toMatchObject({
       organizations: 1,
       users: 5,
+      userCredentials: 5,
       memberships: 5,
       authSessions: 5,
       deals: 2,
@@ -117,7 +120,8 @@ describe("seed data contract", () => {
     expect(operations.indexOf("delete:approvalEvent")).toBeLessThan(operations.indexOf("delete:organization"));
     expect(operations.indexOf("delete:organization")).toBeLessThan(operations.indexOf("create:organization"));
     expect(operations.indexOf("create:organization")).toBeLessThan(operations.indexOf("create:user"));
-    expect(operations.indexOf("create:user")).toBeLessThan(operations.indexOf("create:organizationMembership"));
+    expect(operations.indexOf("create:user")).toBeLessThan(operations.indexOf("create:userCredential"));
+    expect(operations.indexOf("create:userCredential")).toBeLessThan(operations.indexOf("create:organizationMembership"));
     expect(operations.indexOf("create:task")).toBeLessThan(operations.indexOf("create:vaWorkItem"));
   });
 });

@@ -83,6 +83,7 @@ const dueAt = new Date("2026-05-19T18:00:00.000Z");
 const jsonNull = Prisma.JsonNull;
 const emptyObject = {} satisfies Prisma.InputJsonValue;
 const emptyArray = [] satisfies Prisma.InputJsonValue;
+const seedPasswordHash = "scrypt-v1$ctw-seed-password-v1$kO9ulJC910S2jEvkkwIa45eLJDEVHRwUud5IOedsqfuDPi3YQ4erWiyNmlfZUWMNKQAkR0p_DYNV6l0f8Ok_sQ";
 
 export function buildSeedData() {
   const organizationId = seedIds.organization;
@@ -175,6 +176,14 @@ export function buildSeedData() {
     { id: seedIds.memberships.broker, organizationId, userId: seedIds.users.broker, role: "broker", status: "active", createdAt: now, updatedAt: now },
     { id: seedIds.memberships.client, organizationId, userId: seedIds.users.client, role: "client", status: "active", createdAt: now, updatedAt: now }
   ] satisfies Prisma.OrganizationMembershipCreateManyInput[];
+
+  const userCredentials = [
+    { id: "cred_admin", userId: seedIds.users.admin, passwordHash: seedPasswordHash, passwordUpdatedAt: now, createdAt: now, updatedAt: now },
+    { id: "cred_am", userId: seedIds.users.am, passwordHash: seedPasswordHash, passwordUpdatedAt: now, createdAt: now, updatedAt: now },
+    { id: "cred_va", userId: seedIds.users.va, passwordHash: seedPasswordHash, passwordUpdatedAt: now, createdAt: now, updatedAt: now },
+    { id: "cred_broker", userId: seedIds.users.broker, passwordHash: seedPasswordHash, passwordUpdatedAt: now, createdAt: now, updatedAt: now },
+    { id: "cred_client", userId: seedIds.users.client, passwordHash: seedPasswordHash, passwordUpdatedAt: now, createdAt: now, updatedAt: now }
+  ] satisfies Prisma.UserCredentialCreateManyInput[];
 
   const authSessions = [
     { id: seedIds.authSessions.admin, token: seedIds.authTokens.admin, userId: seedIds.users.admin, activeOrganizationId: organizationId, expiresAt: new Date("2026-06-17T15:45:00.000Z"), createdAt: now, updatedAt: now },
@@ -305,6 +314,7 @@ export function buildSeedData() {
     organizationId,
     organizations,
     users,
+    userCredentials,
     memberships,
     authSessions,
     companies,
