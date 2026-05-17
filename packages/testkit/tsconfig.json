@@ -7,5 +7,5 @@
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
   "include": ["src"],
-  "references": [{ "path": "../contracts" }, { "path": "../domain" }, { "path": "../permissions" }]
+  "references": [{ "path": "../contracts" }, { "path": "../db" }, { "path": "../domain" }, { "path": "../permissions" }]
 }

@@ -864,6 +864,8 @@ Review focus:
 
 ## Task 16: Postgres-Backed E2E Suite
 
+**Status:** Done.
+
 **Purpose:** Make e2e tests exercise the real app stack with seeded Postgres.
 
 **Files:**

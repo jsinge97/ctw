@@ -16,10 +16,20 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "pnpm --filter @ctw/api start",
+      command: "pnpm db:migrate && pnpm --filter @ctw/testkit db:seed && pnpm --filter @ctw/api start",
       url: "http://127.0.0.1:3000/healthz",
       reuseExistingServer: !process.env.CI,
-      timeout: 30_000
+      timeout: 60_000,
+      env: {
+        ...process.env,
+        DATABASE_URL: process.env.DATABASE_URL ?? "postgresql://ctw:ctw@localhost:5432/ctw",
+        CTW_RUNTIME_MODE: "demo",
+        CTW_DB_MODE: "prisma",
+        CTW_JOBS_MODE: "memory",
+        CTW_PROVIDER_MODE: "fake",
+        CTW_STORAGE_MODE: "memory",
+        CTW_ALLOW_DEMO_TOKENS: "false"
+      }
     },
     {
       command: "pnpm --filter @ctw/web dev",

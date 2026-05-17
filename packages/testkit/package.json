@@ -10,12 +10,14 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "db:seed": "tsx src/db.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config ../../vitest.config.ts",
     "lint": "eslint src"
   },
   "dependencies": {
     "@ctw/contracts": "workspace:*",
+    "@ctw/db": "workspace:*",
     "@ctw/domain": "workspace:*",
     "@ctw/permissions": "workspace:*"
   }
