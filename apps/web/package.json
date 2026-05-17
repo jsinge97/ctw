@@ -16,7 +16,7 @@
     "@ctw/api-client": "workspace:*",
     "@ctw/contracts": "workspace:*",
     "@ctw/domain": "workspace:*",
-    "@ctw/permissions": "workspace:*"
-  },
-  "devDependencies": {}
+    "@ctw/permissions": "workspace:*",
+    "react-dropzone": "^15.0.0"
+  }
 }

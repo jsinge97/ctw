@@ -1,10 +1,17 @@
 import type { DocumentDto, UpdateDocumentRequest } from "@ctw/contracts";
-import { FileText, MoreHorizontal, Pencil, Trash2, Upload, X } from "lucide-react";
-import { useState } from "react";
+import { FileText, MoreHorizontal, Pencil, Trash2, X } from "lucide-react";
+import { useCallback, useState } from "react";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
+import { Dropzone, type DropzoneUploadItem } from "../../components/ui/dropzone.js";
 
 const documentTypes = ["unknown", "loi", "lease", "om", "estoppel", "comp_set", "other"] as const;
+const documentUploadAccept = {
+  "application/msword": [".doc"],
+  "application/pdf": [".pdf"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+  "image/*": [".jpeg", ".jpg", ".png", ".tif", ".tiff"]
+};
 
 export function sortDocumentsForList(documents: DocumentDto[]) {
   return [...documents].sort((left, right) => left.title.localeCompare(right.title));
@@ -25,11 +32,27 @@ export function DocumentsTab({
   isMutating: boolean;
   onArchiveDocument: (documentId: string) => void;
   onUpdateDocument: (documentId: string, body: UpdateDocumentRequest) => Promise<unknown>;
-  onUploadDocument: (file: File) => void;
+  onUploadDocument: (file: File, onProgress: (progress: number) => void) => Promise<unknown>;
 }) {
   const [editingDocument, setEditingDocument] = useState<DocumentDto | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [uploadItems, setUploadItems] = useState<DropzoneUploadItem[]>([]);
   const listedDocuments = sortDocumentsForList(documents);
+  const handleFiles = useCallback((files: File[]) => {
+    for (const file of files) {
+      const id = crypto.randomUUID();
+      setUploadItems((items) => [...items, { id, fileName: file.name, progress: 0, status: "uploading" }]);
+      void onUploadDocument(file, (progress) => {
+        setUploadItems((items) => items.map((item) => item.id === id ? { ...item, progress } : item));
+      })
+        .then(() => {
+          setUploadItems((items) => items.map((item) => item.id === id ? { ...item, progress: 100, status: "success" } : item));
+        })
+        .catch((error: unknown) => {
+          setUploadItems((items) => items.map((item) => item.id === id ? { ...item, status: "error", error: error instanceof Error ? error.message : "Upload failed" } : item));
+        });
+    }
+  }, [onUploadDocument]);
 
   return (
     <div className="document-list-surface">
@@ -39,21 +62,8 @@ export function DocumentsTab({
             <h2>Documents</h2>
             <p>Files attached to this deal, with editable type, visibility, and tags.</p>
           </div>
-          {canManage ? (
-            <label className="upload-button">
-              <Upload size={16} aria-hidden />
-              Upload
-              <input
-                type="file"
-                onChange={(event) => {
-                  const file = event.currentTarget.files?.[0];
-                  if (file) onUploadDocument(file);
-                  event.currentTarget.value = "";
-                }}
-              />
-            </label>
-          ) : null}
         </header>
+        {canManage ? <Dropzone accept={documentUploadAccept} disabled={isMutating} items={uploadItems} onFiles={handleFiles} /> : null}
         {listedDocuments.length > 0 ? (
           <div className="document-table" role="list">
             {listedDocuments.map((document) => (

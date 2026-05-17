@@ -267,7 +267,7 @@ Secondary content:
 - Filter: type, tag, visibility, uploader.
 - Metadata edit modal opened from the row actions.
 - Future detail view may include version history, source message link, extracted text preview, and OCR status.
-- Upload zone (top of list, permitted users only).
+- Dropzone upload area with per-file progress, success, and error state (permitted users only).
 
 Actions:
 

@@ -110,16 +110,40 @@ export async function archiveDocument(dealId: string, documentId: string): Promi
   return api.postDealsdealIdDocumentsDocumentIdArchive({ dealId, documentId });
 }
 
-export async function uploadDocument(dealId: string, file: File): Promise<DocumentDto> {
+export type UploadProgress = {
+  loaded: number;
+  percent: number;
+  total: number | null;
+};
+
+export async function uploadDocument(dealId: string, file: File, onProgress?: (progress: UploadProgress) => void): Promise<DocumentDto> {
   const body = new FormData();
   body.set("file", file);
-  const response = await fetch(`/v1/deals/${encodeURIComponent(dealId)}/documents/upload`, {
-    method: "POST",
-    credentials: "include",
-    body
+
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", `/v1/deals/${encodeURIComponent(dealId)}/documents/upload`);
+    request.withCredentials = true;
+    request.upload.onprogress = (event) => {
+      const total = event.lengthComputable ? event.total : null;
+      const percent = total ? Math.min(99, Math.round((event.loaded / total) * 100)) : 50;
+      onProgress?.({ loaded: event.loaded, percent, total });
+    };
+    request.onerror = () => reject(new Error("Document upload failed"));
+    request.onload = () => {
+      if (request.status < 200 || request.status >= 300) {
+        reject(new Error(`Document upload failed: ${request.status}`));
+        return;
+      }
+      try {
+        onProgress?.({ loaded: file.size, percent: 100, total: file.size });
+        resolve(JSON.parse(request.responseText) as DocumentDto);
+      } catch {
+        reject(new Error("Document upload response was invalid"));
+      }
+    };
+    request.send(body);
   });
-  if (!response.ok) throw new Error(`Document upload failed: ${response.status}`);
-  return response.json() as Promise<DocumentDto>;
 }
 
 export async function createTask(dealId: string, body: CreateTaskRequest): Promise<TaskDto> {

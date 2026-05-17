@@ -15,6 +15,7 @@ import {
   updateMessage,
   updateParticipant,
   uploadDocument,
+  type UploadProgress,
   type TaskDecisionKind
 } from "../lib/api/adapters/deals.js";
 import type { AddParticipantRequest, CreateTaskRequest, TaskDecisionRequest, UpdateDocumentRequest, UpdateMessageRequest, UpdateParticipantRequest } from "@ctw/contracts";
@@ -94,7 +95,7 @@ export function useArchiveDocument(dealId: string) {
 }
 
 export function useUploadDocument(dealId: string) {
-  return useWorkspaceMutation(dealId, (file: File) => uploadDocument(dealId, file));
+  return useWorkspaceMutation(dealId, ({ file, onProgress }: { file: File; onProgress?: (progress: UploadProgress) => void }) => uploadDocument(dealId, file, onProgress));
 }
 
 export function useCreateTask(dealId: string) {

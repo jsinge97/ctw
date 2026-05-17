@@ -18,7 +18,7 @@ export function DealDocumentsRoute() {
           isMutating={updateDocument.isPending || archiveDocument.isPending || uploadDocument.isPending}
           onArchiveDocument={(documentId) => archiveDocument.mutate(documentId)}
           onUpdateDocument={(documentId, body) => updateDocument.mutateAsync({ documentId, body })}
-          onUploadDocument={(file) => uploadDocument.mutate(file)}
+          onUploadDocument={(file, onProgress) => uploadDocument.mutateAsync({ file, onProgress: (progress) => onProgress(progress.percent) })}
         />
       )}
     </DealWorkspaceShell>
