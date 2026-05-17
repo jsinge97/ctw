@@ -259,21 +259,21 @@ Signifiers and feedback:
 
 Primary content:
 
-- Document list grouped by document type (LOI, lease, OM, estoppel, comp set, other, unknown).
-- Each row: title, type, classification status, latest version, uploader, last update.
+- Flat document list.
+- Each row: title, type, classification status, latest version, visibility, tags, and row actions.
 
 Secondary content:
 
-- Filter: type, folder, tag, visibility, uploader.
-- Detail panel (in URL search param) with version history, source message link, extracted text preview, OCR status.
+- Filter: type, tag, visibility, uploader.
+- Metadata edit modal opened from the row actions.
+- Future detail view may include version history, source message link, extracted text preview, and OCR status.
 - Upload zone (top of list, permitted users only).
 
 Actions:
 
-- Open document detail.
 - Upload new document (permitted users).
 - Replace/version an existing document.
-- Rename, classify, tag, move folder, change visibility.
+- Edit metadata from row actions: rename, classify, tag, change visibility.
 - Archive document.
 
 Permission notes:

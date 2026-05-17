@@ -1,17 +1,13 @@
 import type { DocumentDto, UpdateDocumentRequest } from "@ctw/contracts";
-import { Archive, FileText, Upload } from "lucide-react";
+import { FileText, MoreHorizontal, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
-import { useUrlPanelState } from "./panel-search.js";
 
 const documentTypes = ["unknown", "loi", "lease", "om", "estoppel", "comp_set", "other"] as const;
 
-export function groupDocumentsByType(documents: DocumentDto[]) {
-  return documents.reduce<Record<string, DocumentDto[]>>((groups, document) => {
-    groups[document.documentType] = [...(groups[document.documentType] ?? []), document];
-    return groups;
-  }, {});
+export function sortDocumentsForList(documents: DocumentDto[]) {
+  return [...documents].sort((left, right) => left.title.localeCompare(right.title));
 }
 
 export function DocumentsTab({
@@ -20,7 +16,6 @@ export function DocumentsTab({
   hasError,
   isMutating,
   onArchiveDocument,
-  onCreateDocument,
   onUpdateDocument,
   onUploadDocument
 }: {
@@ -29,24 +24,20 @@ export function DocumentsTab({
   hasError: boolean;
   isMutating: boolean;
   onArchiveDocument: (documentId: string) => void;
-  onCreateDocument: (body: UpdateDocumentRequest) => void;
-  onUpdateDocument: (documentId: string, body: UpdateDocumentRequest) => void;
+  onUpdateDocument: (documentId: string, body: UpdateDocumentRequest) => Promise<unknown>;
   onUploadDocument: (file: File) => void;
 }) {
-  const [selectedId, setSelectedId] = useUrlPanelState("document");
-  const [draftTitle, setDraftTitle] = useState("");
-  const [draftFolder, setDraftFolder] = useState("");
-  const [draftTags, setDraftTags] = useState("");
-  const groupedDocuments = groupDocumentsByType(documents);
-  const selectedDocument = documents.find((document) => document.id === selectedId) ?? documents[0] ?? null;
+  const [editingDocument, setEditingDocument] = useState<DocumentDto | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const listedDocuments = sortDocumentsForList(documents);
 
   return (
-    <div className="crud-surface">
-      <section className="crud-list" aria-label="Documents">
+    <div className="document-list-surface">
+      <section className="crud-list document-list-panel" aria-label="Documents">
         <header className="crud-toolbar">
           <div>
             <h2>Documents</h2>
-            <p>Classified files, versions, folders, and shared visibility.</p>
+            <p>Files attached to this deal, with editable type, visibility, and tags.</p>
           </div>
           {canManage ? (
             <label className="upload-button">
@@ -63,132 +54,140 @@ export function DocumentsTab({
             </label>
           ) : null}
         </header>
-        {documentTypes.map((type) => {
-          const items = groupedDocuments[type] ?? [];
-          if (items.length === 0) return null;
-          return (
-            <div className="document-group" key={type}>
-              <h3>{type.replace("_", " ")}</h3>
-              {items.map((document) => (
-                <button className={document.id === selectedDocument?.id ? "crud-row crud-row-active" : "crud-row"} key={document.id} onClick={() => setSelectedId(document.id)}>
-                  <span className="crud-row-icon">
-                    <FileText size={16} aria-hidden />
+        {listedDocuments.length > 0 ? (
+          <div className="document-table" role="list">
+            {listedDocuments.map((document) => (
+              <div className="crud-row document-row" key={document.id} role="listitem">
+                <span className="crud-row-icon">
+                  <FileText size={16} aria-hidden />
+                </span>
+                <span>
+                  <strong>{document.title}</strong>
+                  <span>{document.documentType.replace("_", " ")} · {document.latestVersion}</span>
+                </span>
+                <span className="crud-row-meta">
+                  <Badge tone={document.classificationStatus === "classified" ? "green" : "amber"}>{document.classificationStatus}</Badge>
+                  <Badge tone={document.visibility === "shared" ? "green" : "amber"}>{document.visibility}</Badge>
+                  {document.tags.length > 0 ? <span>{document.tags.join(", ")}</span> : null}
+                </span>
+                {canManage ? (
+                  <span className="row-actions">
+                    <button
+                      aria-expanded={openMenuId === document.id}
+                      aria-label={`Actions for ${document.title}`}
+                      className="icon-button row-action-button"
+                      type="button"
+                      onClick={() => setOpenMenuId(openMenuId === document.id ? null : document.id)}
+                    >
+                      <MoreHorizontal size={16} aria-hidden />
+                    </button>
+                    {openMenuId === document.id ? (
+                      <span className="row-action-menu" role="menu">
+                        <button
+                          role="menuitem"
+                          type="button"
+                          onClick={() => {
+                            setEditingDocument(document);
+                            setOpenMenuId(null);
+                          }}
+                        >
+                          <Pencil size={15} aria-hidden />
+                          Edit metadata
+                        </button>
+                        <button
+                          role="menuitem"
+                          type="button"
+                          onClick={() => {
+                            onArchiveDocument(document.id);
+                            setOpenMenuId(null);
+                          }}
+                        >
+                          <Trash2 size={15} aria-hidden />
+                          Delete
+                        </button>
+                      </span>
+                    ) : null}
                   </span>
-                  <span>
-                    <strong>{document.title}</strong>
-                    <span>{document.folder ?? "No folder"} · {document.latestVersion}</span>
-                  </span>
-                  <span className="crud-row-meta">
-                    <Badge tone={document.classificationStatus === "classified" ? "green" : "amber"}>{document.classificationStatus}</Badge>
-                    <Badge tone={document.visibility === "shared" ? "green" : "amber"}>{document.visibility}</Badge>
-                  </span>
-                </button>
-              ))}
-            </div>
-          );
-        })}
-      </section>
-
-      <aside className="crud-detail" aria-label="Document detail">
-        {canManage ? (
-          <form
-            className="inline-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!draftTitle.trim()) return;
-              onCreateDocument({ title: draftTitle.trim(), folder: draftFolder.trim() || null, tags: parseTags(draftTags) });
-              setDraftTitle("");
-              setDraftFolder("");
-              setDraftTags("");
-            }}
-          >
-            <h2>Add document metadata</h2>
-            <label>
-              Title
-              <input value={draftTitle} onChange={(event) => setDraftTitle(event.target.value)} placeholder="New lease.pdf" />
-            </label>
-            <label>
-              Folder
-              <input value={draftFolder} onChange={(event) => setDraftFolder(event.target.value)} placeholder="Diligence" />
-            </label>
-            <label>
-              Tags
-              <input value={draftTags} onChange={(event) => setDraftTags(event.target.value)} placeholder="lease, signed" />
-            </label>
-            <Button type="submit" isLoading={isMutating} loadingLabel="Adding">Add metadata</Button>
-          </form>
+                ) : null}
+              </div>
+            ))}
+          </div>
         ) : null}
 
-        {selectedDocument && canManage ? (
-          <DocumentEditor
-            document={selectedDocument}
-            isMutating={isMutating}
-            onArchive={() => onArchiveDocument(selectedDocument.id)}
-            onSave={(body) => onUpdateDocument(selectedDocument.id, body)}
-          />
-        ) : selectedDocument ? (
-          <div className="detail-editor">
-            <h2>{selectedDocument.title}</h2>
-            <p>{selectedDocument.documentType.replace("_", " ")} · {selectedDocument.visibility}</p>
-          </div>
-        ) : (
-          <p>No documents yet.</p>
-        )}
+        {listedDocuments.length === 0 ? <p className="empty-state document-empty-state">No documents yet.</p> : null}
         {hasError ? <p className="form-error">Document change failed.</p> : null}
-      </aside>
+      </section>
+      {editingDocument ? (
+        <EditDocumentDialog
+          document={editingDocument}
+          isMutating={isMutating}
+          onClose={() => setEditingDocument(null)}
+          onSave={async (body) => {
+            await onUpdateDocument(editingDocument.id, body);
+            setEditingDocument(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
 
-function DocumentEditor({ document, isMutating, onArchive, onSave }: { document: DocumentDto; isMutating: boolean; onArchive: () => void; onSave: (body: { title?: string; documentType?: DocumentDto["documentType"]; visibility?: DocumentDto["visibility"]; folder?: string | null; tags?: string[] }) => void }) {
+function EditDocumentDialog({ document, isMutating, onClose, onSave }: { document: DocumentDto; isMutating: boolean; onClose: () => void; onSave: (body: { title?: string; documentType?: DocumentDto["documentType"]; visibility?: DocumentDto["visibility"]; tags?: string[] }) => Promise<void> }) {
   const [title, setTitle] = useState(document.title);
-  const [folder, setFolder] = useState(document.folder ?? "");
   const [tags, setTags] = useState(document.tags.join(", "));
   const [documentType, setDocumentType] = useState<DocumentDto["documentType"]>(document.documentType);
   const [visibility, setVisibility] = useState<DocumentDto["visibility"]>(document.visibility);
 
   return (
-    <form
-      className="detail-editor"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSave({ title: title.trim(), documentType, visibility, folder: folder.trim() || null, tags: parseTags(tags) });
-      }}
-    >
-      <h2>{document.title}</h2>
-      <label>
-        Rename
-        <input value={title} onChange={(event) => setTitle(event.target.value)} />
-      </label>
-      <label>
-        Type
-        <select value={documentType} onChange={(event) => setDocumentType(event.target.value as DocumentDto["documentType"])}>
-          {documentTypes.map((type) => <option key={type} value={type}>{type.replace("_", " ")}</option>)}
-        </select>
-      </label>
-      <label>
-        Visibility
-        <select value={visibility} onChange={(event) => setVisibility(event.target.value as DocumentDto["visibility"])}>
-          <option value="internal">Internal</option>
-          <option value="shared">Shared</option>
-        </select>
-      </label>
-      <label>
-        Folder
-        <input value={folder} onChange={(event) => setFolder(event.target.value)} />
-      </label>
-      <label>
-        Tags
-        <input value={tags} onChange={(event) => setTags(event.target.value)} />
-      </label>
-      <div className="action-row">
-        <Button type="submit" isLoading={isMutating} loadingLabel="Saving">Save document</Button>
-        <Button type="button" variant="danger" isLoading={isMutating} loadingLabel="Archiving" onClick={onArchive}>
-          <Archive size={16} aria-hidden />
-          Archive
-        </Button>
-      </div>
-    </form>
+    <div className="dialog-backdrop" role="presentation">
+      <form
+        aria-modal="true"
+        className="dialog form-dialog document-edit-dialog"
+        role="dialog"
+        aria-labelledby="edit-document-title"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onSave({ title: title.trim(), documentType, visibility, tags: parseTags(tags) }).catch(() => undefined);
+        }}
+      >
+        <div className="dialog-icon dialog-icon-neutral">
+          <FileText size={18} aria-hidden />
+        </div>
+        <div className="detail-editor detail-editor-plain">
+          <div className="dialog-title-row">
+            <h2 id="edit-document-title">Edit document</h2>
+            <button aria-label="Close document editor" className="icon-button" type="button" onClick={onClose}>
+              <X size={16} aria-hidden />
+            </button>
+          </div>
+          <label>
+            Name
+            <input value={title} onChange={(event) => setTitle(event.target.value)} autoFocus />
+          </label>
+          <label>
+            Type
+            <select value={documentType} onChange={(event) => setDocumentType(event.target.value as DocumentDto["documentType"])}>
+              {documentTypes.map((type) => <option key={type} value={type}>{type.replace("_", " ")}</option>)}
+            </select>
+          </label>
+          <label>
+            Visibility
+            <select value={visibility} onChange={(event) => setVisibility(event.target.value as DocumentDto["visibility"])}>
+              <option value="internal">Internal</option>
+              <option value="shared">Shared</option>
+            </select>
+          </label>
+          <label>
+            Tags
+            <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="lease, signed" />
+          </label>
+        </div>
+        <div className="action-row">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" isLoading={isMutating} loadingLabel="Saving">Save</Button>
+        </div>
+      </form>
+    </div>
   );
 }
 

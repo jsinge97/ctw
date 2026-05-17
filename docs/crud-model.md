@@ -140,7 +140,7 @@ Read:
 
 Update:
 
-- Permitted users rename, classify, tag, replace version, or move document stage/folder.
+- Permitted users rename, classify, tag, replace version, or change visibility from the document row actions.
 - Async classification can update document type after filing.
 - AM/Admin controls document visibility.
 

@@ -1,11 +1,10 @@
 import { useParams } from "@tanstack/react-router";
 import { DocumentsTab } from "../features/deal-workspace/documents-tab.js";
 import { DealWorkspaceShell, hasEffectiveCapability } from "../features/deal-workspace/workspace-shell.js";
-import { useArchiveDocument, useCreateDocument, useUpdateDocument, useUploadDocument } from "../hooks/use-deals.js";
+import { useArchiveDocument, useUpdateDocument, useUploadDocument } from "../hooks/use-deals.js";
 
 export function DealDocumentsRoute() {
   const { dealId } = useParams({ from: "/deals/$dealId/documents" });
-  const createDocument = useCreateDocument(dealId);
   const updateDocument = useUpdateDocument(dealId);
   const archiveDocument = useArchiveDocument(dealId);
   const uploadDocument = useUploadDocument(dealId);
@@ -15,11 +14,10 @@ export function DealDocumentsRoute() {
         <DocumentsTab
           documents={workspace.documents}
           canManage={hasEffectiveCapability(session, workspace.deal.capabilities, "uploadDocuments")}
-          hasError={createDocument.isError || updateDocument.isError || archiveDocument.isError || uploadDocument.isError}
-          isMutating={createDocument.isPending || updateDocument.isPending || archiveDocument.isPending || uploadDocument.isPending}
+          hasError={updateDocument.isError || archiveDocument.isError || uploadDocument.isError}
+          isMutating={updateDocument.isPending || archiveDocument.isPending || uploadDocument.isPending}
           onArchiveDocument={(documentId) => archiveDocument.mutate(documentId)}
-          onCreateDocument={(body) => createDocument.mutate(body)}
-          onUpdateDocument={(documentId, body) => updateDocument.mutate({ documentId, body })}
+          onUpdateDocument={(documentId, body) => updateDocument.mutateAsync({ documentId, body })}
           onUploadDocument={(file) => uploadDocument.mutate(file)}
         />
       )}

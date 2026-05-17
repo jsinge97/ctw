@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupDocumentsByType } from "./documents-tab.js";
+import { sortDocumentsForList } from "./documents-tab.js";
 import { sortMessages } from "./messages-tab.js";
 import { groupParticipantsByRole } from "./participants-tab.js";
 import { groupTasksByStatus } from "./tasks-tab.js";
@@ -7,11 +7,11 @@ import { canViewWorkspaceTab } from "./workspace-shell.js";
 import type { CurrentSession } from "@ctw/contracts";
 
 describe("deal workspace tab helpers", () => {
-  it("groups document rows by type", () => {
-    expect(groupDocumentsByType([
+  it("sorts document rows by name for the flat list", () => {
+    expect(sortDocumentsForList([
       { id: "doc_1", dealId: "deal_1", title: "Lease.pdf", documentType: "lease", classificationStatus: "classified", latestVersion: "v1", visibility: "shared", folder: null, tags: [] },
       { id: "doc_2", dealId: "deal_1", title: "OM.pdf", documentType: "om", classificationStatus: "pending", latestVersion: "v1", visibility: "internal", folder: null, tags: [] }
-    ])).toMatchObject({ lease: [{ id: "doc_1" }], om: [{ id: "doc_2" }] });
+    ]).map((document) => document.id)).toEqual(["doc_1", "doc_2"]);
   });
 
   it("sorts newest messages first", () => {

@@ -125,6 +125,7 @@ label {
 .button:focus-visible,
 .workspace-tab:focus-visible,
 .crud-row:focus-visible,
+.row-action-menu button:focus-visible,
 .queue-row:focus-visible,
 .upload-button:focus-within,
 .popover-row:focus-visible {
@@ -918,6 +919,14 @@ label {
   margin-top: 16px;
 }
 
+.document-list-surface {
+  margin-top: 16px;
+}
+
+.document-list-panel {
+  min-height: 280px;
+}
+
 .crud-list,
 .crud-detail,
 .activity-feed {
@@ -1015,6 +1024,73 @@ label {
   display: grid;
   justify-items: end;
   gap: 6px;
+}
+
+.document-table {
+  display: grid;
+}
+
+.document-row {
+  grid-template-columns: 28px minmax(0, 1fr) auto 36px;
+  align-items: center;
+}
+
+.document-row:last-child {
+  border-bottom: 0;
+}
+
+.row-actions {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  justify-self: end;
+}
+
+.row-action-button {
+  color: #334155;
+}
+
+.row-action-button:hover {
+  background: #e6f3f1;
+  color: #0f766e;
+}
+
+.row-action-menu {
+  position: absolute;
+  z-index: 15;
+  top: calc(100% + 6px);
+  right: 0;
+  display: grid;
+  min-width: 176px;
+  overflow: hidden;
+  border: 1px solid #dbe3ea;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgb(15 23 42 / 0.16);
+}
+
+.row-action-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  border: 0;
+  background: #fff;
+  color: #334155;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.row-action-menu button:hover {
+  background: #f8fafc;
+}
+
+.row-action-menu button:last-child {
+  color: #b91c1c;
+}
+
+.document-empty-state {
+  padding: 18px 14px;
 }
 
 .document-group h3 {
@@ -1194,6 +1270,22 @@ label {
   border-radius: 8px;
   background: #fef2f2;
   color: #b91c1c;
+}
+
+.dialog-icon-neutral {
+  background: #e6f3f1;
+  color: #0f766e;
+}
+
+.document-edit-dialog {
+  width: min(520px, 100%);
+}
+
+.dialog-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .next-action-row {
