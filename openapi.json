@@ -1265,6 +1265,36 @@
                       "dealId": {
                         "type": "string"
                       },
+                      "subjectType": {
+                        "type": "string",
+                        "enum": [
+                          "membership",
+                          "contact"
+                        ]
+                      },
+                      "subjectId": {
+                        "type": "string"
+                      },
+                      "membershipId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "contactId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "name": {
                         "type": "string"
                       },
@@ -1314,6 +1344,10 @@
                     "required": [
                       "id",
                       "dealId",
+                      "subjectType",
+                      "subjectId",
+                      "membershipId",
+                      "contactId",
                       "name",
                       "company",
                       "role",
@@ -1417,6 +1451,36 @@
                     "dealId": {
                       "type": "string"
                     },
+                    "subjectType": {
+                      "type": "string",
+                      "enum": [
+                        "membership",
+                        "contact"
+                      ]
+                    },
+                    "subjectId": {
+                      "type": "string"
+                    },
+                    "membershipId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "contactId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "name": {
                       "type": "string"
                     },
@@ -1466,6 +1530,10 @@
                   "required": [
                     "id",
                     "dealId",
+                    "subjectType",
+                    "subjectId",
+                    "membershipId",
+                    "contactId",
                     "name",
                     "company",
                     "role",
@@ -1562,6 +1630,36 @@
                     "dealId": {
                       "type": "string"
                     },
+                    "subjectType": {
+                      "type": "string",
+                      "enum": [
+                        "membership",
+                        "contact"
+                      ]
+                    },
+                    "subjectId": {
+                      "type": "string"
+                    },
+                    "membershipId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "contactId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "name": {
                       "type": "string"
                     },
@@ -1611,6 +1709,10 @@
                   "required": [
                     "id",
                     "dealId",
+                    "subjectType",
+                    "subjectId",
+                    "membershipId",
+                    "contactId",
                     "name",
                     "company",
                     "role",

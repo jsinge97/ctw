@@ -3,6 +3,10 @@ import { z } from "zod";
 export const participantSchema = z.object({
   id: z.string(),
   dealId: z.string(),
+  subjectType: z.enum(["membership", "contact"]),
+  subjectId: z.string(),
+  membershipId: z.string().nullable(),
+  contactId: z.string().nullable(),
   name: z.string(),
   company: z.string().nullable(),
   role: z.enum(["am", "broker", "client", "client_contact", "va", "observer"]),

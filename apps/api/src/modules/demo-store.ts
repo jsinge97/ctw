@@ -8,8 +8,8 @@ export const deals: DealDto[] = [
 ];
 
 export const participants: ParticipantDto[] = [
-  { id: "part_maria", dealId: "deal_sutter", name: "Maria Reyes", company: "Northgate CRE", role: "am", visibility: "internal", capabilities: ["All capabilities"], status: "active" },
-  { id: "part_devon", dealId: "deal_sutter", name: "Devon Asherton", company: "Halcyon Capital", role: "broker", visibility: "shared", capabilities: ["View deal", "Upload documents"], status: "active" }
+  { id: "part_maria", dealId: "deal_sutter", subjectType: "membership", subjectId: "mem_am", membershipId: "mem_am", contactId: null, name: "Maria Reyes", company: "Northgate CRE", role: "am", visibility: "internal", capabilities: ["All capabilities"], status: "active" },
+  { id: "part_devon", dealId: "deal_sutter", subjectType: "membership", subjectId: "mem_broker", membershipId: "mem_broker", contactId: null, name: "Devon Asherton", company: "Halcyon Capital", role: "broker", visibility: "shared", capabilities: ["View deal", "Upload documents"], status: "active" }
 ];
 
 export const messages: MessageDto[] = [

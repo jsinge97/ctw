@@ -6,7 +6,7 @@ export function listParticipants(dealId: string): ParticipantDto[] {
 }
 
 export function addParticipant(dealId: string, input: AddParticipantRequest): ParticipantDto {
-  const participant: ParticipantDto = { id: nextId("part", participants.length), dealId, name: input.name, company: input.company ?? null, role: input.role, visibility: "shared", capabilities: input.capabilities ?? [], status: "active" };
+  const participant: ParticipantDto = { id: nextId("part", participants.length), dealId, subjectType: "contact", subjectId: nextId("contact", participants.length), membershipId: null, contactId: nextId("contact", participants.length), name: input.name, company: input.company ?? null, role: input.role, visibility: "shared", capabilities: input.capabilities ?? [], status: "active" };
   participants.push(participant);
   return participant;
 }

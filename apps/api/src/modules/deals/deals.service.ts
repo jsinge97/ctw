@@ -7,7 +7,7 @@ export function listDeals(session?: CurrentSession): DealDto[] {
   if (!session || ["admin", "am", "va"].includes(session.membership.role)) return activeDeals;
   const visibleDealIds = new Set(
     participants
-      .filter((participant) => participant.role === session.membership.role && participant.status === "active" && participant.capabilities.some((capability) => capability.toLowerCase().replace(/\s+/g, "") === "viewdeal"))
+      .filter((participant) => participant.membershipId === session.membership.id && participant.status === "active" && participant.capabilities.some((capability) => capability.toLowerCase().replace(/\s+/g, "") === "viewdeal"))
       .map((participant) => participant.dealId)
   );
   return activeDeals.filter((deal) => visibleDealIds.has(deal.id));

@@ -33,6 +33,16 @@ const demoSessions: Record<string, SessionLookup> = {
     membershipId: "mem_broker",
     role: "broker"
   },
+  "broker-2-token": {
+    userId: "user_broker_2",
+    email: "other-broker@example.com",
+    displayName: "Other Broker",
+    organizationId: "org_demo",
+    organizationName: "Northgate CRE",
+    organizationSlug: "northgate",
+    membershipId: "mem_broker_2",
+    role: "broker"
+  },
   "va-token": {
     userId: "user_va",
     email: "va@northgate.cre",
