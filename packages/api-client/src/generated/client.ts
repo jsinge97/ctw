@@ -3,6 +3,8 @@ import type { CurrentSession } from "@ctw/contracts";
 import { generatedRoutes } from "./routes.js";
 
 export type GeneratedOperationMap = {
+  "GET /healthz": { response: unknown };
+  "GET /openapi.json": { response: unknown };
   "GET /v1/session/current": { response: CurrentSession };
   "POST /v1/session/accept-invitation": { request: { token: string }; response: CurrentSession };
 };
@@ -27,16 +29,25 @@ export class GeneratedApiClient {
     return response.json() as Promise<T>;
   }
 
-  getCurrentSession(): Promise<GeneratedOperationMap["GET /v1/session/current"]["response"]> {
-    return this.request(generatedRoutes["session_current"]);
+  getHealthz(): Promise<GeneratedOperationMap["GET /healthz"]["response"]> {
+    return this.request(generatedRoutes["healthz"]);
   }
 
-  acceptInvitation(body: GeneratedOperationMap["POST /v1/session/accept-invitation"]["request"]): Promise<GeneratedOperationMap["POST /v1/session/accept-invitation"]["response"]> {
-    return this.request(generatedRoutes["session_accept_invitation"], {
+  getOpenapiJson(): Promise<GeneratedOperationMap["GET /openapi.json"]["response"]> {
+    return this.request(generatedRoutes["openapi_json"]);
+  }
+
+  getSessioncurrent(): Promise<GeneratedOperationMap["GET /v1/session/current"]["response"]> {
+    return this.request(generatedRoutes["sessioncurrent"]);
+  }
+
+  postSessionacceptInvitation(body: GeneratedOperationMap["POST /v1/session/accept-invitation"]["request"]): Promise<GeneratedOperationMap["POST /v1/session/accept-invitation"]["response"]> {
+    const init: RequestInit = {
       method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body)
-    });
+      headers: { "content-type": "application/json" }
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    return this.request(generatedRoutes["sessionaccept_invitation"], init);
   }
 }
 
