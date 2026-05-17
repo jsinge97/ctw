@@ -20,6 +20,8 @@ function setProductionEnv(overrides: NodeJS.ProcessEnv = {}) {
     TWILIO_AUTH_TOKEN: "twilio-token",
     STORAGE_ENDPOINT: "http://localhost:9000",
     STORAGE_BUCKET: "ctw",
+    STORAGE_ACCESS_KEY_ID: "live-access-key",
+    STORAGE_SECRET_ACCESS_KEY: "live-secret-key",
     CTW_RUNTIME_MODE: "production",
     CTW_DB_MODE: "prisma",
     CTW_JOBS_MODE: "pgboss",

@@ -21,6 +21,7 @@
     "@ctw/observability": "workspace:*",
     "@ctw/permissions": "workspace:*",
     "@ctw/storage": "workspace:*",
+    "@fastify/cors": "^11.1.0",
     "@fastify/multipart": "^10.0.0"
   }
 }

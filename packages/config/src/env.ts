@@ -11,6 +11,12 @@ export const envSchema = z.object({
   TWILIO_FROM_NUMBER: z.string().min(1),
   STORAGE_ENDPOINT: z.string().url(),
   STORAGE_BUCKET: z.string().min(1),
+  STORAGE_ACCESS_KEY_ID: z.string().min(1).optional(),
+  STORAGE_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  STORAGE_REGION: z.string().min(1).default("us-east-1"),
+  API_CORS_ORIGIN: z.string().min(1).optional(),
+  SESSION_COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]).default("lax"),
+  SESSION_COOKIE_SECURE: z.enum(["true", "false"]).default("false"),
   API_PORT: z.coerce.number().int().positive().default(3000),
   CTW_RUNTIME_MODE: z.enum(["demo", "test", "production"]).default("demo"),
   CTW_DB_MODE: z.enum(["memory", "prisma"]).default("memory"),
@@ -48,7 +54,9 @@ export function assertProductionRuntimeSafety(source: NodeJS.ProcessEnv = proces
     env.CTW_ALLOW_DEMO_TOKENS === "true" ? "CTW_ALLOW_DEMO_TOKENS must be false in production" : null,
     isPlaceholder(source.RESEND_API_KEY) ? "RESEND_API_KEY must be a live credential in production" : null,
     isPlaceholder(source.TWILIO_ACCOUNT_SID) ? "TWILIO_ACCOUNT_SID must be a live credential in production" : null,
-    isPlaceholder(source.TWILIO_AUTH_TOKEN) ? "TWILIO_AUTH_TOKEN must be a live credential in production" : null
+    isPlaceholder(source.TWILIO_AUTH_TOKEN) ? "TWILIO_AUTH_TOKEN must be a live credential in production" : null,
+    isPlaceholder(source.STORAGE_ACCESS_KEY_ID) ? "STORAGE_ACCESS_KEY_ID must be a live credential in production" : null,
+    isPlaceholder(source.STORAGE_SECRET_ACCESS_KEY) ? "STORAGE_SECRET_ACCESS_KEY must be a live credential in production" : null
   ].filter((violation): violation is string => violation !== null);
   if (violations.length > 0) throw new Error(`Unsafe production runtime: ${violations.join("; ")}`);
   return env;

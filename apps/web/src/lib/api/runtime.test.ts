@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api } from "./runtime.js";
+import { api, apiBaseUrl } from "./runtime.js";
 
 const originalFetch = globalThis.fetch;
 
@@ -9,6 +9,10 @@ afterEach(() => {
 });
 
 describe("API runtime", () => {
+  it("defaults to same-origin API calls unless VITE_API_BASE_URL is set", () => {
+    expect(apiBaseUrl()).toBe("");
+  });
+
   it("uses cookie credentials instead of demo bearer tokens", async () => {
     const calls: Array<[RequestInfo | URL, RequestInit | undefined]> = [];
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

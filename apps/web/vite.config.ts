@@ -6,8 +6,9 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/v1": "http://localhost:3000",
-      "/healthz": "http://localhost:3000"
+      "/v1": process.env.VITE_API_BASE_URL ?? "http://localhost:3000",
+      "/healthz": process.env.VITE_API_BASE_URL ?? "http://localhost:3000",
+      "/readyz": process.env.VITE_API_BASE_URL ?? "http://localhost:3000"
     }
   }
 });

@@ -1,5 +1,7 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
+import { assertProductionRuntimeSafety } from "@ctw/config";
 import { createRequestId } from "@ctw/observability";
 import { registerActivityRoutes } from "./modules/activity/activity.routes.js";
 import { registerDealsRoutes } from "./modules/deals/deals.routes.js";
@@ -19,6 +21,10 @@ import { registerHealthRoutes } from "./health.routes.js";
 
 export async function buildServer() {
   const app = Fastify({ logger: false });
+  await app.register(cors, {
+    credentials: true,
+    origin: corsOrigins(process.env.API_CORS_ORIGIN ?? process.env.APP_BASE_URL ?? "http://localhost:5173")
+  });
   await app.register(multipart);
 
   app.addHook("onRequest", async (request, reply) => {
@@ -47,7 +53,15 @@ export async function buildServer() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  assertProductionRuntimeSafety();
   const port = Number(process.env.API_PORT ?? 3000);
   const app = await buildServer();
   await app.listen({ port, host: "0.0.0.0" });
+}
+
+function corsOrigins(value: string): string | string[] {
+  const origins = value.split(",").map((origin) => origin.trim()).filter(Boolean);
+  if (origins.length === 0) return "http://localhost:5173";
+  if (origins.length === 1) return origins[0] ?? "http://localhost:5173";
+  return origins;
 }

@@ -25,14 +25,21 @@ describe("storage", () => {
   it("requires endpoint and bucket in S3 mode", () => {
     expect(() => createStorage(env({ CTW_STORAGE_MODE: "s3" }))).toThrow(/STORAGE_ENDPOINT is required/);
     expect(() => createStorage(env({ CTW_STORAGE_MODE: "s3", STORAGE_ENDPOINT: "http://localhost:9000" }))).toThrow(/STORAGE_BUCKET is required/);
+    expect(() => createStorage(env({ CTW_STORAGE_MODE: "s3", STORAGE_ENDPOINT: "http://localhost:9000", STORAGE_BUCKET: "ctw" }))).toThrow(/STORAGE_ACCESS_KEY_ID is required/);
   });
 
-  it("puts to S3-compatible storage", async () => {
+  it("puts to S3-compatible storage with signed path-style requests", async () => {
     const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
-    const storage = new S3CompatibleStorage("http://localhost:9000", "ctw", fetchMock as typeof fetch);
+    const storage = new S3CompatibleStorage("http://localhost:9000", "ctw", "access", "secret", "us-east-1", fetchMock as typeof fetch);
 
     await storage.put({ key: "org/deal/doc.txt", contentType: "text/plain", bytes: new TextEncoder().encode("hello") });
 
-    expect(fetchMock).toHaveBeenCalledWith("http://localhost:9000/ctw/org%2Fdeal%2Fdoc.txt", expect.objectContaining({ method: "PUT" }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:9000/ctw/org/deal/doc.txt",
+      expect.objectContaining({
+        headers: expect.objectContaining({ authorization: expect.stringContaining("AWS4-HMAC-SHA256") }),
+        method: "PUT"
+      })
+    );
   });
 });

@@ -1,4 +1,5 @@
 import PgBoss from "pg-boss";
+import { assertProductionRuntimeSafety } from "@ctw/config";
 import { jobNames, type JobName } from "@ctw/jobs";
 import { classifyDocumentRecord } from "./jobs/classify-document.js";
 import { extractDocumentTextRecord } from "./jobs/extract-document-text.js";
@@ -65,6 +66,7 @@ function parseWorkerJobPayload(name: JobName, payload: unknown): unknown {
 }
 
 export async function startWorker(options: { mode?: WorkerMode } = {}): Promise<StartedWorker> {
+  assertProductionRuntimeSafety();
   const mode = options.mode ?? (process.env.CTW_JOBS_MODE === "pgboss" ? "pgboss" : "memory");
   if (mode === "pgboss") {
     if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required for pg-boss worker mode");

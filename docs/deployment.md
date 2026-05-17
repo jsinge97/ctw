@@ -31,6 +31,9 @@ All services:
 - `CTW_ALLOW_DEMO_TOKENS=false`
 - `APP_BASE_URL`
 - `BETTER_AUTH_SECRET`
+- `API_CORS_ORIGIN` for browser origins that call the API directly
+- `SESSION_COOKIE_SAMESITE`
+- `SESSION_COOKIE_SECURE`
 
 API and worker provider/storage services:
 
@@ -41,6 +44,15 @@ API and worker provider/storage services:
 - `TWILIO_FROM_NUMBER`
 - `STORAGE_ENDPOINT`
 - `STORAGE_BUCKET`
+- `STORAGE_ACCESS_KEY_ID`
+- `STORAGE_SECRET_ACCESS_KEY`
+- `STORAGE_REGION`
+
+Web service:
+
+- `VITE_API_BASE_URL` when the web origin calls a separate API origin directly. Leave blank only when the web and API are served behind the same origin or development proxy.
+
+When the web and API are on different origins, set `API_CORS_ORIGIN` to the web origin and use secure cross-site cookies: `SESSION_COOKIE_SAMESITE=none` and `SESSION_COOKIE_SECURE=true`.
 
 ## Webhooks
 

@@ -11,7 +11,9 @@ const validEnv = {
   TWILIO_AUTH_TOKEN: "twilio-token",
   TWILIO_FROM_NUMBER: "+14155550188",
   STORAGE_ENDPOINT: "http://localhost:9000",
-  STORAGE_BUCKET: "ctw"
+  STORAGE_BUCKET: "ctw",
+  STORAGE_ACCESS_KEY_ID: "live-access-key",
+  STORAGE_SECRET_ACCESS_KEY: "live-secret-key"
 };
 
 describe("loadEnv", () => {
@@ -24,7 +26,8 @@ describe("loadEnv", () => {
       CTW_PROVIDER_MODE: "fake",
       CTW_STORAGE_MODE: "memory",
       CTW_RUNTIME_MODE: "demo",
-      STORAGE_BUCKET: "ctw"
+      STORAGE_BUCKET: "ctw",
+      STORAGE_REGION: "us-east-1"
     });
   });
 

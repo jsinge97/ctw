@@ -13,7 +13,7 @@ export async function registerSessionRoutes(app: FastifyInstance) {
   app.post("/v1/session/login", async (request, reply) => {
     try {
       const result = await loginWithEmailPassword(parseBody(loginRequestSchema, request.body));
-      reply.header("set-cookie", sessionSetCookieHeader(result.token));
+      reply.header("set-cookie", sessionSetCookieHeader(result.token, undefined, cookieOptions()));
       return result.session;
     } catch {
       throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
@@ -21,7 +21,18 @@ export async function registerSessionRoutes(app: FastifyInstance) {
   });
   app.post("/v1/session/logout", async (request, reply) => {
     await logoutSession(sessionTokenFromCookieHeader(request.headers.cookie));
-    reply.header("set-cookie", sessionClearCookieHeader());
+    reply.header("set-cookie", sessionClearCookieHeader(cookieOptions()));
     return { ok: true as const };
   });
+}
+
+function cookieOptions() {
+  return {
+    sameSite: sessionSameSiteFromEnv(process.env.SESSION_COOKIE_SAMESITE),
+    secure: process.env.SESSION_COOKIE_SECURE === "true"
+  };
+}
+
+function sessionSameSiteFromEnv(value: string | undefined): "lax" | "strict" | "none" {
+  return value === "none" || value === "strict" || value === "lax" ? value : "lax";
 }

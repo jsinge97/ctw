@@ -18,14 +18,19 @@ export async function registerHealthRoutes(app: FastifyInstance) {
         storageMode: runtime.CTW_STORAGE_MODE
       };
     } catch (error) {
+      requestLogError(app, error);
       reply.code(503);
       return {
         ok: false,
-        error: error instanceof Error ? error.message : "readiness check failed"
+        error: "readiness check failed"
       };
     }
   });
   app.get("/openapi.json", async () => openApiDocument);
+}
+
+function requestLogError(app: FastifyInstance, error: unknown) {
+  app.log.error(error);
 }
 
 async function checkDatabase() {

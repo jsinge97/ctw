@@ -59,12 +59,23 @@ export function sessionCookieHeader(token: string): string {
   return `${BETTER_AUTH_SESSION_COOKIE}=${encodeURIComponent(token)}`;
 }
 
-export function sessionSetCookieHeader(token: string, maxAgeSeconds = 60 * 60 * 24 * 30): string {
-  return `${sessionCookieHeader(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}`;
+export type SessionCookieOptions = {
+  sameSite?: "lax" | "strict" | "none";
+  secure?: boolean;
+};
+
+export function sessionSetCookieHeader(token: string, maxAgeSeconds = 60 * 60 * 24 * 30, options: SessionCookieOptions = {}): string {
+  return `${sessionCookieHeader(token)}; Path=/; HttpOnly; SameSite=${formatSameSite(options.sameSite)}${options.secure ? "; Secure" : ""}; Max-Age=${maxAgeSeconds}`;
 }
 
-export function sessionClearCookieHeader(): string {
-  return `${BETTER_AUTH_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+export function sessionClearCookieHeader(options: SessionCookieOptions = {}): string {
+  return `${BETTER_AUTH_SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=${formatSameSite(options.sameSite)}${options.secure ? "; Secure" : ""}; Max-Age=0`;
+}
+
+function formatSameSite(value: SessionCookieOptions["sameSite"]): "Lax" | "Strict" | "None" {
+  if (value === "strict") return "Strict";
+  if (value === "none") return "None";
+  return "Lax";
 }
 
 export async function lookupBetterAuthSession(prisma: AuthSessionReader, token: string, now = new Date()): Promise<DurableSessionLookup | null> {

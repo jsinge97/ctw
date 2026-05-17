@@ -42,8 +42,7 @@ describe("health routes", () => {
     try {
       const response = await app.inject({ method: "GET", url: "/readyz" });
       expect(response.statusCode).toBe(503);
-      expect(response.json()).toMatchObject({ ok: false });
-      expect(response.json().error).toContain("CTW_DB_MODE must be prisma");
+      expect(response.json()).toMatchObject({ ok: false, error: "readiness check failed" });
     } finally {
       await app.close();
     }
