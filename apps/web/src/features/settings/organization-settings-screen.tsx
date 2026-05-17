@@ -2,6 +2,7 @@ import type { CurrentSession, OrganizationSettingsDto } from "@ctw/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RadioTower, Save } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
 import { canManageOrganizationSettings } from "../../lib/api/adapters/session.js";
@@ -26,14 +27,25 @@ export function OrganizationSettingsScreen({ session }: { session: CurrentSessio
     enabled: Number.isFinite(threshold) && threshold >= 0 && threshold <= 1
   });
   const invalidateSettings = async () => queryClient.invalidateQueries({ queryKey: ["settings", "organization"] });
-  const updateSettings = useMutation({ mutationFn: updateOrganizationSettings, onSuccess: invalidateSettings });
+  const updateSettings = useMutation({
+    mutationFn: updateOrganizationSettings,
+    onSuccess: async () => {
+      toast.success("Organization settings saved");
+      await invalidateSettings();
+    },
+    onError: () => toast.error("Could not save organization settings")
+  });
   const updateChannel = useMutation({
     mutationFn: ({ channelId, mode, status }: { channelId: string; mode?: string; status?: string }) =>
       updateOrganizationChannel(channelId, {
         ...(mode !== undefined ? { mode } : {}),
         ...(status !== undefined ? { status } : {})
       }),
-    onSuccess: invalidateSettings
+    onSuccess: async () => {
+      toast.success("Channel settings saved");
+      await invalidateSettings();
+    },
+    onError: () => toast.error("Could not save channel settings")
   });
 
   useEffect(() => {
@@ -73,7 +85,7 @@ export function OrganizationSettingsScreen({ session }: { session: CurrentSessio
             </label>
             <div className="notice-panel">{thresholdPreviewLabel(preview.data)}</div>
             {canManage ? (
-              <Button type="submit" variant="primary">
+              <Button type="submit" variant="primary" isLoading={updateSettings.isPending} loadingLabel="Saving">
                 <Save size={16} aria-hidden />
                 Save organization
               </Button>
@@ -90,6 +102,8 @@ export function OrganizationSettingsScreen({ session }: { session: CurrentSessio
                 ...(status !== undefined ? { status } : {})
               })
             }
+            updatingChannelId={updateChannel.variables?.channelId}
+            isUpdating={updateChannel.isPending}
           />
         </>
       ) : null}
@@ -100,12 +114,16 @@ export function OrganizationSettingsScreen({ session }: { session: CurrentSessio
 
 function ChannelSettingsList({
   canManage,
+  isUpdating,
   onUpdate,
-  settings
+  settings,
+  updatingChannelId
 }: {
   canManage: boolean;
+  isUpdating: boolean;
   onUpdate: (channelId: string, mode?: string, status?: string) => void;
   settings: OrganizationSettingsDto;
+  updatingChannelId: string | undefined;
 }) {
   return (
     <div className="channel-settings">
@@ -121,10 +139,10 @@ function ChannelSettingsList({
           <Badge tone={channel.status === "active" ? "green" : "amber"}>{channel.status}</Badge>
           {canManage ? (
             <>
-              <select value={channel.mode} onChange={(event) => onUpdate(channel.id, event.target.value)}>
+              <select value={channel.mode} disabled={isUpdating && updatingChannelId === channel.id} onChange={(event) => onUpdate(channel.id, event.target.value)}>
                 {channelModes.map((mode) => <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>)}
               </select>
-              <Button size="sm" variant="danger" onClick={() => onUpdate(channel.id, undefined, "archived")}>Disable</Button>
+              <Button size="sm" variant="danger" isLoading={isUpdating && updatingChannelId === channel.id} onClick={() => onUpdate(channel.id, undefined, "archived")}>Disable</Button>
             </>
           ) : (
             <span>{channel.mode.replaceAll("_", " ")}</span>

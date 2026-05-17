@@ -2,8 +2,10 @@ import type { CurrentSession, UserDto } from "@ctw/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MailPlus, RotateCcw, Shield, UserRoundPlus } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "../../components/ui/badge.js";
 import { Button } from "../../components/ui/button.js";
+import { ConfirmDialog } from "../../components/ui/confirm-dialog.js";
 import { canManageUsers } from "../../lib/api/adapters/session.js";
 import { inviteUser, listUsers, resendInvitation, updateUser } from "../../lib/api/adapters/settings.js";
 
@@ -22,9 +24,30 @@ export function UsersSettingsScreen({ session }: { session: CurrentSession | und
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserDto["role"]>("broker");
   const invalidateUsers = async () => queryClient.invalidateQueries({ queryKey: ["settings", "users"] });
-  const invite = useMutation({ mutationFn: inviteUser, onSuccess: invalidateUsers });
-  const patchUser = useMutation({ mutationFn: ({ userId, body }: { userId: string; body: { role?: UserDto["role"]; status?: "active" | "disabled" } }) => updateUser(userId, body), onSuccess: invalidateUsers });
-  const resend = useMutation({ mutationFn: resendInvitation, onSuccess: invalidateUsers });
+  const invite = useMutation({
+    mutationFn: inviteUser,
+    onSuccess: async () => {
+      toast.success("Invitation sent");
+      await invalidateUsers();
+    },
+    onError: () => toast.error("Could not send invitation")
+  });
+  const patchUser = useMutation({
+    mutationFn: ({ userId, body }: { userId: string; body: { role?: UserDto["role"]; status?: "active" | "disabled" } }) => updateUser(userId, body),
+    onSuccess: async () => {
+      toast.success("User updated");
+      await invalidateUsers();
+    },
+    onError: () => toast.error("Could not update user")
+  });
+  const resend = useMutation({
+    mutationFn: resendInvitation,
+    onSuccess: async () => {
+      toast.success("Invitation resent");
+      await invalidateUsers();
+    },
+    onError: () => toast.error("Could not resend invitation")
+  });
 
   return (
     <section className="settings-stack">
@@ -52,7 +75,7 @@ export function UsersSettingsScreen({ session }: { session: CurrentSession | und
           <select value={role} onChange={(event) => setRole(event.target.value as UserDto["role"])}>
             {roles.map((item) => <option key={item} value={item}>{item.toUpperCase()}</option>)}
           </select>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" isLoading={invite.isPending} loadingLabel="Inviting">
             <UserRoundPlus size={16} aria-hidden />
             Invite
           </Button>
@@ -68,6 +91,8 @@ export function UsersSettingsScreen({ session }: { session: CurrentSession | und
           <UserRow
             canManage={canManage}
             key={user.id}
+            isResending={resend.isPending && resend.variables === user.id}
+            isUpdating={patchUser.isPending && patchUser.variables?.userId === user.id}
             onResend={() => resend.mutate(user.id)}
             onUpdate={(body) => patchUser.mutate({ userId: user.id, body })}
             user={user}
@@ -81,16 +106,21 @@ export function UsersSettingsScreen({ session }: { session: CurrentSession | und
 
 function UserRow({
   canManage,
+  isResending,
+  isUpdating,
   onResend,
   onUpdate,
   user
 }: {
   canManage: boolean;
+  isResending: boolean;
+  isUpdating: boolean;
   onResend: () => void;
   onUpdate: (body: { role?: UserDto["role"]; status?: "active" | "disabled" }) => void;
   user: UserDto;
 }) {
   const [nextRole, setNextRole] = useState<UserDto["role"]>(user.role);
+  const [confirmDisable, setConfirmDisable] = useState(false);
   return (
     <article className="settings-user-row">
       <div>
@@ -108,17 +138,30 @@ function UserRow({
             {roleChangePreview(user, nextRole)}
           </span>
           <div className="action-row settings-actions">
-            <Button size="sm" onClick={() => onUpdate({ role: nextRole })}>Save role</Button>
-            <Button size="sm" variant={user.status === "disabled" ? "secondary" : "danger"} onClick={() => onUpdate({ status: user.status === "disabled" ? "active" : "disabled" })}>
+            <Button size="sm" isLoading={isUpdating} loadingLabel="Saving" onClick={() => onUpdate({ role: nextRole })}>Save role</Button>
+            <Button size="sm" variant={user.status === "disabled" ? "secondary" : "danger"} isLoading={isUpdating} onClick={() => user.status === "disabled" ? onUpdate({ status: "active" }) : setConfirmDisable(true)}>
               {user.status === "disabled" ? "Reactivate" : "Disable"}
             </Button>
             {user.status === "invited" ? (
-              <Button size="sm" onClick={onResend}>
+              <Button size="sm" isLoading={isResending} loadingLabel="Resending" onClick={onResend}>
                 <MailPlus size={14} aria-hidden />
                 Resend
               </Button>
             ) : null}
           </div>
+          {confirmDisable ? (
+            <ConfirmDialog
+              title="Disable user?"
+              message={`${user.name} will lose access to the organization until reactivated.`}
+              confirmLabel="Disable"
+              isLoading={isUpdating}
+              onCancel={() => setConfirmDisable(false)}
+              onConfirm={() => {
+                onUpdate({ status: "disabled" });
+                setConfirmDisable(false);
+              }}
+            />
+          ) : null}
         </>
       ) : (
         <span className="settings-preview">
