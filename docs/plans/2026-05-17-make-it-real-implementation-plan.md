@@ -709,6 +709,8 @@ Review focus:
 
 **Purpose:** Replace the overview-only deal workspace with real tab routes and forms.
 
+**Status:** Done.
+
 **Files:**
 
 - Modify: `apps/web/src/router.tsx`

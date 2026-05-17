@@ -1,4 +1,18 @@
-import type { ActivityEventDto, DealDto, DocumentDto, MessageDto, MoveDealStageRequest, ParticipantDto, TaskDto } from "@ctw/contracts";
+import type {
+  ActivityEventDto,
+  AddParticipantRequest,
+  CreateTaskRequest,
+  DealDto,
+  DocumentDto,
+  MessageDto,
+  MoveDealStageRequest,
+  ParticipantDto,
+  TaskDecisionRequest,
+  TaskDto,
+  UpdateDocumentRequest,
+  UpdateMessageRequest,
+  UpdateParticipantRequest
+} from "@ctw/contracts";
 import { api } from "../runtime.js";
 
 export type DealCardModel = {
@@ -53,4 +67,54 @@ export async function getDealWorkspace(dealId: string): Promise<DealWorkspaceMod
     api.getDealsdealIdActivity({ dealId })
   ]);
   return { deal, participants, messages, documents, tasks, activity };
+}
+
+export async function updateMessage(dealId: string, messageId: string, body: UpdateMessageRequest): Promise<MessageDto> {
+  return api.patchDealsdealIdMessagesMessageId({ dealId, messageId }, body);
+}
+
+export async function createDocument(dealId: string, body: UpdateDocumentRequest): Promise<DocumentDto> {
+  return api.postDealsdealIdDocuments({ dealId }, body);
+}
+
+export async function updateDocument(dealId: string, documentId: string, body: UpdateDocumentRequest): Promise<DocumentDto> {
+  return api.patchDealsdealIdDocumentsDocumentId({ dealId, documentId }, body);
+}
+
+export async function archiveDocument(dealId: string, documentId: string): Promise<DocumentDto> {
+  return api.postDealsdealIdDocumentsDocumentIdArchive({ dealId, documentId });
+}
+
+export async function uploadDocument(dealId: string, file: File): Promise<DocumentDto> {
+  const body = new FormData();
+  body.set("file", file);
+  const response = await fetch(`/v1/deals/${encodeURIComponent(dealId)}/documents/upload`, {
+    method: "POST",
+    credentials: "include",
+    body
+  });
+  if (!response.ok) throw new Error(`Document upload failed: ${response.status}`);
+  return response.json() as Promise<DocumentDto>;
+}
+
+export async function createTask(dealId: string, body: CreateTaskRequest): Promise<TaskDto> {
+  return api.postDealsdealIdTasks({ dealId }, body);
+}
+
+export type TaskDecisionKind = "approve" | "reject" | "defer" | "route" | "complete";
+
+export async function decideTask(taskId: string, decision: TaskDecisionKind, body: TaskDecisionRequest): Promise<TaskDto> {
+  if (decision === "approve") return api.postTaskstaskIdApprove({ taskId }, body);
+  if (decision === "reject") return api.postTaskstaskIdReject({ taskId }, body);
+  if (decision === "defer") return api.postTaskstaskIdDefer({ taskId }, body);
+  if (decision === "route") return api.postTaskstaskIdRoute({ taskId }, body);
+  return api.postTaskstaskIdComplete({ taskId }, body);
+}
+
+export async function addParticipant(dealId: string, body: AddParticipantRequest): Promise<ParticipantDto> {
+  return api.postDealsdealIdParticipants({ dealId }, body);
+}
+
+export async function updateParticipant(dealId: string, participantId: string, body: UpdateParticipantRequest): Promise<ParticipantDto> {
+  return api.patchDealsdealIdParticipantsParticipantId({ dealId, participantId }, body);
 }

@@ -53,7 +53,9 @@ export async function createTask(dealId: string, input: CreateTaskRequest, sessi
   return task;
 }
 
-export async function decideTask(taskId: string, session: CurrentSession, decision: "approve" | "reject" | "defer" | "route", input: TaskDecisionRequest = {}): Promise<TaskDto> {
+type TaskDecision = "approve" | "reject" | "defer" | "route" | "complete";
+
+export async function decideTask(taskId: string, session: CurrentSession, decision: TaskDecision, input: TaskDecisionRequest = {}): Promise<TaskDto> {
   const workflow = getWorkflowProvider();
   if (workflow.mode === "prisma" && workflow.prisma) {
     return decideTaskWithPrisma(workflow.prisma, taskId, session, decision, input);
@@ -65,7 +67,7 @@ async function decideTaskWithPrisma(
   repository: NonNullable<ReturnType<typeof getWorkflowProvider>["prisma"]>,
   taskId: string,
   session: CurrentSession,
-  decision: "approve" | "reject" | "defer" | "route",
+  decision: TaskDecision,
   input: TaskDecisionRequest
 ): Promise<TaskDto> {
   const organizationId = session.activeOrganization.id;
@@ -118,12 +120,16 @@ async function decideTaskWithPrisma(
     updated = (await repository.updateTask({ organizationId, taskId, ...(input.editedTitle !== undefined ? { title } : {}), route: input.route })) as TaskDto;
     await auditService.recordTaskOutcome({ organizationId, dealId: task.dealId, taskId: task.id, outcome: "rerouted", createdByMembershipId: session.membership.id });
   }
+  if (decision === "complete") {
+    updated = (await repository.updateTask({ organizationId, taskId, ...(input.editedTitle !== undefined ? { title } : {}), status: "completed", completedAt: new Date() })) as TaskDto;
+    await auditService.recordTaskOutcome({ organizationId, dealId: task.dealId, taskId: task.id, outcome: "completed", createdByMembershipId: session.membership.id });
+  }
 
   await auditService.recordAuditEvent({ organizationId, dealId: task.dealId, actorType: "user", eventType: `task.${decision}`, entityType: "task", entityId: task.id, before, after: updated, metadata: { reason: input.reason ?? null } });
   return updated;
 }
 
-async function decideTaskInMemory(taskId: string, session: CurrentSession, decision: "approve" | "reject" | "defer" | "route", input: TaskDecisionRequest): Promise<TaskDto> {
+async function decideTaskInMemory(taskId: string, session: CurrentSession, decision: TaskDecision, input: TaskDecisionRequest): Promise<TaskDto> {
   const workflow = getWorkflowProvider().memory;
   const auditService = getRuntimeAuditService();
   const task = workflow.tasks.find((item) => item.id === taskId);
@@ -172,6 +178,10 @@ async function decideTaskInMemory(taskId: string, session: CurrentSession, decis
   if (decision === "route" && input.route) {
     task.route = input.route;
     await auditService.recordTaskOutcome({ organizationId: workflow.orgId, dealId: task.dealId, taskId: task.id, outcome: "rerouted", createdByMembershipId: session.membership.id });
+  }
+  if (decision === "complete") {
+    task.status = "completed";
+    await auditService.recordTaskOutcome({ organizationId: workflow.orgId, dealId: task.dealId, taskId: task.id, outcome: "completed", createdByMembershipId: session.membership.id });
   }
   await auditService.recordAuditEvent({ organizationId: workflow.orgId, dealId: task.dealId, actorType: "user", eventType: `task.${decision}`, entityType: "task", entityId: task.id, before, after: task, metadata: { reason: input.reason } });
   return task;

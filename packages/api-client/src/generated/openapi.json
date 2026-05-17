@@ -2765,6 +2765,129 @@
         }
       }
     },
+    "/v1/deals/{dealId}/documents/{documentId}/archive": {
+      "post": {
+        "summary": "Archive document",
+        "tags": [
+          "documents"
+        ],
+        "parameters": [
+          {
+            "name": "dealId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "dealId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "documentType": {
+                      "type": "string",
+                      "enum": [
+                        "unknown",
+                        "loi",
+                        "lease",
+                        "om",
+                        "estoppel",
+                        "comp_set",
+                        "other"
+                      ]
+                    },
+                    "classificationStatus": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "classified",
+                        "failed"
+                      ]
+                    },
+                    "latestVersion": {
+                      "type": "string"
+                    },
+                    "visibility": {
+                      "type": "string",
+                      "enum": [
+                        "internal",
+                        "shared"
+                      ]
+                    },
+                    "folder": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "dealId",
+                    "title",
+                    "documentType",
+                    "classificationStatus",
+                    "latestVersion",
+                    "visibility",
+                    "folder",
+                    "tags"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/deals/{dealId}/tasks": {
       "get": {
         "summary": "List tasks",
@@ -3452,6 +3575,147 @@
     "/v1/tasks/{taskId}/route": {
       "post": {
         "summary": "Route task",
+        "tags": [
+          "tasks"
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  },
+                  "route": {
+                    "type": "string",
+                    "enum": [
+                      "system",
+                      "va",
+                      "self"
+                    ]
+                  },
+                  "editedTitle": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "dealId": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "proposed",
+                        "approved",
+                        "in_progress",
+                        "waiting_approval",
+                        "completed",
+                        "rejected",
+                        "deferred",
+                        "canceled"
+                      ]
+                    },
+                    "route": {
+                      "type": "string",
+                      "enum": [
+                        "system",
+                        "va",
+                        "self"
+                      ]
+                    },
+                    "isCurrentNextAction": {
+                      "type": "boolean"
+                    },
+                    "payload": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "dueAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "dealId",
+                    "title",
+                    "description",
+                    "status",
+                    "route",
+                    "isCurrentNextAction",
+                    "payload",
+                    "dueAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tasks/{taskId}/complete": {
+      "post": {
+        "summary": "Complete task",
         "tags": [
           "tasks"
         ],

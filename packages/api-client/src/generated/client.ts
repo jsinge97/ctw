@@ -51,12 +51,14 @@ export type GeneratedOperationMap = {
   "GET /v1/deals/{dealId}/documents": { params: { dealId: string }; response: DocumentDto[] };
   "POST /v1/deals/{dealId}/documents": { params: { dealId: string }; request: UpdateDocumentRequest; response: DocumentDto };
   "PATCH /v1/deals/{dealId}/documents/{documentId}": { params: { dealId: string; documentId: string }; request: UpdateDocumentRequest; response: DocumentDto };
+  "POST /v1/deals/{dealId}/documents/{documentId}/archive": { params: { dealId: string; documentId: string }; response: DocumentDto };
   "GET /v1/deals/{dealId}/tasks": { params: { dealId: string }; response: TaskDto[] };
   "POST /v1/deals/{dealId}/tasks": { params: { dealId: string }; request: CreateTaskRequest; response: TaskDto };
   "POST /v1/tasks/{taskId}/approve": { params: { taskId: string }; request: TaskDecisionRequest; response: TaskDto };
   "POST /v1/tasks/{taskId}/reject": { params: { taskId: string }; request: TaskDecisionRequest; response: TaskDto };
   "POST /v1/tasks/{taskId}/defer": { params: { taskId: string }; request: TaskDecisionRequest; response: TaskDto };
   "POST /v1/tasks/{taskId}/route": { params: { taskId: string }; request: TaskDecisionRequest; response: TaskDto };
+  "POST /v1/tasks/{taskId}/complete": { params: { taskId: string }; request: TaskDecisionRequest; response: TaskDto };
   "GET /v1/routing-review-items": { response: RoutingReviewItemDto[] };
   "POST /v1/routing-review-items/{itemId}/resolve": { params: { itemId: string }; request: ResolveRoutingReviewRequest; response: RoutingReviewItemDto };
   "GET /v1/va-work-items": { response: VaWorkItemDto[] };
@@ -119,6 +121,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(generatedRoutes["sessionaccept_invitation"], init);
   }
 
@@ -128,6 +131,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(generatedRoutes["sessionlogin"], init);
   }
 
@@ -137,6 +141,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(generatedRoutes["sessionlogout"], init);
   }
 
@@ -150,6 +155,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(generatedRoutes["deals"], init);
   }
 
@@ -163,6 +169,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId"], params), init);
   }
 
@@ -172,6 +179,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId_move_stage"], params), init);
   }
 
@@ -180,7 +188,7 @@ export class GeneratedApiClient {
       method: "POST",
       headers: { "content-type": "application/json" }
     };
-    
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId_archive"], params), init);
   }
 
@@ -194,6 +202,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId_participants"], params), init);
   }
 
@@ -203,6 +212,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId_participants_participantId"], params), init);
   }
 
@@ -216,6 +226,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId_messages_messageId"], params), init);
   }
 
@@ -229,6 +240,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId_documents"], params), init);
   }
 
@@ -238,7 +250,17 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId_documents_documentId"], params), init);
+  }
+
+  postDealsdealIdDocumentsDocumentIdArchive(params: GeneratedOperationMap["POST /v1/deals/{dealId}/documents/{documentId}/archive"]["params"]): Promise<GeneratedOperationMap["POST /v1/deals/{dealId}/documents/{documentId}/archive"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+
+    return this.request(this.fillPath(generatedRoutes["dealsdealId_documents_documentId_archive"], params), init);
   }
 
   getDealsdealIdTasks(params: GeneratedOperationMap["GET /v1/deals/{dealId}/tasks"]["params"]): Promise<GeneratedOperationMap["GET /v1/deals/{dealId}/tasks"]["response"]> {
@@ -251,6 +273,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["dealsdealId_tasks"], params), init);
   }
 
@@ -260,6 +283,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["taskstaskId_approve"], params), init);
   }
 
@@ -269,6 +293,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["taskstaskId_reject"], params), init);
   }
 
@@ -278,6 +303,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["taskstaskId_defer"], params), init);
   }
 
@@ -287,7 +313,18 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["taskstaskId_route"], params), init);
+  }
+
+  postTaskstaskIdComplete(params: GeneratedOperationMap["POST /v1/tasks/{taskId}/complete"]["params"], body: GeneratedOperationMap["POST /v1/tasks/{taskId}/complete"]["request"]): Promise<GeneratedOperationMap["POST /v1/tasks/{taskId}/complete"]["response"]> {
+    const init: RequestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" }
+    };
+    init.body = JSON.stringify(body);
+
+    return this.request(this.fillPath(generatedRoutes["taskstaskId_complete"], params), init);
   }
 
   getRoutingReviewItems(): Promise<GeneratedOperationMap["GET /v1/routing-review-items"]["response"]> {
@@ -300,6 +337,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["routing_review_itemsitemId_resolve"], params), init);
   }
 
@@ -313,6 +351,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["va_work_itemsitemId_start"], params), init);
   }
 
@@ -322,6 +361,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["va_work_itemsitemId_accept"], params), init);
   }
 
@@ -331,6 +371,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["va_work_itemsitemId_submit"], params), init);
   }
 
@@ -340,6 +381,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["va_work_itemsitemId_send_back"], params), init);
   }
 
@@ -349,6 +391,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["va_work_itemsitemId_cancel"], params), init);
   }
 
@@ -366,6 +409,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(generatedRoutes["settingsorganization"], init);
   }
 
@@ -379,6 +423,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(generatedRoutes["users"], init);
   }
 
@@ -388,6 +433,7 @@ export class GeneratedApiClient {
       headers: { "content-type": "application/json" }
     };
     init.body = JSON.stringify(body);
+
     return this.request(this.fillPath(generatedRoutes["usersuserId"], params), init);
   }
 }

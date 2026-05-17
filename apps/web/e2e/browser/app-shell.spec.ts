@@ -14,6 +14,26 @@ test("login reaches the deal kanban and opens a workspace", async ({ page }) => 
   await expect(page).toHaveURL(/\/deals\/deal_sutter$/);
   await expect(page.getByRole("heading", { name: "Sutter Tower - Floor 14" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Approve" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Messages" }).click();
+  await expect(page).toHaveURL(/\/deals\/deal_sutter\/messages$/);
+  await expect(page.getByRole("heading", { name: "Messages" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Documents" }).click();
+  await expect(page).toHaveURL(/\/deals\/deal_sutter\/documents$/);
+  await expect(page.getByRole("heading", { name: "Documents" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Tasks" }).click();
+  await expect(page).toHaveURL(/\/deals\/deal_sutter\/tasks$/);
+  await expect(page.getByLabel("Tasks")).toBeVisible();
+
+  await page.getByRole("link", { name: "Participants" }).click();
+  await expect(page).toHaveURL(/\/deals\/deal_sutter\/participants$/);
+  await expect(page.getByLabel("Participants")).toBeVisible();
+
+  await page.getByRole("link", { name: "Activity" }).click();
+  await expect(page).toHaveURL(/\/deals\/deal_sutter\/activity$/);
+  await expect(page.getByRole("heading", { name: "Activity" })).toBeVisible();
 });
 
 test("internal review surfaces render in the browser", async ({ page }) => {

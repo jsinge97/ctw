@@ -11,4 +11,5 @@ export async function registerTasksRoutes(app: FastifyInstance) {
   app.post<{ Params: { taskId: string } }>("/v1/tasks/:taskId/reject", async (request) => decideTask(request.params.taskId, getRequiredSession(request), "reject", parseBody(taskDecisionRequestSchema, request.body ?? {})));
   app.post<{ Params: { taskId: string } }>("/v1/tasks/:taskId/defer", async (request) => decideTask(request.params.taskId, getRequiredSession(request), "defer", parseBody(taskDecisionRequestSchema, request.body ?? {})));
   app.post<{ Params: { taskId: string } }>("/v1/tasks/:taskId/route", async (request) => decideTask(request.params.taskId, getRequiredSession(request), "route", parseBody(taskDecisionRequestSchema, request.body ?? {})));
+  app.post<{ Params: { taskId: string } }>("/v1/tasks/:taskId/complete", async (request) => decideTask(request.params.taskId, getRequiredSession(request), "complete", parseBody(taskDecisionRequestSchema, request.body ?? {})));
 }

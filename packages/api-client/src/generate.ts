@@ -136,12 +136,13 @@ const operationMethods = operations.map(({ path, method }) => {
     return this.request(${pathExpression});
   }`;
   }
+  const bodyLine = request ? "    init.body = JSON.stringify(body);\n" : "";
   return `  ${name}(${args}): Promise<GeneratedOperationMap[${JSON.stringify(key)}]["response"]> {
     const init: RequestInit = {
       method: ${JSON.stringify(httpMethod)},
       headers: { "content-type": "application/json" }
     };
-    ${request ? "init.body = JSON.stringify(body);" : ""}
+${bodyLine}
     return this.request(${pathExpression}, init);
   }`;
 });

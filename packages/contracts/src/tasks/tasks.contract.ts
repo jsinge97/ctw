@@ -9,5 +9,6 @@ export const tasksContract = [
   defineRoute({ method: "POST", path: "/v1/tasks/:taskId/approve", summary: "Approve task", tags: ["tasks"], params: taskParams, body: taskDecisionRequestSchema, response: taskSchema }),
   defineRoute({ method: "POST", path: "/v1/tasks/:taskId/reject", summary: "Reject task", tags: ["tasks"], params: taskParams, body: taskDecisionRequestSchema, response: taskSchema }),
   defineRoute({ method: "POST", path: "/v1/tasks/:taskId/defer", summary: "Defer task", tags: ["tasks"], params: taskParams, body: taskDecisionRequestSchema, response: taskSchema }),
-  defineRoute({ method: "POST", path: "/v1/tasks/:taskId/route", summary: "Route task", tags: ["tasks"], params: taskParams, body: taskDecisionRequestSchema, response: taskSchema })
+  defineRoute({ method: "POST", path: "/v1/tasks/:taskId/route", summary: "Route task", tags: ["tasks"], params: taskParams, body: taskDecisionRequestSchema, response: taskSchema }),
+  defineRoute({ method: "POST", path: "/v1/tasks/:taskId/complete", summary: "Complete task", tags: ["tasks"], params: taskParams, body: taskDecisionRequestSchema, response: taskSchema })
 ];

@@ -108,6 +108,21 @@ export async function updateDocument(dealId: string, documentId: string, input: 
   return document;
 }
 
+export async function archiveDocument(dealId: string, documentId: string, session: CurrentSession): Promise<DocumentDto> {
+  const workflow = getWorkflowProvider();
+  if (workflow.mode === "prisma" && workflow.prisma) {
+    return workflow.prisma.archiveDocument({
+      organizationId: session.activeOrganization.id,
+      dealId,
+      documentId
+    }) as Promise<DocumentDto>;
+  }
+  const document = workflow.memory.documents.find((item) => item.id === documentId && item.dealId === dealId);
+  if (!document) throw Object.assign(new Error("Document not found"), { statusCode: 404 });
+  workflow.memory.documents = workflow.memory.documents.filter((item) => item.id !== documentId);
+  return document;
+}
+
 function sanitizeFilename(filename: string): string {
   return filename.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "upload";
 }

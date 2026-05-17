@@ -1,4 +1,9 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
+import { DealActivityRoute } from "./routes/deals.$dealId.activity.js";
+import { DealDocumentsRoute } from "./routes/deals.$dealId.documents.js";
+import { DealMessagesRoute } from "./routes/deals.$dealId.messages.js";
+import { DealParticipantsRoute } from "./routes/deals.$dealId.participants.js";
+import { DealTasksRoute } from "./routes/deals.$dealId.tasks.js";
 import { DealsRoute } from "./routes/deals.js";
 import { DealWorkspaceRoute } from "./routes/deals.$dealId.js";
 import { IndexRoute } from "./routes/index.js";
@@ -35,6 +40,36 @@ const dealWorkspaceRoute = createRoute({
   component: DealWorkspaceRoute
 });
 
+const dealMessagesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/deals/$dealId/messages",
+  component: DealMessagesRoute
+});
+
+const dealDocumentsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/deals/$dealId/documents",
+  component: DealDocumentsRoute
+});
+
+const dealTasksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/deals/$dealId/tasks",
+  component: DealTasksRoute
+});
+
+const dealParticipantsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/deals/$dealId/participants",
+  component: DealParticipantsRoute
+});
+
+const dealActivityRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/deals/$dealId/activity",
+  component: DealActivityRoute
+});
+
 const routingReviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/routing-review",
@@ -53,7 +88,20 @@ const settingsRoute = createRoute({
   component: SettingsRoute
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, dealsRoute, dealWorkspaceRoute, routingReviewRoute, vaRoute, settingsRoute]);
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  loginRoute,
+  dealsRoute,
+  dealWorkspaceRoute,
+  dealMessagesRoute,
+  dealDocumentsRoute,
+  dealTasksRoute,
+  dealParticipantsRoute,
+  dealActivityRoute,
+  routingReviewRoute,
+  vaRoute,
+  settingsRoute
+]);
 
 export const router = createRouter({ routeTree });
 

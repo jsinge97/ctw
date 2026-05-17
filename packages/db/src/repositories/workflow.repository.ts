@@ -31,7 +31,7 @@ export type WorkflowRepository = {
   listDocumentsForDeal: (organizationId: string, dealId: string, includeInternal?: boolean) => Promise<unknown[]>;
   createDocument: (input: { organizationId: string; dealId: string | null; sourceMessageId?: string | null; title: string; documentType?: string; visibility: VisibilityDto; folder?: string | null; tags?: string[]; uploadedByMembershipId?: string | null; version?: DocumentVersionInput }) => Promise<unknown>;
   updateDocument: (input: { organizationId: string; dealId: string; documentId: string; title?: string; documentType?: string; visibility?: VisibilityDto; folder?: string | null; tags?: string[] }) => Promise<unknown>;
-  archiveDocument: (input: { organizationId: string; documentId: string }) => Promise<unknown>;
+  archiveDocument: (input: { organizationId: string; dealId: string; documentId: string }) => Promise<unknown>;
   listTasksForDeal: (organizationId: string, dealId: string) => Promise<unknown[]>;
   getTask: (organizationId: string, taskId: string) => Promise<unknown>;
   createTask: (input: { organizationId: string; dealId: string; title: string; description?: string | null; route: TaskRoute; assignedToMembershipId?: string | null; payload?: unknown }) => Promise<unknown>;
@@ -342,9 +342,9 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return mapped;
   }
 
-  async archiveDocument(input: { organizationId: string; documentId: string }) {
+  async archiveDocument(input: { organizationId: string; dealId: string; documentId: string }) {
     const document = await this.prisma.document.update({
-      where: { id: input.documentId, organizationId: input.organizationId },
+      where: { id: input.documentId, organizationId: input.organizationId, dealId: input.dealId },
       data: { status: "archived", archivedAt: new Date() },
       include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }
     });
