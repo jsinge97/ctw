@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, Outlet, redirect } from "@tanstack/react-router";
 import { DealsRoute } from "./routes/deals.js";
+import { DealWorkspaceRoute } from "./routes/deals.$dealId.js";
 import { IndexRoute } from "./routes/index.js";
 import { LoginRoute } from "./routes/login.js";
 import { RoutingReviewRoute } from "./routes/routing-review.js";
@@ -31,6 +32,12 @@ const dealsRoute = createRoute({
   component: DealsRoute
 });
 
+const dealWorkspaceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/deals/$dealId",
+  component: DealWorkspaceRoute
+});
+
 const routingReviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/routing-review",
@@ -49,7 +56,7 @@ const settingsRoute = createRoute({
   component: SettingsRoute
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, dealsRoute, routingReviewRoute, vaRoute, settingsRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, dealsRoute, dealWorkspaceRoute, routingReviewRoute, vaRoute, settingsRoute]);
 
 export const router = createRouter({ routeTree });
 

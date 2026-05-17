@@ -245,6 +245,8 @@ input {
   background: #fff;
   padding: 10px;
   text-align: left;
+  color: inherit;
+  text-decoration: none;
 }
 
 .deal-card:hover {
@@ -466,6 +468,140 @@ input {
   padding: 16px;
 }
 
+.workspace {
+  padding: 20px;
+}
+
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #dbe3ea;
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px;
+}
+
+.workspace-header h1,
+.next-action-panel h2,
+.workspace-panel h2 {
+  margin: 0;
+}
+
+.workspace-header p,
+.next-action-panel p {
+  margin: 6px 0 0;
+  color: #64748b;
+}
+
+.stage-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.stage-pill {
+  border: 1px solid #dbe3ea;
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+.stage-pill-active {
+  border-color: #0f766e;
+  background: #e6f3f1;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.workspace-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #dbe3ea;
+  margin-top: 14px;
+}
+
+.workspace-tab {
+  min-height: 40px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #64748b;
+  padding: 0 10px;
+}
+
+.workspace-tab-active {
+  border-color: #0f766e;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.next-action-panel,
+.workspace-summary,
+.workspace-panel {
+  border: 1px solid #dbe3ea;
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px;
+}
+
+.next-action-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.workspace-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.summary-metric {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #dbe3ea;
+  padding: 8px 0;
+}
+
+.summary-metric:last-child {
+  border-bottom: 0;
+}
+
+.activity-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.activity-row {
+  display: grid;
+  gap: 2px;
+  border-left: 3px solid #dbe3ea;
+  padding-left: 10px;
+}
+
+.activity-row span,
+.facts-grid span {
+  color: #64748b;
+}
+
+.facts-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -487,7 +623,8 @@ input {
   .top-bar,
   .page-header,
   .split-surface,
-  .settings-grid {
+  .settings-grid,
+  .workspace-grid {
     grid-template-columns: 1fr;
   }
 

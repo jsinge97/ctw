@@ -1,4 +1,4 @@
-import type { DealDto, MoveDealStageRequest } from "@ctw/contracts";
+import type { ActivityEventDto, DealDto, DocumentDto, MessageDto, MoveDealStageRequest, ParticipantDto, TaskDto } from "@ctw/contracts";
 import { api } from "../runtime.js";
 
 export type DealCardModel = {
@@ -32,4 +32,25 @@ export async function listDealCards(): Promise<DealCardModel[]> {
 
 export async function moveDealStage(dealId: string, body: MoveDealStageRequest) {
   return api.postDealsdealIdMoveStage({ dealId }, body);
+}
+
+export type DealWorkspaceModel = {
+  deal: DealDto;
+  participants: ParticipantDto[];
+  messages: MessageDto[];
+  documents: DocumentDto[];
+  tasks: TaskDto[];
+  activity: ActivityEventDto[];
+};
+
+export async function getDealWorkspace(dealId: string): Promise<DealWorkspaceModel> {
+  const [deal, participants, messages, documents, tasks, activity] = await Promise.all([
+    api.getDealsdealId({ dealId }),
+    api.getDealsdealIdParticipants({ dealId }),
+    api.getDealsdealIdMessages({ dealId }),
+    api.getDealsdealIdDocuments({ dealId }),
+    api.getDealsdealIdTasks({ dealId }),
+    api.getDealsdealIdActivity({ dealId })
+  ]);
+  return { deal, participants, messages, documents, tasks, activity };
 }

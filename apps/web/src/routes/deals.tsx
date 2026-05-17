@@ -76,7 +76,7 @@ function DealKanban({ deals }: { deals: DealCardModel[] }) {
 
 function DealCard({ deal }: { deal: DealCardModel }) {
   return (
-    <button className="deal-card" type="button">
+    <Link className="deal-card" to="/deals/$dealId" params={{ dealId: deal.id }}>
       <span className="deal-card-topline">
         {deal.canMove ? <GripVertical size={14} aria-label="Can move stage" /> : <span />}
         <span className="avatar avatar-sm">{deal.ownerInitials}</span>
@@ -94,7 +94,7 @@ function DealCard({ deal }: { deal: DealCardModel }) {
         {deal.pendingApprovals > 0 ? <Badge tone="blue">{deal.pendingApprovals} approval</Badge> : null}
         <span>{deal.lastActivityLabel}</span>
       </span>
-    </button>
+    </Link>
   );
 }
 
@@ -113,3 +113,4 @@ function KanbanSkeleton() {
     </section>
   );
 }
+import { Link } from "@tanstack/react-router";
