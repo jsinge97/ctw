@@ -1,11 +1,12 @@
 import { z } from "zod";
 import PgBoss from "pg-boss";
 
-export const ingestEmailJobSchema = z.object({ payload: z.unknown() });
-export const ingestTwilioJobSchema = z.object({ payload: z.unknown() });
+export const ingestEmailJobSchema = z.object({ raw: z.unknown(), normalized: z.unknown().optional() });
+export const ingestTwilioJobSchema = z.object({ raw: z.unknown(), normalized: z.unknown().optional() });
 export const classifyDocumentJobSchema = z.object({ documentId: z.string() });
+export const extractDocumentTextJobSchema = z.object({ documentVersionId: z.string(), bytes: z.array(z.number()).optional() });
 export const generateSystemDraftJobSchema = z.object({ taskId: z.string(), dealId: z.string() });
-export const proposeNextActionJobSchema = z.object({ dealId: z.string(), sourceMessageId: z.string().optional() });
+export const proposeNextActionJobSchema = z.object({ dealId: z.string(), sourceMessageId: z.string().optional(), sourceMessageSubject: z.string().optional() });
 
 export const jobNames = {
   ingestEmail: "ingest-email",
@@ -17,6 +18,19 @@ export const jobNames = {
 } as const;
 
 export type JobName = (typeof jobNames)[keyof typeof jobNames];
+export const jobPayloadSchemas = {
+  [jobNames.ingestEmail]: ingestEmailJobSchema,
+  [jobNames.ingestTwilio]: ingestTwilioJobSchema,
+  [jobNames.classifyDocument]: classifyDocumentJobSchema,
+  [jobNames.extractDocumentText]: extractDocumentTextJobSchema,
+  [jobNames.generateSystemDraft]: generateSystemDraftJobSchema,
+  [jobNames.proposeNextAction]: proposeNextActionJobSchema
+} as const;
+
+export function parseJobPayload(name: JobName, payload: unknown): unknown {
+  return jobPayloadSchemas[name].parse(payload);
+}
+
 export type QueuedJob = {
   id: string;
   name: JobName;

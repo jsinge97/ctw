@@ -642,6 +642,8 @@ git commit -m "feat: store document files durably"
 
 ## Task 12: Worker Job Processing Against Prisma
 
+**Status:** Done.
+
 **Purpose:** Make workers process durable jobs and update durable records.
 
 **Files:**

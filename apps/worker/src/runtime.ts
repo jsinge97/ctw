@@ -1,16 +1,17 @@
 import PgBoss from "pg-boss";
 import { jobNames, type JobName } from "@ctw/jobs";
-import { classifyDocument } from "./jobs/classify-document.js";
-import { extractDocumentText } from "./jobs/extract-document-text.js";
-import { generateSystemDraft } from "./jobs/generate-system-draft.js";
-import { ingestEmail } from "./jobs/ingest-email.js";
-import { ingestTwilio } from "./jobs/ingest-twilio.js";
-import { proposeNextAction } from "./jobs/propose-next-action.js";
+import { classifyDocumentRecord } from "./jobs/classify-document.js";
+import { extractDocumentTextRecord } from "./jobs/extract-document-text.js";
+import { generateSystemDraftRecord } from "./jobs/generate-system-draft.js";
+import { ingestEmailRecord } from "./jobs/ingest-email.js";
+import { ingestTwilioRecord } from "./jobs/ingest-twilio.js";
+import { proposeNextActionRecord } from "./jobs/propose-next-action.js";
 
 type WorkerMode = "memory" | "pgboss";
 
 export type StartedWorker = {
   mode: WorkerMode;
+  handlerCount: number;
   stop: () => Promise<void>;
 };
 
@@ -23,34 +24,36 @@ function unwrapPayload(jobData: WrappedJobPayload): unknown {
 }
 
 export async function handleQueuedJob(name: JobName, data: WrappedJobPayload): Promise<unknown> {
-  const payload = unwrapPayload(data);
+  const payload = parseWorkerJobPayload(name, unwrapPayload(data));
   if (name === jobNames.ingestEmail) {
-    const raw = typeof payload === "object" && payload !== null && "raw" in payload ? (payload as { raw: unknown }).raw : payload;
-    return ingestEmail(raw);
+    return ingestEmailRecord((payload as { raw: unknown }).raw);
   }
   if (name === jobNames.ingestTwilio) {
-    const raw = typeof payload === "object" && payload !== null && "raw" in payload ? (payload as { raw: unknown }).raw : payload;
-    return ingestTwilio(raw);
+    return ingestTwilioRecord((payload as { raw: unknown }).raw);
   }
   if (name === jobNames.classifyDocument) {
-    const documentId = typeof payload === "object" && payload !== null && "documentId" in payload ? String((payload as { documentId: unknown }).documentId) : "unknown";
-    return classifyDocument(documentId);
+    return classifyDocumentRecord(payload as { documentId: string });
   }
   if (name === jobNames.extractDocumentText) {
-    return extractDocumentText(new Uint8Array([1]));
+    return extractDocumentTextRecord(payload as { documentVersionId: string; bytes?: number[] });
   }
   if (name === jobNames.generateSystemDraft) {
-    const input = typeof payload === "object" && payload !== null ? payload as { dealTitle?: unknown; taskTitle?: unknown } : {};
-    return generateSystemDraft({ dealTitle: String(input.dealTitle ?? "Deal"), taskTitle: String(input.taskTitle ?? "Follow up") });
+    return generateSystemDraftRecord(payload as { taskId: string; dealId: string });
   }
   if (name === jobNames.proposeNextAction) {
-    const input = typeof payload === "object" && payload !== null ? payload as { dealId?: unknown; sourceMessageSubject?: unknown } : {};
-    return proposeNextAction({
-      dealId: String(input.dealId ?? "unknown"),
-      ...(typeof input.sourceMessageSubject === "string" ? { sourceMessageSubject: input.sourceMessageSubject } : {})
-    });
+    return proposeNextActionRecord(payload as { dealId: string; sourceMessageSubject?: string });
   }
   return null;
+}
+
+function parseWorkerJobPayload(name: JobName, payload: unknown): unknown {
+  if (!payload || typeof payload !== "object") throw new Error(`Invalid ${name} payload`);
+  if ((name === jobNames.ingestEmail || name === jobNames.ingestTwilio) && "raw" in payload) return payload;
+  if (name === jobNames.classifyDocument && typeof (payload as { documentId?: unknown }).documentId === "string") return payload;
+  if (name === jobNames.extractDocumentText && typeof (payload as { documentVersionId?: unknown }).documentVersionId === "string") return payload;
+  if (name === jobNames.generateSystemDraft && typeof (payload as { taskId?: unknown }).taskId === "string" && typeof (payload as { dealId?: unknown }).dealId === "string") return payload;
+  if (name === jobNames.proposeNextAction && typeof (payload as { dealId?: unknown }).dealId === "string") return payload;
+  throw new Error(`Invalid ${name} payload`);
 }
 
 export async function startWorker(options: { mode?: WorkerMode } = {}): Promise<StartedWorker> {
@@ -67,12 +70,13 @@ export async function startWorker(options: { mode?: WorkerMode } = {}): Promise<
         boss.work<WrappedJobPayload>(name, { pollingIntervalSeconds: 2 }, async (jobs) => Promise.all(jobs.map((job) => handleQueuedJob(name, job.data))))
       )
     );
-    return { mode, stop: () => boss.stop({ graceful: true, wait: true }) };
+    return { mode, handlerCount: Object.values(jobNames).length, stop: () => boss.stop({ graceful: true, wait: true }) };
   }
 
   const heartbeat = setInterval(() => undefined, 60_000);
   return {
     mode,
+    handlerCount: Object.values(jobNames).length,
     stop: async () => {
       clearInterval(heartbeat);
     }
