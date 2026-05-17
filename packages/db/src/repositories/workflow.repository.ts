@@ -11,6 +11,7 @@ type DocumentRow = Prisma.DocumentGetPayload<object> & { versions?: Array<Prisma
 type TaskRow = Prisma.TaskGetPayload<object>;
 type VaWorkItemRow = Prisma.VaWorkItemGetPayload<{ include: { task: { include: { deal: true } } } }>;
 type RoutingReviewRow = Prisma.RoutingReviewItemGetPayload<object>;
+type DocumentVersionInput = { storageKey: string; filename: string; mimeType: string; fileSizeBytes: number; checksum: string };
 
 export type WorkflowRepository = {
   listDeals: (organizationId: string, membershipId?: string, role?: string) => Promise<unknown[]>;
@@ -28,7 +29,7 @@ export type WorkflowRepository = {
   updateMessage: (input: { organizationId: string; dealId: string; messageId: string; nextDealId?: string | null; visibility?: VisibilityDto; hidden?: boolean; redacted?: boolean }) => Promise<unknown>;
   appendOutboundMessage: (input: { organizationId: string; dealId: string; taskId: string; providerMessageId: string | null; messageStatus: "sent" | "failed"; subject: string; bodyText: string }) => Promise<unknown>;
   listDocumentsForDeal: (organizationId: string, dealId: string, includeInternal?: boolean) => Promise<unknown[]>;
-  createDocument: (input: { organizationId: string; dealId: string; title: string; documentType?: string; visibility: VisibilityDto; folder?: string | null; tags?: string[]; uploadedByMembershipId?: string | null }) => Promise<unknown>;
+  createDocument: (input: { organizationId: string; dealId: string; title: string; documentType?: string; visibility: VisibilityDto; folder?: string | null; tags?: string[]; uploadedByMembershipId?: string | null; version?: DocumentVersionInput }) => Promise<unknown>;
   updateDocument: (input: { organizationId: string; dealId: string; documentId: string; title?: string; documentType?: string; visibility?: VisibilityDto; folder?: string | null; tags?: string[] }) => Promise<unknown>;
   archiveDocument: (input: { organizationId: string; documentId: string }) => Promise<unknown>;
   listTasksForDeal: (organizationId: string, dealId: string) => Promise<unknown[]>;
@@ -279,7 +280,7 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return documents.map(mapDocument);
   }
 
-  async createDocument(input: { organizationId: string; dealId: string; title: string; documentType?: string; visibility: VisibilityDto; folder?: string | null; tags?: string[]; uploadedByMembershipId?: string | null }) {
+  async createDocument(input: { organizationId: string; dealId: string; title: string; documentType?: string; visibility: VisibilityDto; folder?: string | null; tags?: string[]; uploadedByMembershipId?: string | null; version?: DocumentVersionInput }) {
     await this.assertDealBelongsToOrganization(input.organizationId, input.dealId);
     const data: Prisma.DocumentUncheckedCreateInput = {
       organizationId: input.organizationId,
@@ -289,11 +290,27 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       documentType: (input.documentType ?? "unknown") as DocumentType,
       visibility: toDbVisibility(input.visibility),
       folder: input.folder ?? null,
-      tags: (input.tags ?? []) as Prisma.InputJsonValue
+      tags: (input.tags ?? []) as Prisma.InputJsonValue,
+      ...(input.version
+        ? {
+            versions: {
+              create: {
+                organizationId: input.organizationId,
+                storageKey: input.version.storageKey,
+                filename: input.version.filename,
+                mimeType: input.version.mimeType,
+                fileSizeBytes: input.version.fileSizeBytes,
+                checksum: input.version.checksum,
+                versionNumber: 1,
+                ocrStatus: "pending"
+              }
+            }
+          }
+        : {})
     };
     const document = await this.prisma.document.create({
       data,
-      include: { versions: true }
+      include: { versions: { orderBy: { versionNumber: "desc" }, take: 1 } }
     });
     const mapped = mapDocument(document);
     await this.recordAudit({ organizationId: input.organizationId, actorMembershipId: input.uploadedByMembershipId ?? null, entityType: "document", entityId: document.id, dealId: document.dealId, eventType: "document.created", after: mapped });

@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import multipart from "@fastify/multipart";
 import { createRequestId } from "@ctw/observability";
 import { openApiDocument } from "./openapi.js";
 import { registerActivityRoutes } from "./modules/activity/activity.routes.js";
@@ -18,6 +19,7 @@ import { requireAuthenticated } from "./modules/authz.js";
 
 export async function buildServer() {
   const app = Fastify({ logger: false });
+  await app.register(multipart);
 
   app.addHook("onRequest", async (request, reply) => {
     const requestId = createRequestId();

@@ -22,6 +22,7 @@ describe("loadEnv", () => {
       CTW_DB_MODE: "memory",
       CTW_JOBS_MODE: "memory",
       CTW_PROVIDER_MODE: "fake",
+      CTW_STORAGE_MODE: "memory",
       CTW_RUNTIME_MODE: "demo",
       STORAGE_BUCKET: "ctw"
     });
@@ -40,6 +41,7 @@ describe("loadEnv", () => {
         CTW_DB_MODE: "memory",
         CTW_JOBS_MODE: "memory",
         CTW_PROVIDER_MODE: "fake",
+        CTW_STORAGE_MODE: "memory",
         CTW_ALLOW_DEMO_TOKENS: "true"
       })
     ).toThrow(/CTW_DB_MODE must be prisma/);
@@ -53,6 +55,7 @@ describe("loadEnv", () => {
         CTW_DB_MODE: "prisma",
         CTW_JOBS_MODE: "pgboss",
         CTW_PROVIDER_MODE: "live",
+        CTW_STORAGE_MODE: "s3",
         CTW_ALLOW_DEMO_TOKENS: "false"
       })
     ).toMatchObject({ CTW_RUNTIME_MODE: "production", CTW_DB_MODE: "prisma" });

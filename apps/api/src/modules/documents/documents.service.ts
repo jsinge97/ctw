@@ -1,5 +1,17 @@
 import type { CurrentSession, DocumentDto, UpdateDocumentRequest } from "@ctw/contracts";
+import { createHash } from "node:crypto";
+import { createStorage } from "@ctw/storage";
 import { getWorkflowProvider } from "../workflow-provider.js";
+
+export type UploadDocumentInput = {
+  filename: string;
+  contentType: string;
+  bytes: Uint8Array;
+  title?: string;
+  visibility?: "internal" | "shared";
+  folder?: string | null;
+  tags?: string[];
+};
 
 export async function listDocuments(dealId: string, session?: CurrentSession): Promise<DocumentDto[]> {
   const workflow = getWorkflowProvider();
@@ -31,6 +43,46 @@ export async function createDocument(dealId: string, input: UpdateDocumentReques
   return document;
 }
 
+export async function uploadDocument(dealId: string, input: UploadDocumentInput, session: CurrentSession): Promise<DocumentDto> {
+  return createStoredDocument({
+    organizationId: session.activeOrganization.id,
+    dealId,
+    uploadedByMembershipId: session.membership.id,
+    input
+  });
+}
+
+export async function createStoredDocument(options: { organizationId: string; dealId: string; uploadedByMembershipId: string | null; input: UploadDocumentInput }): Promise<DocumentDto> {
+  const workflow = getWorkflowProvider();
+  const checksum = createHash("sha256").update(options.input.bytes).digest("hex");
+  const storageKey = `${options.organizationId}/${options.dealId}/${Date.now()}-${sanitizeFilename(options.input.filename)}`;
+  await createStorage().put({ key: storageKey, contentType: options.input.contentType, bytes: options.input.bytes });
+
+  if (workflow.mode === "prisma" && workflow.prisma) {
+    return workflow.prisma.createDocument({
+      organizationId: options.organizationId,
+      dealId: options.dealId,
+      title: options.input.title ?? options.input.filename,
+      documentType: "unknown",
+      visibility: options.input.visibility ?? "internal",
+      folder: options.input.folder ?? null,
+      tags: options.input.tags ?? [],
+      uploadedByMembershipId: options.uploadedByMembershipId,
+      version: {
+        storageKey,
+        filename: options.input.filename,
+        mimeType: options.input.contentType,
+        fileSizeBytes: options.input.bytes.byteLength,
+        checksum
+      }
+    }) as Promise<DocumentDto>;
+  }
+
+  const document: DocumentDto = { id: workflow.memory.nextId("doc", workflow.memory.documents.length), dealId: options.dealId, title: options.input.title ?? options.input.filename, documentType: "unknown", classificationStatus: "pending", latestVersion: "v1", visibility: options.input.visibility ?? "internal", folder: options.input.folder ?? null, tags: options.input.tags ?? [] };
+  workflow.memory.documents.push(document);
+  return document;
+}
+
 export async function updateDocument(dealId: string, documentId: string, input: UpdateDocumentRequest, session?: CurrentSession): Promise<DocumentDto> {
   const workflow = getWorkflowProvider();
   if (workflow.mode === "prisma" && workflow.prisma) {
@@ -49,4 +101,8 @@ export async function updateDocument(dealId: string, documentId: string, input: 
   if (!document) throw Object.assign(new Error("Document not found"), { statusCode: 404 });
   Object.assign(document, input);
   return document;
+}
+
+function sanitizeFilename(filename: string): string {
+  return filename.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "upload";
 }

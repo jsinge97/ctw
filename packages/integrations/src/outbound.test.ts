@@ -15,6 +15,7 @@ function setLiveProviderEnv() {
     CTW_DB_MODE: "prisma",
     CTW_JOBS_MODE: "pgboss",
     CTW_PROVIDER_MODE: "live",
+    CTW_STORAGE_MODE: "s3",
     CTW_ALLOW_DEMO_TOKENS: "false"
   };
 }

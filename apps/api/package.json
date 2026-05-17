@@ -20,6 +20,7 @@
     "@ctw/jobs": "workspace:*",
     "@ctw/observability": "workspace:*",
     "@ctw/permissions": "workspace:*",
-    "@ctw/storage": "workspace:*"
+    "@ctw/storage": "workspace:*",
+    "@fastify/multipart": "^10.0.0"
   }
 }

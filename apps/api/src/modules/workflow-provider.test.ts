@@ -24,6 +24,7 @@ function setProductionEnv(overrides: NodeJS.ProcessEnv = {}) {
     CTW_DB_MODE: "prisma",
     CTW_JOBS_MODE: "pgboss",
     CTW_PROVIDER_MODE: "live",
+    CTW_STORAGE_MODE: "s3",
     CTW_ALLOW_DEMO_TOKENS: "false",
     ...overrides
   };
@@ -47,6 +48,7 @@ describe("workflow provider runtime guardrails", () => {
       CTW_DB_MODE: "prisma",
       CTW_JOBS_MODE: "memory",
       CTW_PROVIDER_MODE: "fake",
+      CTW_STORAGE_MODE: "memory",
       CTW_ALLOW_DEMO_TOKENS: "true"
     };
     expect(() => getWorkflowProvider().memory).toThrow(/Memory workflow provider is not available/);

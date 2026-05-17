@@ -597,6 +597,8 @@ git commit -m "feat: add real provider adapter boundaries"
 
 ## Task 11: Real Storage and Attachment Filing
 
+**Status:** Done.
+
 **Purpose:** Store uploaded/attached documents in S3-compatible storage and create durable document versions.
 
 **Files:**

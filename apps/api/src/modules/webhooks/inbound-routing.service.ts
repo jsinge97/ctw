@@ -1,5 +1,7 @@
 import type { DealDto, MessageDto, RoutingReviewItemDto } from "@ctw/contracts";
 import type { normalizeResendInbound, normalizeTwilioInbound } from "@ctw/integrations";
+import { Buffer } from "node:buffer";
+import { createStoredDocument } from "../documents/documents.service.js";
 import { getWorkflowProvider } from "../workflow-provider.js";
 
 type NormalizedEmail = ReturnType<typeof normalizeResendInbound>;
@@ -13,7 +15,10 @@ function scoreInboundRoute(normalized: NormalizedInbound, candidates: Pick<DealD
   const body = normalized.bodyText.toLowerCase();
   const haystack = `${subject} ${body}`;
   const matchedDeal = candidates.find((deal) => dealTitleSignals(deal.title).some((signal) => haystack.includes(signal)));
-  if (matchedDeal) return { confidence: 0.41, suggestedDealId: matchedDeal.id };
+  if (matchedDeal) {
+    const exactTitle = matchedDeal.title.toLowerCase();
+    return { confidence: subject.includes(exactTitle) || body.includes(exactTitle) ? 0.92 : 0.41, suggestedDealId: matchedDeal.id };
+  }
   return { confidence: 0.4, suggestedDealId: null };
 }
 
@@ -50,6 +55,10 @@ async function fileInboundMessage(normalized: NormalizedInbound): Promise<FiledI
       visibility: routedDealId ? "shared" : "internal"
     })) as MessageDto;
 
+    if (message.dealId && normalized.channelType === "email") {
+      await fileEmailAttachments({ organizationId: channel.organizationId, dealId: message.dealId, attachments: normalized.attachments });
+    }
+
     if (routedDealId) return { message, reviewItem: null };
 
     const reviewItem = (await workflow.prisma.createRoutingReviewItem({
@@ -63,6 +72,25 @@ async function fileInboundMessage(normalized: NormalizedInbound): Promise<FiledI
 
   const route = scoreInboundRoute(normalized, getWorkflowProvider().memory.deals);
   return fileInboundMessageInMemory(normalized, route);
+}
+
+async function fileEmailAttachments(options: { organizationId: string; dealId: string; attachments: NormalizedEmail["attachments"] }) {
+  for (const attachment of options.attachments) {
+    if (!attachment.contentBase64) continue;
+    await createStoredDocument({
+      organizationId: options.organizationId,
+      dealId: options.dealId,
+      uploadedByMembershipId: null,
+      input: {
+        filename: attachment.filename,
+        contentType: attachment.contentType,
+        bytes: Buffer.from(attachment.contentBase64, "base64"),
+        title: attachment.filename,
+        visibility: "internal",
+        tags: ["email-attachment"]
+      }
+    });
+  }
 }
 
 function dealTitleSignals(title: string): string[] {

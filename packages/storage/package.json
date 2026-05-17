@@ -13,5 +13,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config ../../vitest.config.ts",
     "lint": "eslint src"
+  },
+  "dependencies": {
+    "@ctw/config": "workspace:*"
   }
 }
