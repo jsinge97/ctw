@@ -9,7 +9,8 @@ export const deals: DealDto[] = [
 
 export const participants: ParticipantDto[] = [
   { id: "part_maria", dealId: "deal_sutter", subjectType: "membership", subjectId: "mem_am", membershipId: "mem_am", contactId: null, name: "Maria Reyes", company: "Northgate CRE", role: "am", visibility: "internal", capabilities: ["All capabilities"], status: "active" },
-  { id: "part_devon", dealId: "deal_sutter", subjectType: "membership", subjectId: "mem_broker", membershipId: "mem_broker", contactId: null, name: "Devon Asherton", company: "Halcyon Capital", role: "broker", visibility: "shared", capabilities: ["View deal", "Upload documents"], status: "active" }
+  { id: "part_devon", dealId: "deal_sutter", subjectType: "membership", subjectId: "mem_broker", membershipId: "mem_broker", contactId: null, name: "Devon Asherton", company: "Halcyon Capital", role: "broker", visibility: "shared", capabilities: ["View deal", "Upload documents"], status: "active" },
+  { id: "part_casey", dealId: "deal_bryant", subjectType: "membership", subjectId: "mem_client", membershipId: "mem_client", contactId: null, name: "Casey Client", company: "Greylock Holdings", role: "client", visibility: "shared", capabilities: ["View deal"], status: "active" }
 ];
 
 export const messages: MessageDto[] = [
@@ -42,8 +43,10 @@ export const activityEvents: ActivityEventDto[] = [
 ];
 
 export const users: UserDto[] = [
+  { id: "user_admin", name: "Avery Admin", email: "admin@northgate.cre", role: "admin", status: "active", lastLoginAt: "2026-05-17T15:10:00.000Z" },
   { id: "user_am", name: "Maria Reyes", email: "am@northgate.cre", role: "am", status: "active", lastLoginAt: "2026-05-17T15:00:00.000Z" },
-  { id: "user_broker", name: "Devon Asherton", email: "broker@halcyon.com", role: "broker", status: "active", lastLoginAt: null }
+  { id: "user_broker", name: "Devon Asherton", email: "broker@halcyon.com", role: "broker", status: "active", lastLoginAt: null },
+  { id: "user_client", name: "Casey Client", email: "client@greylock.com", role: "client", status: "active", lastLoginAt: null }
 ];
 
 export const organizationSettings: OrganizationSettingsDto = {

@@ -162,7 +162,7 @@ export function hasEffectiveCapability(session: CurrentSession | undefined, deal
 export function canViewWorkspaceTab(tab: DealWorkspaceTab, session: CurrentSession | undefined, dealCapabilities: string[] = []) {
   if (tab === "overview" || tab === "participants") return hasEffectiveCapability(session, dealCapabilities, "viewDeal");
   if (tab === "messages") return hasEffectiveCapability(session, dealCapabilities, "viewMessages");
-  if (tab === "documents") return hasEffectiveCapability(session, dealCapabilities, "viewDocuments");
+  if (tab === "documents") return hasEffectiveCapability(session, dealCapabilities, "viewDocuments") || hasEffectiveCapability(session, dealCapabilities, "uploadDocuments");
   if (tab === "tasks") return hasEffectiveCapability(session, dealCapabilities, "viewDeal");
   if (tab === "activity") return hasEffectiveCapability(session, dealCapabilities, "viewActivity");
   return false;

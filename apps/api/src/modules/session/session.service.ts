@@ -27,6 +27,16 @@ export function resetDurableSessionLookupForTests() {
 }
 
 const demoSessions: Record<string, SessionLookup> = {
+  "admin-token": {
+    userId: "user_admin",
+    email: "admin@northgate.cre",
+    displayName: "Avery Admin",
+    organizationId: "org_demo",
+    organizationName: "Northgate CRE",
+    organizationSlug: "northgate",
+    membershipId: "mem_admin",
+    role: "admin"
+  },
   "am-token": {
     userId: "user_am",
     email: "am@northgate.cre",
@@ -57,6 +67,16 @@ const demoSessions: Record<string, SessionLookup> = {
     membershipId: "mem_broker_2",
     role: "broker"
   },
+  "client-token": {
+    userId: "user_client",
+    email: "client@greylock.com",
+    displayName: "Casey Client",
+    organizationId: "org_demo",
+    organizationName: "Northgate CRE",
+    organizationSlug: "northgate",
+    membershipId: "mem_client",
+    role: "client"
+  },
   "va-token": {
     userId: "user_va",
     email: "va@northgate.cre",
@@ -70,8 +90,10 @@ const demoSessions: Record<string, SessionLookup> = {
 };
 
 const demoLoginSessions: Record<string, { cookieToken: string; bearerToken: keyof typeof demoSessions }> = {
+  "admin@northgate.cre": { cookieToken: "demo-session-admin", bearerToken: "admin-token" },
   "am@northgate.cre": { cookieToken: "demo-session-am", bearerToken: "am-token" },
   "broker@halcyon.com": { cookieToken: "demo-session-broker", bearerToken: "broker-token" },
+  "client@greylock.com": { cookieToken: "demo-session-client", bearerToken: "client-token" },
   "va@northgate.cre": { cookieToken: "demo-session-va", bearerToken: "va-token" }
 };
 
@@ -94,7 +116,7 @@ export function buildSession(lookup: SessionLookup): CurrentSession {
     membership: { id: lookup.membershipId, role: lookup.role },
     capabilities,
     allowedSurfaces: allowedSurfaces(lookup.role, capabilities),
-    homeRoute: lookup.role === "va" ? "/va" : "/deals"
+    homeRoute: lookup.role === "admin" ? "/settings/organization" : lookup.role === "va" ? "/va" : "/deals"
   };
 }
 
