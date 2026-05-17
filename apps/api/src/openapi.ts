@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { buildOpenApiDocument, defineRoute } from "@ctw/contracts";
+import { buildOpenApiDocument, defineRoute, sessionContract } from "@ctw/contracts";
 import { z } from "zod";
 
 export const healthRoutes = [
@@ -20,7 +20,7 @@ export const healthRoutes = [
   })
 ];
 
-export const openApiDocument = buildOpenApiDocument(healthRoutes);
+export const openApiDocument = buildOpenApiDocument([...healthRoutes, ...sessionContract]);
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   writeFileSync(resolve("openapi.json"), `${JSON.stringify(openApiDocument, null, 2)}\n`);
