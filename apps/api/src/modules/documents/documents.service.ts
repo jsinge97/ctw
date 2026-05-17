@@ -53,15 +53,20 @@ export async function uploadDocument(dealId: string, input: UploadDocumentInput,
 }
 
 export async function createStoredDocument(options: { organizationId: string; dealId: string; uploadedByMembershipId: string | null; input: UploadDocumentInput }): Promise<DocumentDto> {
+  return createStoredDocumentForSource({ ...options, sourceMessageId: null });
+}
+
+export async function createStoredDocumentForSource(options: { organizationId: string; dealId: string | null; sourceMessageId?: string | null; uploadedByMembershipId: string | null; input: UploadDocumentInput }): Promise<DocumentDto> {
   const workflow = getWorkflowProvider();
   const checksum = createHash("sha256").update(options.input.bytes).digest("hex");
-  const storageKey = `${options.organizationId}/${options.dealId}/${Date.now()}-${sanitizeFilename(options.input.filename)}`;
+  const storageKey = `${options.organizationId}/${options.dealId ?? "unfiled"}/${Date.now()}-${sanitizeFilename(options.input.filename)}`;
   await createStorage().put({ key: storageKey, contentType: options.input.contentType, bytes: options.input.bytes });
 
   if (workflow.mode === "prisma" && workflow.prisma) {
     return workflow.prisma.createDocument({
       organizationId: options.organizationId,
       dealId: options.dealId,
+      sourceMessageId: options.sourceMessageId ?? null,
       title: options.input.title ?? options.input.filename,
       documentType: "unknown",
       visibility: options.input.visibility ?? "internal",

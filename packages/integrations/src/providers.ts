@@ -120,5 +120,7 @@ function providerIdFrom(raw: unknown): string | null {
 
 function required(value: string | undefined, name: string): string {
   if (!value) throw new Error(`${name} is required for live provider mode`);
+  const normalized = value.toLowerCase();
+  if (normalized.includes("replace") || normalized.includes("test") || normalized.includes("example")) throw new Error(`${name} must be a live credential`);
   return value;
 }

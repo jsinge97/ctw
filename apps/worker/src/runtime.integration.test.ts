@@ -5,11 +5,11 @@ import { handleQueuedJob, startWorker } from "./runtime.js";
 
 describe("worker runtime", () => {
   it("validates payloads before dispatch", async () => {
-    await expect(handleQueuedJob(jobNames.generateSystemDraft, { payload: { taskId: "task_1" } })).rejects.toThrow();
+    await expect(handleQueuedJob(jobNames.generateSystemDraft, { payload: { organizationId: "org_1", taskId: "task_1" } })).rejects.toThrow();
   });
 
   it("dispatches inline ingest jobs", async () => {
-    await expect(handleQueuedJob(jobNames.ingestEmail, { payload: { raw: { from: "broker@example.com", to: "deals@northgate.cre", text: "LOI attached" } } })).resolves.toMatchObject({ confidence: 0.92 });
+    await expect(handleQueuedJob(jobNames.ingestEmail, { payload: { organizationId: "org_1", messageId: "msg_1", providerMetadata: { provider: "resend" } } })).resolves.toMatchObject({ idempotent: true });
   });
 
   it("reports queue mode and handler count", async () => {

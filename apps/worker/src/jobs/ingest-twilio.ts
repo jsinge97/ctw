@@ -15,13 +15,22 @@ export function ingestTwilio(payload: unknown, options: { routingConfidenceThres
   };
 }
 
-export async function ingestTwilioRecord(payload: unknown) {
-  const normalized = normalizeTwilioInbound(payload);
-  if (process.env.CTW_DB_MODE !== "prisma") return ingestTwilio(payload);
+export async function ingestTwilioRecord(input: { organizationId: string; messageId: string }) {
+  if (process.env.CTW_DB_MODE !== "prisma") return { routed: null, requiresReview: false, confidence: 0, idempotent: true };
+
+  const existing = await getPrismaClient().message.findFirst({ where: { id: input.messageId, organizationId: input.organizationId }, select: { id: true, dealId: true, routingConfidence: true } });
+  if (existing) return { routed: existing.dealId, requiresReview: !existing.dealId, confidence: existing.routingConfidence ?? 0, idempotent: true };
+  throw new Error("Ingest message not found");
+}
+
+export async function ingestRawTwilioRecord(input: { organizationId: string; raw: unknown }) {
+  const normalized = normalizeTwilioInbound(input.raw);
+  if (process.env.CTW_DB_MODE !== "prisma") return ingestTwilio(input.raw);
 
   const repository = new PrismaWorkflowRepository(getPrismaClient());
   const channel = await repository.findOrganizationByChannelAddress("sms", normalized.recipient);
   if (!channel) throw new Error("Inbound channel not found");
+  if (channel.organizationId !== input.organizationId) throw new Error("Inbound channel organization mismatch");
   const settings = (await repository.getOrganizationSettings(channel.organizationId)) as { routingConfidenceThreshold: number };
   const deals = (await repository.listDeals(channel.organizationId)) as Pick<DealDto, "id" | "title">[];
   const route = scoreRoute(normalized.bodyText, deals);
@@ -38,7 +47,8 @@ export async function ingestTwilioRecord(payload: unknown) {
     recipient: normalized.recipient,
     routingConfidence: route.confidence,
     routingStatus: routedDealId ? "routed" : "review_required",
-    visibility: routedDealId ? "shared" : "internal"
+    visibility: routedDealId ? "shared" : "internal",
+    rawProviderPayload: normalized.rawProviderPayload
   });
   if (!routedDealId) await repository.createRoutingReviewItem({ organizationId: channel.organizationId, messageId: (message as { id: string }).id, suggestedDealId: route.suggestedDealId, confidence: route.confidence });
   return { routed: routedDealId, requiresReview: !routedDealId, confidence: route.confidence, normalized };

@@ -35,6 +35,15 @@ export function normalizeResendInbound(payload: unknown) {
       contentBase64: attachment.contentBase64 ?? attachment.content ?? null,
       size: attachment.size ?? null
     })),
-    rawProviderPayload: payload
+    rawProviderPayload: {
+      provider: "resend",
+      from: parsed.from,
+      to: parsed.to,
+      subject: parsed.subject ?? null,
+      messageId: parsed.messageId ?? null,
+      textBytes: parsed.text.length,
+      attachmentCount: parsed.attachments.length,
+      attachments: parsed.attachments.map((attachment) => ({ filename: attachment.filename, contentType: attachment.contentType ?? "application/octet-stream", size: attachment.size ?? null }))
+    }
   };
 }

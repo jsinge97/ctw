@@ -16,18 +16,21 @@ function setLiveProviderEnv() {
     CTW_JOBS_MODE: "pgboss",
     CTW_PROVIDER_MODE: "live",
     CTW_STORAGE_MODE: "s3",
-    CTW_ALLOW_DEMO_TOKENS: "false"
+    CTW_ALLOW_DEMO_TOKENS: "false",
+    RESEND_API_KEY: "",
+    TWILIO_ACCOUNT_SID: "",
+    TWILIO_AUTH_TOKEN: ""
   };
 }
 
 describe("outbound provider guardrails", () => {
   it("does not fake Resend sends when provider mode is live", async () => {
     setLiveProviderEnv();
-    await expect(sendOutboundEmail({ to: ["broker@halcyon.com"], subject: "LOI", text: "Draft" })).rejects.toThrow(/RESEND_API_KEY is required/);
+    await expect(sendOutboundEmail({ to: ["broker@halcyon.com"], subject: "LOI", text: "Draft" })).rejects.toThrow(/RESEND_API_KEY must be a live credential/);
   });
 
   it("does not fake Twilio sends when provider mode is live", async () => {
     setLiveProviderEnv();
-    await expect(sendOutboundSms({ to: "+14155550188", text: "Draft" })).rejects.toThrow(/TWILIO_ACCOUNT_SID is required/);
+    await expect(sendOutboundSms({ to: "+14155550188", text: "Draft" })).rejects.toThrow(/TWILIO_ACCOUNT_SID must be a live credential/);
   });
 });

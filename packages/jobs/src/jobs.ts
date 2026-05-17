@@ -1,12 +1,12 @@
 import { z } from "zod";
 import PgBoss from "pg-boss";
 
-export const ingestEmailJobSchema = z.object({ raw: z.unknown(), normalized: z.unknown().optional() });
-export const ingestTwilioJobSchema = z.object({ raw: z.unknown(), normalized: z.unknown().optional() });
-export const classifyDocumentJobSchema = z.object({ documentId: z.string() });
-export const extractDocumentTextJobSchema = z.object({ documentVersionId: z.string(), bytes: z.array(z.number()).optional() });
-export const generateSystemDraftJobSchema = z.object({ taskId: z.string(), dealId: z.string() });
-export const proposeNextActionJobSchema = z.object({ dealId: z.string(), sourceMessageId: z.string().optional(), sourceMessageSubject: z.string().optional() });
+export const ingestEmailJobSchema = z.object({ organizationId: z.string(), messageId: z.string(), providerMetadata: z.unknown().optional() });
+export const ingestTwilioJobSchema = z.object({ organizationId: z.string(), messageId: z.string(), providerMetadata: z.unknown().optional() });
+export const classifyDocumentJobSchema = z.object({ organizationId: z.string(), documentId: z.string() });
+export const extractDocumentTextJobSchema = z.object({ organizationId: z.string(), documentVersionId: z.string(), bytes: z.array(z.number()).optional() });
+export const generateSystemDraftJobSchema = z.object({ organizationId: z.string(), taskId: z.string(), dealId: z.string() });
+export const proposeNextActionJobSchema = z.object({ organizationId: z.string(), dealId: z.string(), sourceMessageId: z.string().optional(), sourceMessageSubject: z.string().optional() });
 
 export const jobNames = {
   ingestEmail: "ingest-email",
@@ -52,15 +52,16 @@ async function getBoss(): Promise<PgBoss> {
 }
 
 export async function enqueueJob(name: JobName, payload: unknown): Promise<QueuedJob> {
+  const parsedPayload = parseJobPayload(name, payload);
   const job = {
     id: `job_${memoryJobs.length + 1}`,
     name,
-    payload,
+    payload: parsedPayload,
     queuedAt: new Date().toISOString()
   };
   if (process.env.CTW_JOBS_MODE === "pgboss") {
     const boss = await getBoss();
-    const id = await boss.send(name, { payload });
+    const id = await boss.send(name, { payload: parsedPayload });
     return { ...job, id: String(id) };
   }
   memoryJobs.push(job);

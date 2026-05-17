@@ -28,8 +28,12 @@ describe("provider bundle", () => {
   });
 
   it("requires live Resend and Twilio credentials", () => {
-    const liveEnv = baseEnv({ CTW_PROVIDER_MODE: "live" });
+    const liveEnv = baseEnv({ CTW_PROVIDER_MODE: "live", RESEND_API_KEY: "" });
     expect(() => createProviderBundle(liveEnv)).toThrow(/RESEND_API_KEY is required/);
+  });
+
+  it("rejects placeholder live credentials", () => {
+    expect(() => createResendProvider(baseEnv({ RESEND_API_KEY: "re_test", RESEND_FROM_EMAIL: "deals@northgate.cre" }))).toThrow(/RESEND_API_KEY must be a live credential/);
   });
 
   it("sends Resend mail through the live adapter", async () => {
@@ -53,7 +57,7 @@ describe("provider bundle", () => {
     const resendPayload = { from: "a@example.com", to: "deals@northgate.cre", subject: "401 Bryant", text: "Tour?", messageId: "email_1" };
     const twilioPayload = { From: "+14155550199", To: "+14155550188", Body: "Tour?", MessageSid: "SM123" };
 
-    expect(providers.inboundEmail(resendPayload)).toMatchObject({ providerMessageId: "email_1", rawProviderPayload: resendPayload });
-    expect(providers.inboundSms(twilioPayload)).toMatchObject({ providerMessageId: "SM123", rawProviderPayload: twilioPayload });
+    expect(providers.inboundEmail(resendPayload)).toMatchObject({ providerMessageId: "email_1", rawProviderPayload: { provider: "resend", messageId: "email_1" } });
+    expect(providers.inboundSms(twilioPayload)).toMatchObject({ providerMessageId: "SM123", rawProviderPayload: { provider: "twilio", messageSid: "SM123" } });
   });
 });

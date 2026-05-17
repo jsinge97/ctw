@@ -83,18 +83,20 @@ async function decideTaskWithPrisma(
       const payloadRecipients = task.payload["recipients"];
       const recipients = Array.isArray(payloadRecipients) && payloadRecipients.every((value) => typeof value === "string") ? payloadRecipients : ["broker@halcyon.com"];
       let providerMessageId: string | null = null;
+      let rawProviderResponse: unknown = null;
       let messageStatus: "sent" | "failed" = "sent";
       try {
         const sendResult = await emailProvider().sendOutbound({ to: recipients, subject: title, text: bodyText });
         providerMessageId = sendResult.providerMessageId;
+        rawProviderResponse = sendResult.rawProviderResponse;
       } catch {
         messageStatus = "failed";
       }
       updated = (await repository.updateTask({ organizationId, taskId, title, status: messageStatus === "sent" ? "completed" : "waiting_approval", completedAt: messageStatus === "sent" ? new Date() : null })) as TaskDto;
-      const message = (await repository.appendOutboundMessage({ organizationId, dealId: task.dealId, taskId: task.id, providerMessageId, messageStatus, subject: title, bodyText })) as { id: string };
+      const message = (await repository.appendOutboundMessage({ organizationId, dealId: task.dealId, taskId: task.id, providerMessageId, messageStatus, subject: title, bodyText, rawProviderResponse })) as { id: string };
       await auditService.recordApprovalEvent({ organizationId, dealId: task.dealId, taskId: task.id, messageId: message.id, approvalType: "outbound_send", decision: "approved", decisionByMembershipId: session.membership.id, ...(input.reason ? { decisionReason: input.reason } : {}) });
       if (messageStatus === "sent") await auditService.recordTaskOutcome({ organizationId, dealId: task.dealId, taskId: task.id, outcome: "completed", createdByMembershipId: session.membership.id });
-      await auditService.recordAuditEvent({ organizationId, dealId: task.dealId, actorType: "system", eventType: `outbound_send.${messageStatus}`, entityType: "message", entityId: message.id, metadata: { recipients } });
+      await auditService.recordAuditEvent({ organizationId, dealId: task.dealId, actorType: "system", eventType: `outbound_send.${messageStatus}`, entityType: "message", entityId: message.id, metadata: { recipients, rawProviderResponse } });
     } else {
       updated = (await repository.updateTask({ organizationId, taskId, title, status: "approved" })) as TaskDto;
       await repository.setCurrentNextAction({ organizationId, dealId: task.dealId, taskId: task.id });

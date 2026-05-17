@@ -7,7 +7,7 @@ export async function registerResendWebhookRoutes(app: FastifyInstance) {
   app.post<{ Body: unknown }>("/v1/webhooks/resend", async (request) => {
     const normalized = normalizeResendInbound(request.body);
     const filed = await fileInboundEmail(normalized);
-    const job = await enqueueJob(jobNames.ingestEmail, { raw: request.body, normalized });
+    const job = await enqueueJob(jobNames.ingestEmail, { organizationId: filed.organizationId, messageId: filed.message.id, providerMetadata: normalized.rawProviderPayload });
     return { accepted: true, jobId: job.id, messageId: filed.message.id, reviewItemId: filed.reviewItem?.id ?? null };
   });
 }

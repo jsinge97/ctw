@@ -26,29 +26,37 @@ function unwrapPayload(jobData: WrappedJobPayload): unknown {
 export async function handleQueuedJob(name: JobName, data: WrappedJobPayload): Promise<unknown> {
   const payload = parseWorkerJobPayload(name, unwrapPayload(data));
   if (name === jobNames.ingestEmail) {
-    return ingestEmailRecord((payload as { raw: unknown }).raw);
+    return ingestEmailRecord(payload as { organizationId: string; messageId: string });
   }
   if (name === jobNames.ingestTwilio) {
-    return ingestTwilioRecord((payload as { raw: unknown }).raw);
+    return ingestTwilioRecord(payload as { organizationId: string; messageId: string });
   }
   if (name === jobNames.classifyDocument) {
-    return classifyDocumentRecord(payload as { documentId: string });
+    return classifyDocumentRecord(payload as { organizationId: string; documentId: string });
   }
   if (name === jobNames.extractDocumentText) {
-    return extractDocumentTextRecord(payload as { documentVersionId: string; bytes?: number[] });
+    return extractDocumentTextRecord(payload as { organizationId: string; documentVersionId: string; bytes?: number[] });
   }
   if (name === jobNames.generateSystemDraft) {
-    return generateSystemDraftRecord(payload as { taskId: string; dealId: string });
+    return generateSystemDraftRecord(payload as { organizationId: string; taskId: string; dealId: string });
   }
   if (name === jobNames.proposeNextAction) {
-    return proposeNextActionRecord(payload as { dealId: string; sourceMessageSubject?: string });
+    return proposeNextActionRecord(payload as { organizationId: string; dealId: string; sourceMessageSubject?: string });
   }
   return null;
 }
 
 function parseWorkerJobPayload(name: JobName, payload: unknown): unknown {
   if (!payload || typeof payload !== "object") throw new Error(`Invalid ${name} payload`);
-  if ((name === jobNames.ingestEmail || name === jobNames.ingestTwilio) && "raw" in payload) return payload;
+  if (typeof (payload as { organizationId?: unknown }).organizationId !== "string") throw new Error(`Invalid ${name} payload`);
+  if ((name === jobNames.ingestEmail || name === jobNames.ingestTwilio) && typeof (payload as { messageId?: unknown }).messageId === "string") {
+    const input = payload as { organizationId: string; messageId: string; providerMetadata?: unknown };
+    return {
+      organizationId: input.organizationId,
+      messageId: input.messageId,
+      ...(input.providerMetadata !== undefined ? { providerMetadata: input.providerMetadata } : {})
+    };
+  }
   if (name === jobNames.classifyDocument && typeof (payload as { documentId?: unknown }).documentId === "string") return payload;
   if (name === jobNames.extractDocumentText && typeof (payload as { documentVersionId?: unknown }).documentVersionId === "string") return payload;
   if (name === jobNames.generateSystemDraft && typeof (payload as { taskId?: unknown }).taskId === "string" && typeof (payload as { dealId?: unknown }).dealId === "string") return payload;

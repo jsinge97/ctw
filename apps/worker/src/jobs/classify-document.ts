@@ -8,14 +8,14 @@ export function classifyDocument(filename: string) {
   return { documentType: "unknown" as const, confidence: 0.3 };
 }
 
-export async function classifyDocumentRecord(input: { documentId: string }) {
+export async function classifyDocumentRecord(input: { organizationId: string; documentId: string }) {
   if (process.env.CTW_DB_MODE !== "prisma") return classifyDocument(input.documentId);
   const prisma = getPrismaClient();
-  const document = await prisma.document.findUnique({ where: { id: input.documentId }, select: { id: true, title: true } });
+  const document = await prisma.document.findFirst({ where: { id: input.documentId, organizationId: input.organizationId }, select: { id: true, title: true } });
   if (!document) throw new Error("Document not found");
   const classification = classifyDocument(document.title);
   await prisma.document.update({
-    where: { id: document.id },
+    where: { id: document.id, organizationId: input.organizationId },
     data: { documentType: classification.documentType, classificationStatus: classification.documentType === "unknown" ? "failed" : "classified" }
   });
   return classification;

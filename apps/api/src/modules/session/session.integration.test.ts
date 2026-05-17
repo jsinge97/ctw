@@ -73,7 +73,10 @@ describe("session service", () => {
       CTW_JOBS_MODE: "pgboss",
       CTW_PROVIDER_MODE: "live",
       CTW_STORAGE_MODE: "s3",
-      CTW_ALLOW_DEMO_TOKENS: "false"
+      CTW_ALLOW_DEMO_TOKENS: "false",
+      RESEND_API_KEY: "re_live_123",
+      TWILIO_ACCOUNT_SID: "AClive123",
+      TWILIO_AUTH_TOKEN: "live-token"
     };
 
     expect(() => resolveSessionFromToken("am-token")).toThrow(/Demo bearer tokens are not allowed/);
@@ -87,7 +90,10 @@ describe("session service", () => {
       CTW_JOBS_MODE: "pgboss",
       CTW_PROVIDER_MODE: "live",
       CTW_STORAGE_MODE: "s3",
-      CTW_ALLOW_DEMO_TOKENS: "false"
+      CTW_ALLOW_DEMO_TOKENS: "false",
+      RESEND_API_KEY: "re_live_123",
+      TWILIO_ACCOUNT_SID: "AClive123",
+      TWILIO_AUTH_TOKEN: "live-token"
     };
 
     await expect(loginWithEmailPassword({ email: "am@northgate.cre", password: "password" })).rejects.toThrow(/Better Auth credential login is not configured/);

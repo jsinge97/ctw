@@ -1,14 +1,14 @@
 import type { DealDto, MessageDto, RoutingReviewItemDto } from "@ctw/contracts";
 import type { normalizeResendInbound, normalizeTwilioInbound } from "@ctw/integrations";
 import { Buffer } from "node:buffer";
-import { createStoredDocument } from "../documents/documents.service.js";
+import { createStoredDocumentForSource } from "../documents/documents.service.js";
 import { getWorkflowProvider } from "../workflow-provider.js";
 
 type NormalizedEmail = ReturnType<typeof normalizeResendInbound>;
 type NormalizedSms = ReturnType<typeof normalizeTwilioInbound>;
 type NormalizedInbound = NormalizedEmail | NormalizedSms;
 
-type FiledInboundMessage = { message: MessageDto; reviewItem: RoutingReviewItemDto | null };
+type FiledInboundMessage = { organizationId: string; message: MessageDto; reviewItem: RoutingReviewItemDto | null };
 
 function scoreInboundRoute(normalized: NormalizedInbound, candidates: Pick<DealDto, "id" | "title">[]): { confidence: number; suggestedDealId: string | null } {
   const subject = normalized.channelType === "email" ? normalized.subject?.toLowerCase() ?? "" : "";
@@ -52,14 +52,15 @@ async function fileInboundMessage(normalized: NormalizedInbound): Promise<FiledI
       recipient: normalized.recipient,
       routingConfidence: route.confidence,
       routingStatus: routedDealId ? "routed" : "review_required",
-      visibility: routedDealId ? "shared" : "internal"
+      visibility: routedDealId ? "shared" : "internal",
+      rawProviderPayload: normalized.rawProviderPayload
     })) as MessageDto;
 
-    if (message.dealId && normalized.channelType === "email") {
-      await fileEmailAttachments({ organizationId: channel.organizationId, dealId: message.dealId, attachments: normalized.attachments });
+    if (normalized.channelType === "email") {
+      await fileEmailAttachments({ organizationId: channel.organizationId, dealId: message.dealId, messageId: message.id, attachments: normalized.attachments });
     }
 
-    if (routedDealId) return { message, reviewItem: null };
+    if (routedDealId) return { organizationId: channel.organizationId, message, reviewItem: null };
 
     const reviewItem = (await workflow.prisma.createRoutingReviewItem({
       organizationId: channel.organizationId,
@@ -67,19 +68,20 @@ async function fileInboundMessage(normalized: NormalizedInbound): Promise<FiledI
       suggestedDealId: route.suggestedDealId,
       confidence: route.confidence
     })) as RoutingReviewItemDto;
-    return { message, reviewItem };
+    return { organizationId: channel.organizationId, message, reviewItem };
   }
 
   const route = scoreInboundRoute(normalized, getWorkflowProvider().memory.deals);
-  return fileInboundMessageInMemory(normalized, route);
+  return { organizationId: "org_demo", ...fileInboundMessageInMemory(normalized, route) };
 }
 
-async function fileEmailAttachments(options: { organizationId: string; dealId: string; attachments: NormalizedEmail["attachments"] }) {
+async function fileEmailAttachments(options: { organizationId: string; dealId: string | null; messageId: string; attachments: NormalizedEmail["attachments"] }) {
   for (const attachment of options.attachments) {
     if (!attachment.contentBase64) continue;
-    await createStoredDocument({
+    await createStoredDocumentForSource({
       organizationId: options.organizationId,
       dealId: options.dealId,
+      sourceMessageId: options.messageId,
       uploadedByMembershipId: null,
       input: {
         filename: attachment.filename,
@@ -99,7 +101,7 @@ function dealTitleSignals(title: string): string[] {
   return [primary, normalized].filter((signal): signal is string => Boolean(signal && signal.length >= 4));
 }
 
-function fileInboundMessageInMemory(normalized: NormalizedInbound, route: { confidence: number; suggestedDealId: string | null }): FiledInboundMessage {
+function fileInboundMessageInMemory(normalized: NormalizedInbound, route: { confidence: number; suggestedDealId: string | null }): Omit<FiledInboundMessage, "organizationId"> {
   const workflow = getWorkflowProvider().memory;
   const threshold = workflow.organizationSettings.routingConfidenceThreshold;
   const routedDealId = route.confidence >= threshold ? route.suggestedDealId : null;
