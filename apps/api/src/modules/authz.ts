@@ -104,6 +104,17 @@ async function prismaParticipantAllows(session: CurrentSession, capability: Capa
   return grants.length > 0;
 }
 
+async function dealIdForTaskPath(session: CurrentSession, path: string): Promise<string | null> {
+  const taskId = path.match(/^\/v1\/tasks\/([^/]+)\//)?.[1];
+  if (!taskId) return null;
+  const workflow = getWorkflowProvider();
+  if (workflow.mode === "prisma" && workflow.prisma) {
+    const task = await workflow.prisma.getTask(session.activeOrganization.id, taskId) as { dealId?: string };
+    return task.dealId ?? null;
+  }
+  return workflow.memory.tasks.find((task) => task.id === taskId)?.dealId ?? null;
+}
+
 export async function requireAuthenticated(request: FastifyRequest) {
   const path = request.url.split("?")[0] ?? request.url;
   if (isPublicPath(path)) return null;
@@ -115,7 +126,7 @@ export async function requireAuthenticated(request: FastifyRequest) {
   }
   const capability = requiredCapability(request.method, path);
   try {
-    if (capability) await requireCapabilityForSession(session, capability, dealIdFromPath(path));
+    if (capability) await requireCapabilityForSession(session, capability, dealIdFromPath(path) ?? await dealIdForTaskPath(session, path));
   } catch {
     throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
   }
@@ -136,6 +147,15 @@ async function requireCapabilityForSession(session: CurrentSession, capability: 
       ? [{ capability, effect: "allow", scopeType: scope.scopeType, scopeId: scope.scopeId, subjectType: "membership", subjectId: session.membership.id }]
       : []
   );
+}
+
+export async function sessionHasCapabilityForDeal(session: CurrentSession, capability: Capability, dealId: string | null = null): Promise<boolean> {
+  try {
+    await requireCapabilityForSession(session, capability, dealId);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function assertDealBelongsToSessionOrganization(session: CurrentSession, dealId: string) {

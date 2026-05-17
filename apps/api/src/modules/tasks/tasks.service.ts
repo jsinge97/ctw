@@ -1,6 +1,7 @@
 import type { CreateTaskRequest, CurrentSession, TaskDecisionRequest, TaskDto } from "@ctw/contracts";
 import { createProviderBundle, type EmailProvider } from "@ctw/integrations";
 import { getRuntimeAuditService } from "../audit/audit.service.js";
+import { sessionHasCapabilityForDeal } from "../authz.js";
 import { getWorkflowProvider } from "../workflow-provider.js";
 
 const defaultOrganizationId = "org_northgate";
@@ -73,7 +74,7 @@ async function decideTaskWithPrisma(
   const organizationId = session.activeOrganization.id;
   const auditService = getRuntimeAuditService();
   const task = (await repository.getTask(organizationId, taskId)) as TaskDto;
-  if (decision === "approve" && task.route === "system" && !session.capabilities.includes("approveOutboundSend")) throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
+  if (decision === "approve" && task.route === "system" && !(await sessionHasCapabilityForDeal(session, "approveOutboundSend", task.dealId))) throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
 
   const before = { ...task };
   let updated = task;
@@ -134,7 +135,7 @@ async function decideTaskInMemory(taskId: string, session: CurrentSession, decis
   const auditService = getRuntimeAuditService();
   const task = workflow.tasks.find((item) => item.id === taskId);
   if (!task) throw Object.assign(new Error("Task not found"), { statusCode: 404 });
-  if (decision === "approve" && task.route === "system" && !session.capabilities.includes("approveOutboundSend")) throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
+  if (decision === "approve" && task.route === "system" && !(await sessionHasCapabilityForDeal(session, "approveOutboundSend", task.dealId))) throw Object.assign(new Error("Forbidden"), { statusCode: 403 });
   const before = { ...task };
   if (input.editedTitle) task.title = input.editedTitle;
   if (decision === "approve") {
