@@ -34,7 +34,9 @@ export function LoginRoute() {
             <input type="password" name="password" defaultValue="password" autoComplete="current-password" />
           </label>
           {login.isError ? <p className="form-error">Could not sign in with those credentials.</p> : null}
-          <Button type="submit" variant="primary" disabled={login.isPending}>{login.isPending ? "Signing in" : "Sign in"}</Button>
+          <Button type="submit" variant="primary" isLoading={login.isPending} loadingLabel="Signing in">
+            Sign in
+          </Button>
         </form>
       </section>
     </main>

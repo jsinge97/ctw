@@ -1,8 +1,10 @@
-import type { DealDto } from "@ctw/contracts";
+import type { CreateDealRequest, DealDto } from "@ctw/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   addParticipant,
   archiveDocument,
+  createDeal,
   createDocument,
   createTask,
   decideTask,
@@ -30,6 +32,18 @@ export function useDealCards() {
   });
 }
 
+export function useCreateDeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateDealRequest) => createDeal(body),
+    onSuccess: async () => {
+      toast.success("Deal created");
+      await queryClient.invalidateQueries({ queryKey: dealKeys.cards() });
+    },
+    onError: () => toast.error("Could not create deal")
+  });
+}
+
 export function useDealWorkspace(dealId: string) {
   return useQuery({
     queryKey: dealKeys.workspace(dealId),
@@ -42,8 +56,10 @@ export function useMoveDealStage() {
   return useMutation({
     mutationFn: ({ dealId, stage }: { dealId: string; stage: DealDto["stage"] }) => moveDealStage(dealId, { stage }),
     onSuccess: async () => {
+      toast.success("Deal stage updated");
       await queryClient.invalidateQueries({ queryKey: dealKeys.all });
-    }
+    },
+    onError: () => toast.error("Could not move deal")
   });
 }
 
@@ -52,8 +68,10 @@ function useWorkspaceMutation<TInput, TOutput>(dealId: string, mutationFn: (inpu
   return useMutation({
     mutationFn,
     onSuccess: async () => {
+      toast.success("Deal workspace updated");
       await Promise.all([queryClient.invalidateQueries({ queryKey: dealKeys.workspace(dealId) }), queryClient.invalidateQueries({ queryKey: dealKeys.cards() })]);
-    }
+    },
+    onError: () => toast.error("Deal workspace update failed")
   });
 }
 

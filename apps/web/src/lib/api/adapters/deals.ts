@@ -1,6 +1,7 @@
 import type {
   ActivityEventDto,
   AddParticipantRequest,
+  CreateDealRequest,
   CreateTaskRequest,
   DealDto,
   DocumentDto,
@@ -42,6 +43,10 @@ export async function listDealCards(): Promise<DealCardModel[]> {
     lastActivityLabel: deal.lastActivityAt ? new Intl.DateTimeFormat("en", { month: "short", day: "numeric", hour: "numeric" }).format(new Date(deal.lastActivityAt)) : "No activity",
     canMove: deal.capabilities.includes("moveDealStage")
   }));
+}
+
+export async function createDeal(body: CreateDealRequest): Promise<DealDto> {
+  return api.postDeals(body);
 }
 
 export async function moveDealStage(dealId: string, body: MoveDealStageRequest) {
