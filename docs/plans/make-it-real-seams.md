@@ -19,6 +19,8 @@ This file tracks temporary demo seams that must disappear before production mode
   - Full Better Auth credential provider wiring is required before production login is enabled.
 - API workflow services mostly read `getWorkflowProvider().memory`; access now throws when `CTW_DB_MODE=prisma`.
   - Replaced by Prisma repository calls in Tasks 6-9.
+- Full `docker compose up api worker web` uses demo memory mode until Tasks 6-9 remove the import-time memory bindings.
+  - Postgres can still be migrated and seeded independently for durable repository work.
 - `apps/api/src/modules/demo-store.ts` seeds in-memory deal state.
   - Replaced by durable seed/reset flow in Task 3 and Prisma services in Tasks 6-9.
 - Provider functions in `packages/integrations` return deterministic fake IDs only when `CTW_PROVIDER_MODE=fake`; live mode currently throws instead of faking sends.

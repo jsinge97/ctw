@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import type { PrismaClient } from "./generated/client/index.js";
+import { seedDatabase } from "./seed.js";
 import { buildSeedData, seedIds } from "./seed-data.js";
 
 describe("seed data contract", () => {
@@ -91,4 +93,54 @@ describe("seed data contract", () => {
     );
     expect(seed.auditEvents.map((event) => event.eventType)).toEqual(["message.routed", "task.approved"]);
   });
+
+  it("executes reset before seed creates in dependency order", async () => {
+    const operations: string[] = [];
+    const tx = createRecordingTransaction(operations);
+    const prisma = {
+      async $transaction<T>(callback: (transaction: typeof tx) => Promise<T>) {
+        return callback(tx);
+      }
+    } as unknown as PrismaClient;
+
+    const result = await seedDatabase(prisma);
+
+    expect(result.counts).toMatchObject({
+      organizations: 1,
+      users: 5,
+      memberships: 5,
+      authSessions: 5,
+      deals: 2,
+      tasks: 2,
+      auditEvents: 2
+    });
+    expect(operations.indexOf("delete:approvalEvent")).toBeLessThan(operations.indexOf("delete:organization"));
+    expect(operations.indexOf("delete:organization")).toBeLessThan(operations.indexOf("create:organization"));
+    expect(operations.indexOf("create:organization")).toBeLessThan(operations.indexOf("create:user"));
+    expect(operations.indexOf("create:user")).toBeLessThan(operations.indexOf("create:organizationMembership"));
+    expect(operations.indexOf("create:task")).toBeLessThan(operations.indexOf("create:vaWorkItem"));
+  });
 });
+
+function createRecordingTransaction(operations: string[]) {
+  const counts = new Map<string, number>();
+  return new Proxy(
+    {},
+    {
+      get(_target, modelName: string) {
+        return {
+          async deleteMany() {
+            operations.push(`delete:${modelName}`);
+            return { count: 0 };
+          },
+          async createMany(input: { data: unknown[] }) {
+            operations.push(`create:${modelName}`);
+            const count = input.data.length;
+            counts.set(modelName, count);
+            return { count };
+          }
+        };
+      }
+    }
+  ) as Record<string, { deleteMany: () => Promise<{ count: number }>; createMany: (input: { data: unknown[] }) => Promise<{ count: number }> }>;
+}
