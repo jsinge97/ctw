@@ -22,9 +22,9 @@ export const roleDefaults: Record<Role, Capability[]> = {
     "viewActivity",
     "manageParticipants"
   ],
-  va: ["viewDeal", "viewDocuments", "completeAssignedTask", "viewVaQueue", "viewActivity"],
-  broker: ["viewDeal", "viewKanban", "viewMessages", "viewDocuments", "uploadDocuments"],
-  client: ["viewDeal", "viewKanban", "viewMessages", "viewDocuments", "uploadDocuments"]
+  va: ["viewVaQueue"],
+  broker: [],
+  client: []
 };
 
 function capabilitiesForAdmin(): Capability[] {

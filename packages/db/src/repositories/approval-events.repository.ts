@@ -13,4 +13,10 @@ export type ApprovalEventRecord = {
   createdAt: string;
 };
 
-export class ApprovalEventsRepository extends MemoryTable<ApprovalEventRecord> {}
+export class ApprovalEventsRepository extends MemoryTable<ApprovalEventRecord> {
+  append(row: ApprovalEventRecord): ApprovalEventRecord {
+    if (this.rows.has(row.id)) throw new Error(`Approval event already exists: ${row.id}`);
+    this.rows.set(row.id, row);
+    return row;
+  }
+}

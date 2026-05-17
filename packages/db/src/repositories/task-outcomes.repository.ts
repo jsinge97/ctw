@@ -10,4 +10,10 @@ export type TaskOutcomeRecord = {
   createdAt: string;
 };
 
-export class TaskOutcomesRepository extends MemoryTable<TaskOutcomeRecord> {}
+export class TaskOutcomesRepository extends MemoryTable<TaskOutcomeRecord> {
+  append(row: TaskOutcomeRecord): TaskOutcomeRecord {
+    if (this.rows.has(row.id)) throw new Error(`Task outcome already exists: ${row.id}`);
+    this.rows.set(row.id, row);
+    return row;
+  }
+}

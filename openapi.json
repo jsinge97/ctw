@@ -16,7 +16,19 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
               }
             }
           },
@@ -42,7 +54,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema"
+                }
               }
             }
           },
@@ -68,7 +82,124 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "displayName"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "activeOrganization": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "slug"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "membership": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "admin",
+                            "am",
+                            "va",
+                            "broker",
+                            "client"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "role"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "viewDeal",
+                          "viewKanban",
+                          "viewMessages",
+                          "viewDocuments",
+                          "uploadDocuments",
+                          "editDealFields",
+                          "moveDealStage",
+                          "createTask",
+                          "editTask",
+                          "completeAssignedTask",
+                          "approveProposedAction",
+                          "approveOutboundSend",
+                          "routeWork",
+                          "viewRoutingReview",
+                          "viewVaQueue",
+                          "viewSettingsUsers",
+                          "viewSettingsOrganization",
+                          "viewActivity",
+                          "manageParticipants",
+                          "managePermissions",
+                          "manageOrganizationSettings"
+                        ]
+                      }
+                    },
+                    "allowedSurfaces": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "homeRoute": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "user",
+                    "activeOrganization",
+                    "membership",
+                    "capabilities",
+                    "allowedSurfaces",
+                    "homeRoute"
+                  ],
+                  "additionalProperties": false
+                }
               }
             }
           },
@@ -89,12 +220,150 @@
         "tags": [
           "session"
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "displayName"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "activeOrganization": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "slug"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "membership": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "admin",
+                            "am",
+                            "va",
+                            "broker",
+                            "client"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "role"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "viewDeal",
+                          "viewKanban",
+                          "viewMessages",
+                          "viewDocuments",
+                          "uploadDocuments",
+                          "editDealFields",
+                          "moveDealStage",
+                          "createTask",
+                          "editTask",
+                          "completeAssignedTask",
+                          "approveProposedAction",
+                          "approveOutboundSend",
+                          "routeWork",
+                          "viewRoutingReview",
+                          "viewVaQueue",
+                          "viewSettingsUsers",
+                          "viewSettingsOrganization",
+                          "viewActivity",
+                          "manageParticipants",
+                          "managePermissions",
+                          "manageOrganizationSettings"
+                        ]
+                      }
+                    },
+                    "allowedSurfaces": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "homeRoute": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "user",
+                    "activeOrganization",
+                    "membership",
+                    "capabilities",
+                    "allowedSurfaces",
+                    "homeRoute"
+                  ],
+                  "additionalProperties": false
+                }
               }
             }
           },

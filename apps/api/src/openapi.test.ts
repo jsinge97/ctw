@@ -6,5 +6,6 @@ describe("openapi document", () => {
     expect(openApiDocument.openapi).toBe("3.1.0");
     expect(openApiDocument.paths["/healthz"]).toBeDefined();
     expect(openApiDocument.paths["/openapi.json"]).toBeDefined();
+    expect(openApiDocument.paths["/v1/session/current"]).toBeDefined();
   });
 });

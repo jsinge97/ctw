@@ -11,7 +11,7 @@ export function createAuditService(repositories = {
   return {
     repositories,
     recordAuditEvent(event: Omit<AuditRecord, "id" | "createdAt">): AuditRecord {
-      return repositories.audit.upsert({
+      return repositories.audit.append({
         ...event,
         id: `audit_${repositories.audit.rows.size + 1}`,
         before: sanitizeAuditPayload(event.before),
@@ -21,14 +21,14 @@ export function createAuditService(repositories = {
       });
     },
     recordApprovalEvent(event: Omit<ApprovalEventRecord, "id" | "createdAt">): ApprovalEventRecord {
-      return repositories.approvals.upsert({
+      return repositories.approvals.append({
         ...event,
         id: `approval_${repositories.approvals.rows.size + 1}`,
         createdAt: new Date().toISOString()
       });
     },
     recordTaskOutcome(outcome: Omit<TaskOutcomeRecord, "id" | "createdAt">): TaskOutcomeRecord {
-      return repositories.outcomes.upsert({
+      return repositories.outcomes.append({
         ...outcome,
         id: `outcome_${repositories.outcomes.rows.size + 1}`,
         createdAt: new Date().toISOString()

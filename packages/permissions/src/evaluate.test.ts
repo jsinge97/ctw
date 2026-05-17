@@ -4,8 +4,8 @@ import { can } from "./evaluate.js";
 const actor = { membershipId: "m1", role: "broker" as const, participantIds: ["p1"] };
 
 describe("can", () => {
-  it("allows role defaults", () => {
-    expect(can(actor, "viewDeal", { scopeType: "deal", scopeId: "d1" }).allowed).toBe(true);
+  it("does not let external role defaults bypass participant grants", () => {
+    expect(can(actor, "viewDeal", { scopeType: "deal", scopeId: "d1" }).allowed).toBe(false);
   });
 
   it("lets explicit deny win", () => {

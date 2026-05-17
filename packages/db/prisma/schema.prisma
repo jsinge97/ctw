@@ -566,6 +566,7 @@ model Task {
   route                 TaskRoute
   visibility            Visibility @default(internal)
   isCurrentNextAction   Boolean    @default(false) @map("is_current_next_action")
+  currentNextActionKey  String?    @unique @map("current_next_action_key")
   proposedBy            ProposedBy @default(user) @map("proposed_by")
   assignedToMembershipId String?   @map("assigned_to_membership_id")
   approvedByMembershipId String?   @map("approved_by_membership_id")
