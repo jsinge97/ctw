@@ -849,6 +849,8 @@ git commit -m "feat: use shadcn kanban board"
 
 ## Milestone 4 Review
 
+**Status:** Done after four reviewer passes.
+
 Request one subagent review before continuing.
 
 Review focus:
