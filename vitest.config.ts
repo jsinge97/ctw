@@ -1,4 +1,7 @@
 import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
+
+const root = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
   test: {
@@ -8,18 +11,18 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@ctw/api-client": "/packages/api-client/src/index.ts",
-      "@ctw/auth": "/packages/auth/src/index.ts",
-      "@ctw/config": "/packages/config/src/index.ts",
-      "@ctw/contracts": "/packages/contracts/src/index.ts",
-      "@ctw/db": "/packages/db/src/index.ts",
-      "@ctw/domain": "/packages/domain/src/index.ts",
-      "@ctw/integrations": "/packages/integrations/src/index.ts",
-      "@ctw/jobs": "/packages/jobs/src/index.ts",
-      "@ctw/observability": "/packages/observability/src/index.ts",
-      "@ctw/permissions": "/packages/permissions/src/index.ts",
-      "@ctw/storage": "/packages/storage/src/index.ts",
-      "@ctw/testkit": "/packages/testkit/src/index.ts"
+      "@ctw/api-client": `${root}packages/api-client/src/index.ts`,
+      "@ctw/auth": `${root}packages/auth/src/index.ts`,
+      "@ctw/config": `${root}packages/config/src/index.ts`,
+      "@ctw/contracts": `${root}packages/contracts/src/index.ts`,
+      "@ctw/db": `${root}packages/db/src/index.ts`,
+      "@ctw/domain": `${root}packages/domain/src/index.ts`,
+      "@ctw/integrations": `${root}packages/integrations/src/index.ts`,
+      "@ctw/jobs": `${root}packages/jobs/src/index.ts`,
+      "@ctw/observability": `${root}packages/observability/src/index.ts`,
+      "@ctw/permissions": `${root}packages/permissions/src/index.ts`,
+      "@ctw/storage": `${root}packages/storage/src/index.ts`,
+      "@ctw/testkit": `${root}packages/testkit/src/index.ts`
     }
   }
 }
