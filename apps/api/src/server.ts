@@ -54,7 +54,7 @@ export async function buildServer() {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   assertProductionRuntimeSafety();
-  const port = Number(process.env.API_PORT ?? 3000);
+  const port = Number(process.env.PORT ?? process.env.API_PORT ?? 3000);
   const app = await buildServer();
   await app.listen({ port, host: "0.0.0.0" });
 }
