@@ -46,9 +46,14 @@ async function getBoss(): Promise<PgBoss> {
     if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required for pg-boss jobs");
     const boss = new PgBoss({ connectionString: process.env.DATABASE_URL });
     await boss.start();
+    await ensureJobQueues(boss);
     return boss;
   })();
   return bossPromise;
+}
+
+export async function ensureJobQueues(boss: PgBoss): Promise<void> {
+  await Promise.all(Object.values(jobNames).map((name) => boss.createQueue(name)));
 }
 
 export async function enqueueJob(name: JobName, payload: unknown): Promise<QueuedJob> {
@@ -62,6 +67,7 @@ export async function enqueueJob(name: JobName, payload: unknown): Promise<Queue
   if (process.env.CTW_JOBS_MODE === "pgboss") {
     const boss = await getBoss();
     const id = await boss.send(name, { payload: parsedPayload });
+    if (!id) throw new Error(`Failed to enqueue ${name}`);
     return { ...job, id: String(id) };
   }
   memoryJobs.push(job);

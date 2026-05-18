@@ -1,6 +1,6 @@
 import PgBoss from "pg-boss";
 import { assertProductionRuntimeSafety } from "@ctw/config";
-import { jobNames, type JobName } from "@ctw/jobs";
+import { ensureJobQueues, jobNames, type JobName } from "@ctw/jobs";
 import { classifyDocumentRecord } from "./jobs/classify-document.js";
 import { extractDocumentTextRecord } from "./jobs/extract-document-text.js";
 import { generateSystemDraftRecord } from "./jobs/generate-system-draft.js";
@@ -75,6 +75,7 @@ export async function startWorker(options: { mode?: WorkerMode } = {}): Promise<
       console.error(error);
     });
     await boss.start();
+    await ensureJobQueues(boss);
     await Promise.all(
       Object.values(jobNames).map((name) =>
         boss.work<WrappedJobPayload>(name, { pollingIntervalSeconds: 2 }, async (jobs) => Promise.all(jobs.map((job) => handleQueuedJob(name, job.data))))
