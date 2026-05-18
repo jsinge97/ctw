@@ -70,9 +70,9 @@ function useWorkspaceMutation<TInput, TOutput>(dealId: string, mutationFn: (inpu
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("Deal workspace updated");
-      await Promise.all([queryClient.invalidateQueries({ queryKey: dealKeys.workspace(dealId) }), queryClient.invalidateQueries({ queryKey: dealKeys.cards() })]);
+      void Promise.all([queryClient.invalidateQueries({ queryKey: dealKeys.workspace(dealId) }), queryClient.invalidateQueries({ queryKey: dealKeys.cards() })]).catch(() => undefined);
     },
     onError: () => toast.error("Deal workspace update failed")
   });
