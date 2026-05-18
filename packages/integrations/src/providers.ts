@@ -40,8 +40,12 @@ export type ProviderBundle = {
 
 export function createProviderBundle(source: NodeJS.ProcessEnv = process.env): ProviderBundle {
   return {
-    email: createEmailProvider(source),
-    sms: createSmsProvider(source),
+    get email() {
+      return createEmailProvider(source);
+    },
+    get sms() {
+      return createSmsProvider(source);
+    },
     inboundEmail: normalizeResendInbound,
     inboundSms: normalizeTwilioInbound
   };

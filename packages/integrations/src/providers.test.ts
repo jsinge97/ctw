@@ -27,9 +27,11 @@ describe("provider bundle", () => {
     await expect(providers.sms.sendOutbound({ to: "+14155550188", text: "Draft" })).resolves.toMatchObject({ provider: "twilio", rawProviderResponse: { mode: "fake" } });
   });
 
-  it("requires live Resend and Twilio credentials", () => {
+  it("lazily requires live provider credentials", async () => {
     const liveEnv = baseEnv({ CTW_PROVIDER_MODE: "live", RESEND_API_KEY: "" });
-    expect(() => createProviderBundle(liveEnv)).toThrow(/RESEND_API_KEY is required/);
+    const providers = createProviderBundle(liveEnv);
+    expect(() => providers.email).toThrow(/RESEND_API_KEY is required/);
+    expect(() => providers.sms).toThrow(/TWILIO_ACCOUNT_SID is required/);
   });
 
   it("rejects placeholder live credentials", () => {
