@@ -1,5 +1,6 @@
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import type { Request, Response } from "express";
 import { ApiInvoker } from "./api-invoker.js";
 import { loadMcpConfig } from "./config.js";
 import { createCtwMcpServer } from "./mcp-server.js";
@@ -7,11 +8,11 @@ import { createCtwMcpServer } from "./mcp-server.js";
 const config = loadMcpConfig();
 const app = createMcpExpressApp({ host: config.host });
 
-app.get("/healthz", (_req, res) => {
+app.get("/healthz", (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-app.post("/mcp", async (req, res) => {
+app.post("/mcp", async (req: Request, res: Response) => {
   const server = createCtwMcpServer(new ApiInvoker({ baseUrl: config.apiBaseUrl, token: config.apiToken }));
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined } as unknown as ConstructorParameters<typeof StreamableHTTPServerTransport>[0]);
   try {
@@ -33,11 +34,11 @@ app.post("/mcp", async (req, res) => {
   }
 });
 
-app.get("/mcp", (_req, res) => {
+app.get("/mcp", (_req: Request, res: Response) => {
   res.status(405).json({ jsonrpc: "2.0", error: { code: -32000, message: "Use POST /mcp for stateless Streamable HTTP." }, id: null });
 });
 
-app.delete("/mcp", (_req, res) => {
+app.delete("/mcp", (_req: Request, res: Response) => {
   res.status(405).json({ jsonrpc: "2.0", error: { code: -32000, message: "Session deletion is not used by this stateless MCP server." }, id: null });
 });
 
