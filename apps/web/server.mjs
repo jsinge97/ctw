@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = join(fileURLToPath(new URL(".", import.meta.url)), "dist");
 const port = Number(process.env.PORT ?? 3000);
 const host = "0.0.0.0";
+const apiBaseUrl = process.env.VITE_API_BASE_URL ?? process.env.API_BASE_URL;
 
 const contentTypes = new Map([
   [".css", "text/css; charset=utf-8"],
@@ -19,7 +20,13 @@ const contentTypes = new Map([
 ]);
 
 createServer((request, response) => {
-  const pathname = new URL(request.url ?? "/", "http://localhost").pathname;
+  const url = new URL(request.url ?? "/", "http://localhost");
+  if (shouldProxyToApi(url.pathname)) {
+    proxyApiRequest(request, response, url);
+    return;
+  }
+
+  const pathname = url.pathname;
   const requestedPath = normalize(pathname).replace(/^(\.\.[/\\])+/, "");
   const candidate = join(root, requestedPath === "/" ? "index.html" : requestedPath);
   const filePath = resolveFile(candidate);
@@ -35,6 +42,58 @@ createServer((request, response) => {
 }).listen(port, host, () => {
   console.log(`CTW web server listening on http://${host}:${port}`);
 });
+
+function shouldProxyToApi(pathname) {
+  return pathname.startsWith("/v1/") || pathname === "/readyz" || pathname === "/healthz";
+}
+
+async function proxyApiRequest(request, response, url) {
+  if (!apiBaseUrl) {
+    response.writeHead(502, { "content-type": "application/json; charset=utf-8" });
+    response.end(JSON.stringify({ error: "API base URL is not configured" }));
+    return;
+  }
+
+  const targetUrl = new URL(`${url.pathname}${url.search}`, apiBaseUrl);
+  const headers = new Headers(request.headers);
+  headers.delete("host");
+  headers.delete("connection");
+  headers.delete("content-length");
+
+  try {
+    const upstream = await fetch(targetUrl, {
+      method: request.method,
+      headers,
+      body: request.method === "GET" || request.method === "HEAD" ? undefined : request,
+      duplex: "half",
+      redirect: "manual"
+    });
+
+    const responseHeaders = Object.fromEntries(upstream.headers.entries());
+    responseHeaders["cache-control"] = "no-store";
+    response.writeHead(upstream.status, responseHeaders);
+    if (upstream.body) {
+      await upstream.body.pipeTo(
+        new WritableStream({
+          write(chunk) {
+            response.write(chunk);
+          },
+          close() {
+            response.end();
+          },
+          abort() {
+            response.destroy();
+          }
+        })
+      );
+    } else {
+      response.end();
+    }
+  } catch {
+    response.writeHead(502, { "content-type": "application/json; charset=utf-8" });
+    response.end(JSON.stringify({ error: "API request failed" }));
+  }
+}
 
 function resolveFile(candidate) {
   try {
