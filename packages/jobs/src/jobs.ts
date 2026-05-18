@@ -53,7 +53,25 @@ async function getBoss(): Promise<PgBoss> {
 }
 
 export async function ensureJobQueues(boss: PgBoss): Promise<void> {
-  await Promise.all(Object.values(jobNames).map((name) => boss.createQueue(name)));
+  for (const name of Object.values(jobNames)) {
+    await createQueueWithRetry(boss, name);
+  }
+}
+
+async function createQueueWithRetry(boss: PgBoss, name: JobName): Promise<void> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await boss.createQueue(name);
+      return;
+    } catch (error) {
+      if (!isDeadlockError(error) || attempt === 2) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+}
+
+function isDeadlockError(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && (error as { code?: unknown }).code === "40P01";
 }
 
 export async function enqueueJob(name: JobName, payload: unknown): Promise<QueuedJob> {
